@@ -9,6 +9,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Custom color palette from design
+        palladian: '#EEE9DF',
+        oatmeal: '#C9C1B1',
+        'blue-fantastic': '#2C3B4D',
+        'burning-flame': '#FFB162',
+        'truffle-trouble': '#A35139',
+        'abyssal-anchorfish': '#1B2632',
+        
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
