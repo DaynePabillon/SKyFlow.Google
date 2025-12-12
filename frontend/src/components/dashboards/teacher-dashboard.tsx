@@ -49,9 +49,9 @@ export default function TeacherDashboard({ userName }: TeacherDashboardProps) {
   ]
 
   return (
-    <div className="space-y-8 p-6 bg-gray-50">
+    <div className="space-y-8 p-6 bg-palladian">
       {/* Welcome Section with Gradient */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 rounded-2xl p-8 shadow-xl">
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-fantastic via-abyssal-anchorfish to-truffle-trouble rounded-2xl p-8 shadow-xl">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
           <h1 className="text-4xl font-bold text-white mb-2">Welcome, {userName}! 🎓</h1>
@@ -63,48 +63,48 @@ export default function TeacherDashboard({ userName }: TeacherDashboardProps) {
 
       {/* Key Metrics with Enhanced Design */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="group bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 rounded-2xl p-6 border border-blue-200 dark:border-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div className="group bg-gradient-to-br from-blue-fantastic/20 to-blue-fantastic/30 rounded-2xl p-6 border border-blue-fantastic/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Total Students</p>
-            <div className="p-2 bg-blue-200 dark:bg-blue-800 rounded-lg group-hover:scale-110 transition-transform">
-              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <p className="text-sm font-semibold text-blue-fantastic uppercase tracking-wide">Total Students</p>
+            <div className="p-2 bg-blue-fantastic/20 rounded-lg group-hover:scale-110 transition-transform">
+              <Users className="w-5 h-5 text-blue-fantastic" />
             </div>
           </div>
-          <p className="text-4xl font-bold text-blue-900 dark:text-blue-100">105</p>
-          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">Across all classes</p>
+          <p className="text-4xl font-bold text-blue-fantastic">105</p>
+          <p className="text-xs text-truffle-trouble mt-2">Across all classes</p>
         </div>
         
-        <div className="group bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 rounded-2xl p-6 border border-emerald-200 dark:border-emerald-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div className="group bg-gradient-to-br from-oatmeal/40 to-oatmeal/60 rounded-2xl p-6 border border-oatmeal shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">Active Classes</p>
-            <div className="p-2 bg-emerald-200 dark:bg-emerald-800 rounded-lg group-hover:scale-110 transition-transform">
-              <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <p className="text-sm font-semibold text-truffle-trouble uppercase tracking-wide">Active Classes</p>
+            <div className="p-2 bg-oatmeal rounded-lg group-hover:scale-110 transition-transform">
+              <BookOpen className="w-5 h-5 text-blue-fantastic" />
             </div>
           </div>
-          <p className="text-4xl font-bold text-emerald-900 dark:text-emerald-100">3</p>
-          <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2">This semester</p>
+          <p className="text-4xl font-bold text-blue-fantastic">3</p>
+          <p className="text-xs text-truffle-trouble mt-2">This semester</p>
         </div>
         
-        <div className="group bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-950 dark:to-violet-900 rounded-2xl p-6 border border-violet-200 dark:border-violet-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div className="group bg-gradient-to-br from-truffle-trouble/20 to-truffle-trouble/30 rounded-2xl p-6 border border-truffle-trouble/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-violet-700 dark:text-violet-300 uppercase tracking-wide">Avg Performance</p>
-            <div className="p-2 bg-violet-200 dark:bg-violet-800 rounded-lg group-hover:scale-110 transition-transform">
-              <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+            <p className="text-sm font-semibold text-truffle-trouble uppercase tracking-wide">Avg Performance</p>
+            <div className="p-2 bg-truffle-trouble/20 rounded-lg group-hover:scale-110 transition-transform">
+              <TrendingUp className="w-5 h-5 text-truffle-trouble" />
             </div>
           </div>
-          <p className="text-4xl font-bold text-violet-900 dark:text-violet-100">87%</p>
-          <p className="text-xs text-violet-600 dark:text-violet-400 mt-2">Great progress!</p>
+          <p className="text-4xl font-bold text-blue-fantastic">87%</p>
+          <p className="text-xs text-truffle-trouble mt-2">Great progress!</p>
         </div>
         
-        <div className="group bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 rounded-2xl p-6 border border-amber-200 dark:border-amber-800 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div className="group bg-gradient-to-br from-burning-flame/20 to-burning-flame/30 rounded-2xl p-6 border border-burning-flame/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wide">Pending Reviews</p>
-            <div className="p-2 bg-amber-200 dark:bg-amber-800 rounded-lg group-hover:scale-110 transition-transform">
-              <BarChart3 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <p className="text-sm font-semibold text-truffle-trouble uppercase tracking-wide">Pending Reviews</p>
+            <div className="p-2 bg-burning-flame/30 rounded-lg group-hover:scale-110 transition-transform">
+              <BarChart3 className="w-5 h-5 text-truffle-trouble" />
             </div>
           </div>
-          <p className="text-4xl font-bold text-amber-900 dark:text-amber-100">8</p>
-          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">Needs attention</p>
+          <p className="text-4xl font-bold text-blue-fantastic">8</p>
+          <p className="text-xs text-truffle-trouble mt-2">Needs attention</p>
         </div>
       </div>
 

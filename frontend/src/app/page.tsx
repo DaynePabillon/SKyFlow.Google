@@ -75,29 +75,29 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-palladian">
       {/* Header with Glass Effect */}
-      <header className="border-b border-gray-200 bg-white backdrop-blur-xl sticky top-0 z-50 shadow-sm">
+      <header className="border-b border-oatmeal/30 bg-white/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Cloud className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-fantastic to-abyssal-anchorfish rounded-xl flex items-center justify-center shadow-lg">
+                <Cloud className="w-6 h-6 text-burning-flame" />
               </div>
               <div className="flex flex-col">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">SkyFlow</h1>
-                <p className="text-xs text-muted-foreground font-medium">{getRoleName()} Portal</p>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-fantastic to-abyssal-anchorfish bg-clip-text text-transparent">SkyFlow</h1>
+                <p className="text-xs text-truffle-trouble font-medium">{getRoleName()} Portal</p>
               </div>
             </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6">
               <div className="flex flex-col items-end">
-                <p className="text-sm font-medium text-foreground">{userName}</p>
-                <p className="text-xs text-muted-foreground">{userRole}</p>
+                <p className="text-sm font-medium text-blue-fantastic">{userName}</p>
+                <p className="text-xs text-truffle-trouble">{userRole}</p>
               </div>
-              <button onClick={handleLogout} className="p-2 hover:bg-muted rounded-lg transition-colors">
-                <LogOut className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+              <button onClick={handleLogout} className="p-2 hover:bg-oatmeal/30 rounded-lg transition-colors">
+                <LogOut className="w-5 h-5 text-truffle-trouble hover:text-blue-fantastic" />
               </button>
             </div>
 
@@ -126,44 +126,48 @@ export default function Home() {
       {/* Main Layout with Sidebar */}
       <div className="flex">
         {/* Sidebar */}
-        <aside className="hidden lg:flex lg:flex-col w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-73px)] sticky top-[73px]">
+        <aside className="hidden lg:flex lg:flex-col w-64 bg-white/60 backdrop-blur-sm border-r border-oatmeal/30 min-h-[calc(100vh-73px)] sticky top-[73px]">
           <div className="p-6">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Google Services</h2>
+            <h2 className="text-xs font-semibold text-truffle-trouble uppercase tracking-wider mb-4">Google Services</h2>
             <nav className="space-y-1">
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors group">
-                <BookOpen className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+              <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-blue-fantastic rounded-lg hover:bg-burning-flame/10 hover:text-burning-flame transition-colors group">
+                <BookOpen className="w-5 h-5 text-truffle-trouble group-hover:text-burning-flame" />
                 <span>Classroom</span>
-                <span className="ml-auto text-xs text-gray-400">Soon</span>
+                <span className="ml-auto text-xs text-oatmeal">Soon</span>
               </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-green-50 hover:text-green-600 transition-colors group">
-                <FileText className="w-5 h-5 text-gray-400 group-hover:text-green-600" />
+              <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-blue-fantastic rounded-lg hover:bg-burning-flame/10 hover:text-burning-flame transition-colors group">
+                <FileText className="w-5 h-5 text-truffle-trouble group-hover:text-burning-flame" />
                 <span>Sheets</span>
-                <span className="ml-auto text-xs text-gray-400">Soon</span>
+                <span className="ml-auto text-xs text-oatmeal">Soon</span>
               </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors group">
-                <Calendar className="w-5 h-5 text-gray-400 group-hover:text-red-600" />
+              <button 
+                onClick={() => window.location.href = '/calendar'}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-blue-fantastic rounded-lg hover:bg-burning-flame/10 hover:text-burning-flame transition-colors group"
+              >
+                <Calendar className="w-5 h-5 text-truffle-trouble group-hover:text-burning-flame" />
                 <span>Calendar</span>
-                <span className="ml-auto text-xs text-gray-400">Soon</span>
               </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-yellow-50 hover:text-yellow-600 transition-colors group">
-                <FolderOpen className="w-5 h-5 text-gray-400 group-hover:text-yellow-600" />
+              <button 
+                onClick={() => window.location.href = '/drive'}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-blue-fantastic rounded-lg hover:bg-burning-flame/10 hover:text-burning-flame transition-colors group"
+              >
+                <FolderOpen className="w-5 h-5 text-truffle-trouble group-hover:text-burning-flame" />
                 <span>Drive</span>
-                <span className="ml-auto text-xs text-gray-400">Soon</span>
               </button>
             </nav>
 
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Quick Actions</h2>
+            <div className="mt-8 pt-6 border-t border-oatmeal/30">
+              <h2 className="text-xs font-semibold text-truffle-trouble uppercase tracking-wider mb-4">Quick Actions</h2>
               <nav className="space-y-1">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition-colors group">
-                  <BarChart3 className="w-5 h-5 text-gray-400 group-hover:text-purple-600" />
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-blue-fantastic rounded-lg hover:bg-burning-flame/10 hover:text-burning-flame transition-colors group">
+                  <BarChart3 className="w-5 h-5 text-truffle-trouble group-hover:text-burning-flame" />
                   <span>Analytics</span>
-                  <span className="ml-auto text-xs text-gray-400">Soon</span>
+                  <span className="ml-auto text-xs text-oatmeal">Soon</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors group">
-                  <Users className="w-5 h-5 text-gray-400 group-hover:text-indigo-600" />
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-blue-fantastic rounded-lg hover:bg-burning-flame/10 hover:text-burning-flame transition-colors group">
+                  <Users className="w-5 h-5 text-truffle-trouble group-hover:text-burning-flame" />
                   <span>Attendance</span>
-                  <span className="ml-auto text-xs text-gray-400">Soon</span>
+                  <span className="ml-auto text-xs text-oatmeal">Soon</span>
                 </button>
               </nav>
             </div>
