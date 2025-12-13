@@ -18,7 +18,6 @@ async function createAdminOrganization() {
 
     if (userRes.rows.length === 0) {
       console.log('❌ User not found');
-      await pool.end();
       return;
     }
 
