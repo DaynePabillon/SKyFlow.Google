@@ -72,7 +72,8 @@ router.get('/google/callback', async (req: Request, res: Response) => {
     return res.redirect(redirectUrl);
   } catch (error) {
     logger.error('Error in OAuth callback:', error);
-    return res.status(500).json({ error: 'Authentication failed' });
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/?error=authentication_failed`);
   }
 });
 

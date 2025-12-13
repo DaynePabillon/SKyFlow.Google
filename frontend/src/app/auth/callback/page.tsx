@@ -20,24 +20,36 @@ export default function AuthCallback() {
           'Authorization': `Bearer ${token}`
         }
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('Failed to fetch user data')
+          }
+          return res.json()
+        })
         .then(data => {
           // Backend returns user data at root level, not nested
           const { organizations, ...userData } = data
           // Store user data for offline access
           localStorage.setItem('user', JSON.stringify(userData))
           localStorage.setItem('organizations', JSON.stringify(organizations || []))
-          // Redirect to home page
-          router.push("/")
+          
+          // Small delay to ensure localStorage is written
+          setTimeout(() => {
+            router.push("/")
+          }, 100)
         })
         .catch(err => {
           console.error('Error fetching user data:', err)
-          // Redirect anyway, home page will handle it
-          router.push("/")
+          // Clear invalid token
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          localStorage.removeItem('organizations')
+          // Redirect to login
+          router.push("/login")
         })
     } else {
       // If no token, redirect to login
-      router.push("/")
+      router.push("/login")
     }
   }, [searchParams, router])
 
