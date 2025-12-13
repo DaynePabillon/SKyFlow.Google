@@ -56,8 +56,41 @@ router.get('/google/callback', async (req: Request, res: Response) => {
       tokens.refresh_token || undefined
     );
 
-    // If invite token provided, process invitation
-    if (inviteToken) {
+    // Check for pending invitations by email
+    const { query: dbQuery } = await import('../config/database');
+    const invitationResult = await dbQuery(
+      `SELECT id, organization_id, role, token
+       FROM organization_invitations
+       WHERE email = $1 AND expires_at > NOW() AND accepted_at IS NULL
+       LIMIT 1`,
+      [user.email]
+    );
+
+    // Process invitation if found
+    if (invitationResult.rows.length > 0) {
+      const invitation = invitationResult.rows[0];
+      logger.info(`Processing pending invitation for ${user.email}`);
+      
+      // Add user to organization
+      await dbQuery(
+        `INSERT INTO organization_members (organization_id, user_id, role, status, invited_by, joined_at)
+         SELECT $1, $2, $3, $4, invited_by, NOW()
+         FROM organization_invitations
+         WHERE id = $5
+         ON CONFLICT (organization_id, user_id) DO NOTHING`,
+        [invitation.organization_id, user.id, invitation.role, 'active', invitation.id]
+      );
+
+      // Mark invitation as accepted
+      await dbQuery(
+        `UPDATE organization_invitations SET accepted_at = NOW() WHERE id = $1`,
+        [invitation.id]
+      );
+
+      inviteToken = invitation.token;
+      logger.info(`User ${user.email} added to organization via invitation`);
+    } else if (inviteToken) {
+      // If invite token provided in URL, process it
       await GoogleAuthService.processInvitation(user.id, inviteToken);
     }
 
