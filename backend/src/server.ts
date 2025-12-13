@@ -8,12 +8,12 @@ import logger from './config/logger';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
-import classroomRoutes from './routes/classroom.routes';
+import organizationRoutes from './routes/organization.routes';
+import projectRoutes from './routes/project.routes';
+import taskRoutes from './routes/task.routes';
 import calendarRoutes from './routes/calendar.routes';
 import driveRoutes from './routes/drive.routes';
 import sheetsRoutes from './routes/sheets.routes';
-import attendanceRoutes from './routes/attendance.routes';
-import dashboardRoutes from './routes/dashboard.routes';
 
 dotenv.config();
 
@@ -45,12 +45,12 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/classroom', classroomRoutes);
+app.use('/api/organizations', organizationRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/tasks', taskRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/drive', driveRoutes);
 app.use('/api/sheets', sheetsRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/dashboard', dashboardRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

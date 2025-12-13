@@ -1,0 +1,343 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { TrendingUp, Users, FolderKanban, CheckSquare, Calendar, Plus, UserPlus, X } from "lucide-react"
+import LoginPage from "@/components/auth/login-page"
+import AppLayout from "@/components/layout/AppLayout"
+
+interface Organization {
+  id: string
+  name: string
+  role: 'admin' | 'manager' | 'member'
+}
+
+export default function Home() {
+  const [user, setUser] = useState<any>(null)
+  const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<'admin' | 'manager' | 'member'>('member')
+  const [inviteUrl, setInviteUrl] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token")
+    
+    if (storedToken) {
+      fetch('http://localhost:3001/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${storedToken}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          setUser(data.user)
+          setOrganizations(data.organizations || [])
+          if (data.organizations && data.organizations.length > 0) {
+            setSelectedOrg(data.organizations[0])
+          }
+          setIsLoading(false)
+        })
+        .catch(err => {
+          console.error('Failed to fetch user info:', err)
+          localStorage.removeItem('token')
+          setIsLoading(false)
+        })
+    } else {
+      setIsLoading(false)
+    }
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-palladian flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic"></div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <LoginPage />
+  }
+
+  if (!selectedOrg) {
+    return (
+      <div className="min-h-screen bg-palladian flex items-center justify-center">
+        <p className="text-truffle-trouble">No organization selected</p>
+      </div>
+    )
+  }
+
+  const handleInviteMember = async () => {
+    if (!inviteEmail || !selectedOrg) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`http://localhost:3001/api/organizations/${selectedOrg.id}/invite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          email: inviteEmail,
+          role: inviteRole
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setInviteUrl(data.inviteUrl)
+      } else {
+        const error = await response.json()
+        alert(`Failed to send invitation: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error sending invitation:', error)
+      alert('Failed to send invitation. Please try again.')
+    }
+  }
+
+  const copyInviteLink = () => {
+    navigator.clipboard.writeText(inviteUrl)
+    alert('Invitation link copied to clipboard!')
+  }
+
+  const closeInviteModal = () => {
+    setIsInviteModalOpen(false)
+    setInviteEmail('')
+    setInviteRole('member')
+    setInviteUrl('')
+  }
+
+  return (
+    <AppLayout
+      user={user}
+      organizations={organizations}
+      selectedOrg={selectedOrg}
+      onOrgChange={setSelectedOrg}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Dashboard Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-blue-fantastic">Dashboard</h1>
+          <p className="text-truffle-trouble mt-1">Welcome back, {user.name}</p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FolderKanban className="w-5 h-5 text-blue-600" />
+              </div>
+              <span className="text-sm font-medium text-truffle-trouble">Projects</span>
+            </div>
+            <p className="text-3xl font-bold text-blue-fantastic">0</p>
+            <p className="text-xs text-truffle-trouble mt-1">Active projects</p>
+          </div>
+
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <CheckSquare className="w-5 h-5 text-green-600" />
+              </div>
+              <span className="text-sm font-medium text-truffle-trouble">Tasks</span>
+            </div>
+            <p className="text-3xl font-bold text-blue-fantastic">0</p>
+            <p className="text-xs text-truffle-trouble mt-1">Pending tasks</p>
+          </div>
+
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Users className="w-5 h-5 text-purple-600" />
+              </div>
+              <span className="text-sm font-medium text-truffle-trouble">Team</span>
+            </div>
+            <p className="text-3xl font-bold text-blue-fantastic">1</p>
+            <p className="text-xs text-truffle-trouble mt-1">Team members</p>
+          </div>
+
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <TrendingUp className="w-5 h-5 text-orange-600" />
+              </div>
+              <span className="text-sm font-medium text-truffle-trouble">Progress</span>
+            </div>
+            <p className="text-3xl font-bold text-blue-fantastic">0%</p>
+            <p className="text-xs text-truffle-trouble mt-1">Overall completion</p>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm mb-8">
+          <h2 className="text-xl font-semibold text-blue-fantastic mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="/projects" className="flex items-center gap-3 p-4 border border-oatmeal rounded-lg hover:bg-palladian transition-colors">
+              <FolderKanban className="w-5 h-5 text-blue-fantastic" />
+              <div>
+                <p className="font-medium text-blue-fantastic">View Projects</p>
+                <p className="text-xs text-truffle-trouble">Manage your projects</p>
+              </div>
+            </a>
+            <a href="/tasks" className="flex items-center gap-3 p-4 border border-oatmeal rounded-lg hover:bg-palladian transition-colors">
+              <CheckSquare className="w-5 h-5 text-blue-fantastic" />
+              <div>
+                <p className="font-medium text-blue-fantastic">View Tasks</p>
+                <p className="text-xs text-truffle-trouble">Check your tasks</p>
+              </div>
+            </a>
+            <a href="/team" className="flex items-center gap-3 p-4 border border-oatmeal rounded-lg hover:bg-palladian transition-colors">
+              <Users className="w-5 h-5 text-blue-fantastic" />
+              <div>
+                <p className="font-medium text-blue-fantastic">View Team</p>
+                <p className="text-xs text-truffle-trouble">Manage team members</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        {/* Recent Activity Placeholder */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
+          <h2 className="text-xl font-semibold text-blue-fantastic mb-4">Recent Activity</h2>
+          <div className="text-center py-8">
+            <Calendar className="w-12 h-12 text-truffle-trouble mx-auto mb-4 opacity-50" />
+            <p className="text-truffle-trouble">No recent activity</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Invite Modal */}
+      {isInviteModalOpen && selectedOrg?.role === 'admin' && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-blue-fantastic">Invite Team Member</h2>
+              <button 
+                onClick={closeInviteModal}
+                className="p-1 hover:bg-oatmeal/30 rounded-lg transition-colors"
+      {isInviteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-blue-fantastic">Invite Team Member</h2>
+              <button 
+                onClick={closeInviteModal}
+                className="p-1 hover:bg-oatmeal/30 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-truffle-trouble" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {!inviteUrl ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-truffle-trouble mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="colleague@company.com"
+                      className="w-full px-4 py-2 border border-oatmeal rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-fantastic"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-truffle-trouble mb-2">
+                      Role
+                    </label>
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value as 'admin' | 'manager' | 'member')}
+                      className="w-full px-4 py-2 border border-oatmeal rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-fantastic"
+                    >
+                      <option value="member">Member - Can complete tasks and view projects</option>
+                      <option value="manager">Manager - Can create projects and invite members</option>
+                      <option value="admin">Admin - Full access to organization</option>
+                    </select>
+                  </div>
+
+                  <div className="bg-blue-fantastic/10 border border-blue-fantastic/20 rounded-lg p-4">
+                    <p className="text-sm text-blue-fantastic">
+                      <strong>Note:</strong> An invitation link will be generated. Share it with the person you want to invite.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={closeInviteModal}
+                      className="flex-1 px-4 py-2 border border-oatmeal rounded-lg hover:bg-oatmeal/30 transition-colors text-truffle-trouble font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleInviteMember}
+                      disabled={!inviteEmail}
+                      className="flex-1 px-4 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Generate Invite
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-sm font-medium text-green-800 mb-2">✓ Invitation Created!</p>
+                    <p className="text-sm text-green-700">
+                      Share this link with <strong>{inviteEmail}</strong>
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-truffle-trouble mb-2">
+                      Invitation Link
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={inviteUrl}
+                        readOnly
+                        className="flex-1 px-4 py-2 border border-oatmeal rounded-lg bg-gray-50 text-sm"
+                      />
+                      <button
+                        onClick={copyInviteLink}
+                        className="px-4 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors font-medium"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-fantastic/10 border border-blue-fantastic/20 rounded-lg p-4">
+                    <p className="text-sm text-blue-fantastic">
+                      <strong>Next Steps:</strong>
+                    </p>
+                    <ul className="text-sm text-blue-fantastic mt-2 space-y-1 list-disc list-inside">
+                      <li>Send this link to {inviteEmail}</li>
+                      <li>They'll sign in with Google</li>
+                      <li>They'll automatically join as {inviteRole}</li>
+                      <li>Link expires in 7 days</li>
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={closeInviteModal}
+                    className="w-full px-4 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors font-medium"
+                  >
+                    Done
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

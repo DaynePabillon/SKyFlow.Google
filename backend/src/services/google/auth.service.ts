@@ -14,8 +14,10 @@ export class GoogleAuthService {
   /**
    * Generate Google OAuth URL for user authentication
    */
-  static getAuthUrl(role: 'student' | 'teacher'): string {
-    const state = Buffer.from(JSON.stringify({ role })).toString('base64');
+  static getAuthUrl(inviteToken?: string): string {
+    const state = inviteToken 
+      ? Buffer.from(JSON.stringify({ inviteToken })).toString('base64')
+      : '';
     return getGoogleAuthUrl(state);
   }
 
@@ -59,7 +61,6 @@ export class GoogleAuthService {
    */
   static async upsertUser(
     googleUser: GoogleUserInfo,
-    role: 'student' | 'teacher',
     accessToken: string,
     refreshToken?: string
   ) {
@@ -67,8 +68,8 @@ export class GoogleAuthService {
       const tokenExpiry = new Date(Date.now() + 3600 * 1000); // 1 hour from now
 
       const result = await query(
-        `INSERT INTO users (google_id, email, name, role, profile_picture, access_token, refresh_token, token_expiry, last_login)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+        `INSERT INTO users (google_id, email, name, profile_picture, access_token, refresh_token, token_expiry, last_login)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
          ON CONFLICT (google_id) 
          DO UPDATE SET 
            email = EXCLUDED.email,
@@ -80,7 +81,7 @@ export class GoogleAuthService {
            last_login = NOW(),
            updated_at = NOW()
          RETURNING *`,
-        [googleUser.id, googleUser.email, googleUser.name, role, googleUser.picture, accessToken, refreshToken, tokenExpiry]
+        [googleUser.id, googleUser.email, googleUser.name, googleUser.picture, accessToken, refreshToken, tokenExpiry]
       );
 
       return result.rows[0];
@@ -91,13 +92,57 @@ export class GoogleAuthService {
   }
 
   /**
+   * Process organization invitation
+   */
+  static async processInvitation(userId: string, inviteToken: string) {
+    try {
+      // Get invitation details
+      const inviteResult = await query(
+        `SELECT * FROM organization_invitations 
+         WHERE token = $1 AND expires_at > NOW() AND accepted_at IS NULL`,
+        [inviteToken]
+      );
+
+      if (inviteResult.rows.length === 0) {
+        throw new Error('Invalid or expired invitation');
+      }
+
+      const invitation = inviteResult.rows[0];
+
+      // Check if user email matches invitation
+      const userResult = await query('SELECT email FROM users WHERE id = $1', [userId]);
+      if (userResult.rows[0].email !== invitation.email) {
+        throw new Error('Email does not match invitation');
+      }
+
+      // Add user to organization
+      await query(
+        `INSERT INTO organization_members (organization_id, user_id, role, status, invited_by, joined_at)
+         VALUES ($1, $2, $3, $4, $5, NOW())
+         ON CONFLICT (organization_id, user_id) DO UPDATE SET status = $4, joined_at = NOW()`,
+        [invitation.organization_id, userId, invitation.role, 'active', invitation.invited_by]
+      );
+
+      // Mark invitation as accepted
+      await query(
+        'UPDATE organization_invitations SET accepted_at = NOW() WHERE id = $1',
+        [invitation.id]
+      );
+
+      logger.info(`User ${userId} accepted invitation to organization ${invitation.organization_id}`);
+    } catch (error) {
+      logger.error('Error processing invitation:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Generate JWT token for authenticated user
    */
   static generateJWT(user: any): string {
     const payload = {
       id: user.id,
       email: user.email,
-      role: user.role,
       googleId: user.google_id,
     };
 

@@ -11,13 +11,8 @@ const router = Router();
  */
 router.get('/google', (req: Request, res: Response) => {
   try {
-    const role = req.query.role as 'student' | 'teacher';
-    
-    if (!role || !['student', 'teacher'].includes(role)) {
-      return res.status(400).json({ error: 'Valid role (student/teacher) is required' });
-    }
-
-    const authUrl = GoogleAuthService.getAuthUrl(role);
+    const inviteToken = req.query.invite as string;
+    const authUrl = GoogleAuthService.getAuthUrl(inviteToken);
     return res.json({ authUrl });
   } catch (error) {
     logger.error('Error generating auth URL:', error);
@@ -37,8 +32,16 @@ router.get('/google/callback', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Authorization code is required' });
     }
 
-    // Decode state to get role
-    const { role } = JSON.parse(Buffer.from(state as string, 'base64').toString());
+    // Decode state to get invite token if present
+    let inviteToken: string | undefined;
+    if (state) {
+      try {
+        const decoded = JSON.parse(Buffer.from(state as string, 'base64').toString());
+        inviteToken = decoded.inviteToken;
+      } catch (e) {
+        // State parsing failed, continue without invite
+      }
+    }
 
     // Exchange code for tokens
     const tokens = await GoogleAuthService.exchangeCodeForTokens(code as string);
@@ -49,17 +52,24 @@ router.get('/google/callback', async (req: Request, res: Response) => {
     // Save/update user in database
     const user = await GoogleAuthService.upsertUser(
       googleUser,
-      role,
       tokens.access_token!,
       tokens.refresh_token || undefined
     );
+
+    // If invite token provided, process invitation
+    if (inviteToken) {
+      await GoogleAuthService.processInvitation(user.id, inviteToken);
+    }
 
     // Generate JWT
     const jwt = GoogleAuthService.generateJWT(user);
 
     // Redirect to frontend with token
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    return res.redirect(`${frontendUrl}/auth/callback?token=${jwt}&role=${role}`);
+    const redirectUrl = inviteToken 
+      ? `${frontendUrl}/auth/callback?token=${jwt}&invited=true`
+      : `${frontendUrl}/auth/callback?token=${jwt}`;
+    return res.redirect(redirectUrl);
   } catch (error) {
     logger.error('Error in OAuth callback:', error);
     return res.status(500).json({ error: 'Authentication failed' });
@@ -68,16 +78,30 @@ router.get('/google/callback', async (req: Request, res: Response) => {
 
 /**
  * GET /api/auth/me
- * Get current user info
+ * Get current user info with organizations
  */
 router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const user = await GoogleAuthService.getUserWithTokens(req.user!.id);
     
+    // Get user's organizations
+    const { query: dbQuery } = await import('../config/database');
+    const orgsResult = await dbQuery(
+      `SELECT o.id, o.name, om.role, om.status
+       FROM organizations o
+       INNER JOIN organization_members om ON o.id = om.organization_id
+       WHERE om.user_id = $1 AND om.status = $2
+       ORDER BY om.joined_at DESC`,
+      [user.id, 'active']
+    );
+    
     // Don't send sensitive tokens to frontend
     const { access_token, refresh_token, ...safeUser } = user;
     
-    res.json(safeUser);
+    res.json({
+      ...safeUser,
+      organizations: orgsResult.rows,
+    });
   } catch (error) {
     logger.error('Error fetching user info:', error);
     res.status(500).json({ error: 'Failed to fetch user information' });
@@ -95,6 +119,34 @@ router.post('/refresh', authenticateToken, async (req: AuthRequest, res: Respons
   } catch (error) {
     logger.error('Error refreshing token:', error);
     res.status(500).json({ error: 'Failed to refresh access token' });
+  }
+});
+
+/**
+ * GET /api/auth/invite/:token
+ * Get invitation details
+ */
+router.get('/invite/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { query: dbQuery } = await import('../config/database');
+    
+    const result = await dbQuery(
+      `SELECT oi.*, o.name as organization_name
+       FROM organization_invitations oi
+       INNER JOIN organizations o ON oi.organization_id = o.id
+       WHERE oi.token = $1 AND oi.expires_at > NOW() AND oi.accepted_at IS NULL`,
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Invalid or expired invitation' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    logger.error('Error fetching invitation:', error);
+    res.status(500).json({ error: 'Failed to fetch invitation' });
   }
 });
 

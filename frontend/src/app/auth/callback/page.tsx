@@ -9,15 +9,32 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const token = searchParams.get("token")
-    const role = searchParams.get("role")
 
-    if (token && role) {
+    if (token) {
       // Store token in localStorage
       localStorage.setItem("token", token)
-      localStorage.setItem("userRole", role)
       
-      // Redirect to home page
-      router.push("/")
+      // Fetch user data and store it
+      fetch('http://localhost:3001/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          // Backend returns user data at root level, not nested
+          const { organizations, ...userData } = data
+          // Store user data for offline access
+          localStorage.setItem('user', JSON.stringify(userData))
+          localStorage.setItem('organizations', JSON.stringify(organizations || []))
+          // Redirect to home page
+          router.push("/")
+        })
+        .catch(err => {
+          console.error('Error fetching user data:', err)
+          // Redirect anyway, home page will handle it
+          router.push("/")
+        })
     } else {
       // If no token, redirect to login
       router.push("/")

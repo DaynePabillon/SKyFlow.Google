@@ -1,6 +1,6 @@
-# 🌤️ SkyFlow - Academic Management Platform
+# 🌤️ SkyFlow - Organizational Project Management System
 
-**SkyFlow** is a comprehensive academic management system that integrates multiple Google services (Classroom, Calendar, Drive, Sheets) to provide a unified dashboard for **Teachers** and **Students**. The platform stores metadata in PostgreSQL while leveraging Google APIs for core functionality.
+**SkyFlow** is a comprehensive organizational project management platform that integrates Google Workspace services (Calendar, Drive, Sheets, Docs) to provide a unified dashboard for **Teams**, **Managers**, and **Administrators**. The platform stores organizational metadata in PostgreSQL while leveraging Google APIs for real-time collaboration and file management.
 
 ---
 
@@ -21,21 +21,28 @@
 
 ## ✨ Features
 
-### For Teachers
-- ✅ **Google Classroom Integration** - Create and manage assignments
-- ✅ **Grade Management** - Import grades from Google Sheets
-- ✅ **Calendar Scheduling** - Create class schedules and exam dates
-- ✅ **Attendance Tracking** - Record and view student attendance
-- ✅ **Performance Analytics** - View class-wide performance trends
-- ✅ **File Management** - Upload and share files via Google Drive
+### For Administrators
+- ✅ **Organization Management** - Create and manage organizations
+- ✅ **Team Member Invitations** - Invite users via email with role-based access
+- ✅ **Project Oversight** - Monitor all organizational projects
+- ✅ **Analytics Dashboard** - View organization-wide metrics and insights
+- ✅ **Google Workspace Integration** - Seamless sync with Google services
 
-### For Students
-- ✅ **Assignment Dashboard** - View all assignments with deadlines
-- ✅ **Submission Tracking** - Submit work and track submission status
-- ✅ **Grade Viewing** - Access current grades and performance metrics
-- ✅ **Attendance History** - View personal attendance records
-- ✅ **Calendar Integration** - See unified academic schedule
-- ✅ **File Access** - Access shared files and resources
+### For Managers
+- ✅ **Project Creation** - Create and configure new projects
+- ✅ **Task Management** - Assign tasks to team members with deadlines
+- ✅ **Team Coordination** - Manage project teams and roles
+- ✅ **Meeting Scheduling** - Create events synced with Google Calendar
+- ✅ **Progress Tracking** - Monitor project milestones and deliverables
+- ✅ **File Management** - Organize project files via Google Drive
+
+### For Team Members
+- ✅ **Task Dashboard** - View assigned tasks with priorities and deadlines
+- ✅ **Time Tracking** - Log work hours on tasks
+- ✅ **Deliverable Submission** - Submit project outputs for review
+- ✅ **Team Calendar** - Access unified team schedule
+- ✅ **File Access** - View and collaborate on project files
+- ✅ **Activity Updates** - Stay informed on project changes
 
 ---
 
@@ -44,9 +51,9 @@
 ### Backend
 - **Node.js** + **Express.js** - REST API server
 - **TypeScript** - Type-safe development
-- **PostgreSQL** - Metadata storage
-- **Google APIs** - Classroom, Calendar, Drive, Sheets integration
-- **JWT** - Authentication
+- **PostgreSQL** - Organizational metadata storage
+- **Google APIs** - Calendar, Drive, Sheets, Docs integration
+- **OAuth 2.0** + **JWT** - Secure authentication
 - **Winston** - Logging
 
 ### Frontend
@@ -73,21 +80,19 @@ SkyFlow.Google/
 │   │   │   ├── google.ts
 │   │   │   └── logger.ts
 │   │   ├── services/            # Business logic
-│   │   │   ├── google/
-│   │   │   │   ├── auth.service.ts
-│   │   │   │   ├── classroom.service.ts
-│   │   │   │   ├── calendar.service.ts
-│   │   │   │   ├── drive.service.ts
-│   │   │   │   └── sheets.service.ts
-│   │   │   └── attendance.service.ts
+│   │   │   └── google/
+│   │   │       ├── auth.service.ts
+│   │   │       ├── calendar.service.ts
+│   │   │       ├── drive.service.ts
+│   │   │       └── sheets.service.ts
 │   │   ├── routes/              # API endpoints
 │   │   │   ├── auth.routes.ts
-│   │   │   ├── classroom.routes.ts
+│   │   │   ├── organization.routes.ts
+│   │   │   ├── project.routes.ts
+│   │   │   ├── task.routes.ts
 │   │   │   ├── calendar.routes.ts
 │   │   │   ├── drive.routes.ts
-│   │   │   ├── sheets.routes.ts
-│   │   │   ├── attendance.routes.ts
-│   │   │   └── dashboard.routes.ts
+│   │   │   └── sheets.routes.ts
 │   │   ├── middleware/          # Auth, validation
 │   │   │   └── auth.middleware.ts
 │   │   └── server.ts            # Express app entry point
@@ -97,16 +102,21 @@ SkyFlow.Google/
 ├── frontend/                     # Next.js frontend
 │   ├── src/
 │   │   ├── app/                 # Next.js 14 App Router
-│   │   │   ├── (auth)/
+│   │   │   ├── auth/
 │   │   │   │   └── login/
-│   │   │   ├── (dashboard)/
-│   │   │   │   ├── student/
-│   │   │   │   └── teacher/
+│   │   │   ├── dashboard/
+│   │   │   ├── projects/
+│   │   │   ├── tasks/
+│   │   │   ├── calendar/
+│   │   │   ├── drive/
+│   │   │   ├── invite/
 │   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
 │   │   ├── components/
-│   │   │   ├── auth/            # Login components
-│   │   │   ├── dashboards/      # Student/Teacher dashboards
+│   │   │   ├── auth/            # Login & invitation components
+│   │   │   ├── dashboards/      # Role-based dashboards
+│   │   │   ├── projects/        # Project management components
+│   │   │   ├── tasks/           # Task management components
 │   │   │   ├── shared/          # Reusable components
 │   │   │   └── ui/              # UI primitives
 │   │   ├── lib/
@@ -305,27 +315,49 @@ npm run dev
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/auth/google?role=student\|teacher` | Get Google OAuth URL |
+| GET | `/api/auth/google?invite=token` | Get Google OAuth URL |
 | GET | `/api/auth/google/callback` | OAuth callback handler |
-| GET | `/api/auth/me` | Get current user info |
+| GET | `/api/auth/me` | Get current user info with organizations |
+| GET | `/api/auth/invite/:token` | Get invitation details |
 | POST | `/api/auth/refresh` | Refresh access token |
 | POST | `/api/auth/logout` | Logout user |
 
-### Dashboard Endpoints
+### Organization Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/dashboard/student` | Get student dashboard data |
-| GET | `/api/dashboard/teacher` | Get teacher dashboard data |
+| POST | `/api/organizations` | Create new organization |
+| GET | `/api/organizations` | Get user's organizations |
+| GET | `/api/organizations/:id` | Get organization details |
+| PUT | `/api/organizations/:id` | Update organization |
+| POST | `/api/organizations/:id/invite` | Invite user to organization |
+| GET | `/api/organizations/:id/members` | Get organization members |
+| DELETE | `/api/organizations/:id/members/:userId` | Remove member |
 
-### Classroom Endpoints
+### Project Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/classroom/courses` | Get user's courses |
-| POST | `/api/classroom/courses/sync` | Sync courses from Google Classroom |
-| GET | `/api/classroom/courses/:courseId/assignments` | Get course assignments |
-| POST | `/api/classroom/assignments` | Create new assignment |
+| POST | `/api/projects` | Create new project |
+| GET | `/api/projects` | Get projects (filtered) |
+| GET | `/api/projects/:id` | Get project details |
+| PUT | `/api/projects/:id` | Update project |
+| DELETE | `/api/projects/:id` | Delete project |
+| GET | `/api/projects/:id/members` | Get project members |
+| POST | `/api/projects/:id/members` | Add member to project |
+| DELETE | `/api/projects/:id/members/:userId` | Remove member |
+
+### Task Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/tasks` | Create new task |
+| GET | `/api/tasks` | Get tasks (filtered) |
+| GET | `/api/tasks/:id` | Get task details |
+| PUT | `/api/tasks/:id` | Update task |
+| DELETE | `/api/tasks/:id` | Delete task |
+| POST | `/api/tasks/:id/comments` | Add comment to task |
+| POST | `/api/tasks/:id/time` | Log time entry |
 
 ### Calendar Endpoints
 
@@ -348,35 +380,32 @@ npm run dev
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/sheets/grades` | Get student grades |
-| POST | `/api/sheets/grades/sync` | Sync grades from Google Sheets |
-| GET | `/api/sheets/class/:classId/stats` | Get class grade statistics |
-
-### Attendance Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/attendance/student/:studentId` | Get student attendance |
-| POST | `/api/attendance/record` | Record attendance |
-| POST | `/api/attendance/bulk` | Bulk record attendance |
+| GET | `/api/sheets/project/:projectId` | Get project analytics |
+| POST | `/api/sheets/sync` | Sync data from Google Sheets |
 
 ---
 
 ## 🗄 Database Schema
 
-The PostgreSQL database stores metadata for Google services:
+The PostgreSQL database stores organizational metadata:
 
 ### Core Tables
 
+- **organizations** - Organization entities
 - **users** - User accounts (synced from Google OAuth)
-- **classes** - Courses (mirrored from Google Classroom)
-- **class_enrollments** - Student-class relationships
-- **assignments** - Assignments (mirrored from Classroom)
-- **submissions** - Student submissions metadata
+- **organization_members** - User-organization relationships with roles
+- **organization_invitations** - Pending organization invites
+- **projects** - Project entities
+- **project_members** - Project team assignments
+- **tasks** - Task entities with assignments
+- **task_comments** - Task discussion threads
+- **milestones** - Project milestones
+- **deliverables** - Project outputs and submissions
 - **calendar_events** - Events (synced from Google Calendar)
+- **event_attendees** - Event participant tracking
 - **drive_files** - File references (Google Drive)
-- **attendance** - Attendance records
-- **grade_summaries** - Grade data (from Google Sheets)
+- **time_entries** - Time tracking for tasks
+- **project_analytics** - Analytics snapshots (from Google Sheets)
 - **activity_logs** - System activity tracking
 
 See `database/schema.sql` for complete schema definition.
@@ -434,16 +463,19 @@ npm run lint
 
 ## 🚧 TODO / Future Enhancements
 
-- [ ] Implement remaining API route handlers
-- [ ] Add real-time notifications (WebSockets)
-- [ ] Implement AI-powered insights (Phase 2)
-- [ ] Add mobile app support
+- [ ] Email notification system for invitations
+- [ ] Real-time collaboration (WebSockets)
+- [ ] Kanban board view for tasks
+- [ ] Gantt chart for project timelines
+- [ ] Advanced analytics and reporting
+- [ ] Mobile app support
 - [ ] Implement caching with Redis
 - [ ] Add comprehensive test suite
 - [ ] Set up CI/CD pipeline
 - [ ] Add API rate limiting
-- [ ] Implement file upload progress tracking
-- [ ] Add email notifications
+- [ ] File upload progress tracking
+- [ ] Slack/Teams integration
+- [ ] AI-powered project insights
 
 ---
 
