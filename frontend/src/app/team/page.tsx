@@ -18,51 +18,59 @@ export default function TeamPage() {
   const [user, setUser] = useState<any>(null)
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
+
+  // Load from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user')
+    const storedOrgs = localStorage.getItem('organizations')
+    const storedSelectedOrg = localStorage.getItem('selectedOrganization')
+
+    if (storedUser) {
+      setUser(JSON.parse(storedUser))
+    }
+    if (storedOrgs) {
+      setOrganizations(JSON.parse(storedOrgs))
+    }
+    if (storedSelectedOrg) {
+      setSelectedOrg(JSON.parse(storedSelectedOrg))
+    }
+
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
+    if (!mounted) return
+
     const token = localStorage.getItem("token")
-    
+
     if (!token) {
       router.push("/")
       return
     }
 
-    fetch('http://localhost:3001/api/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error('Authentication failed')
+    if (!user) {
+      fetch('http://localhost:3001/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-        return res.json()
       })
-      .then(data => {
-        const { organizations, ...userData } = data
-        setUser(userData)
-        setOrganizations(organizations || [])
-        if (organizations && organizations.length > 0) {
-          setSelectedOrg(organizations[0])
-        }
-        setIsLoading(false)
-      })
-      .catch((err) => {
-        console.error('Auth error:', err)
-        setIsLoading(false)
-      })
-  }, [router])
+        .then(res => res.ok ? res.json() : Promise.reject('Auth failed'))
+        .then(data => {
+          const { organizations: orgs, ...userData } = data
+          setUser(userData)
+          setOrganizations(orgs || [])
+          if (orgs && orgs.length > 0 && !selectedOrg) {
+            setSelectedOrg(orgs[0])
+          }
+        })
+        .catch(err => console.error('Auth error:', err))
+    }
+  }, [mounted, router, user, selectedOrg])
 
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-palladian flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic mx-auto mb-4"></div>
-          <p className="text-truffle-trouble">Loading...</p>
-        </div>
-      </div>
-    )
+  // Show nothing until mounted to prevent hydration mismatch
+  if (!mounted || !user) {
+    return null
   }
 
   if (!selectedOrg) {

@@ -41,7 +41,7 @@ export default function DrivePage() {
     const token = localStorage.getItem("token")
     const storedUser = localStorage.getItem("user")
     const storedOrgs = localStorage.getItem("organizations")
-    
+
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser)
@@ -55,7 +55,7 @@ export default function DrivePage() {
         console.error('Error parsing stored user data:', e)
       }
     }
-    
+
     if (token) {
       fetch('http://localhost:3001/api/auth/me', {
         headers: {
@@ -202,11 +202,11 @@ export default function DrivePage() {
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - date.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+
     if (diffDays === 0) return "Today"
     if (diffDays === 1) return "Yesterday"
     if (diffDays < 7) return `${diffDays} days ago`
-    
+
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -218,10 +218,10 @@ export default function DrivePage() {
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  if (isLoading || !user) {
+  if (!user) {
     return (
-      <div className="min-h-screen bg-palladian flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     )
   }
@@ -366,7 +366,7 @@ export default function DrivePage() {
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-blue-fantastic">New Folder</h2>
-              <button 
+              <button
                 onClick={() => setShowFolderModal(false)}
                 className="p-1 hover:bg-oatmeal/30 rounded-lg transition-colors"
               >

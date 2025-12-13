@@ -59,7 +59,7 @@ export default function CalendarPage() {
     const token = localStorage.getItem("token")
     const storedUser = localStorage.getItem("user")
     const storedOrgs = localStorage.getItem("organizations")
-    
+
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser)
@@ -73,7 +73,7 @@ export default function CalendarPage() {
         console.error('Error parsing stored user data:', e)
       }
     }
-    
+
     if (token) {
       fetch('http://localhost:3001/api/auth/me', {
         headers: {
@@ -158,15 +158,15 @@ export default function CalendarPage() {
   const formatEventTime = (event: CalendarEvent) => {
     const start = new Date(event.start.dateTime || event.start.date || "")
     const end = new Date(event.end.dateTime || event.end.date || "")
-    
+
     if (event.start.date) {
       return "All day"
     }
-    
+
     const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60))
     const hours = Math.floor(duration / 60)
     const minutes = duration % 60
-    
+
     return `${start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} • ${hours > 0 ? `${hours} hour` : ""}${minutes > 0 ? ` ${minutes} min` : ""}`
   }
 
@@ -233,10 +233,10 @@ export default function CalendarPage() {
     .sort((a, b) => new Date(a.start.dateTime || a.start.date || "").getTime() - new Date(b.start.dateTime || b.start.date || "").getTime())
     .slice(0, 10)
 
-  if (isLoading || !user) {
+  if (!user) {
     return (
-      <div className="min-h-screen bg-palladian flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     )
   }
@@ -293,14 +293,13 @@ export default function CalendarPage() {
                   const date = new Date(year, month, day)
                   const isToday = date.toDateString() === new Date().toDateString()
                   const dayEvents = getEventsForDate(date)
-                  
+
                   return (
                     <button
                       key={day}
                       onClick={() => handleDateClick(day)}
-                      className={`aspect-square p-2 rounded-lg border transition-all hover:border-blue-fantastic hover:bg-blue-50 ${
-                        isToday ? "bg-blue-fantastic text-white font-bold border-blue-fantastic" : "border-oatmeal hover:shadow-sm"
-                      }`}
+                      className={`aspect-square p-2 rounded-lg border transition-all hover:border-blue-fantastic hover:bg-blue-50 ${isToday ? "bg-blue-fantastic text-white font-bold border-blue-fantastic" : "border-oatmeal hover:shadow-sm"
+                        }`}
                     >
                       <div className="text-sm">{day}</div>
                       {dayEvents.length > 0 && (

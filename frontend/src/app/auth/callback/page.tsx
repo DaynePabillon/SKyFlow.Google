@@ -1,11 +1,14 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { Cloud, CheckCircle2 } from "lucide-react"
 
 export default function AuthCallback() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const [status, setStatus] = useState<'authenticating' | 'resolving' | 'success' | 'error'>('authenticating')
+  const [message, setMessage] = useState('Verifying your identity...')
 
   useEffect(() => {
     const token = searchParams.get("token")
@@ -14,50 +17,102 @@ export default function AuthCallback() {
       // Store token in localStorage
       localStorage.setItem("token", token)
       
-      // Fetch user data and store it
-      fetch('http://localhost:3001/api/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-        .then(res => {
-          if (!res.ok) {
-            throw new Error('Failed to fetch user data')
-          }
-          return res.json()
-        })
-        .then(data => {
-          // Backend returns user data at root level, not nested
-          const { organizations, ...userData } = data
-          // Store user data for offline access
-          localStorage.setItem('user', JSON.stringify(userData))
-          localStorage.setItem('organizations', JSON.stringify(organizations || []))
-          
-          // Small delay to ensure localStorage is written
-          setTimeout(() => {
-            router.push("/")
-          }, 100)
-        })
-        .catch(err => {
-          console.error('Error fetching user data:', err)
-          // Clear invalid token
-          localStorage.removeItem('token')
-          localStorage.removeItem('user')
-          localStorage.removeItem('organizations')
-          // Redirect to login
-          router.push("/login")
-        })
+      // Show authenticating status for 1 second
+      setTimeout(() => {
+        setStatus('resolving')
+        setMessage('Finding your workspace...')
+        
+        // Fetch user data after showing resolving status
+        setTimeout(() => {
+          fetch('http://localhost:3001/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+            .then(res => {
+              if (!res.ok) {
+                throw new Error('Failed to fetch user data')
+              }
+              return res.json()
+            })
+            .then(data => {
+              const { organizations, onboarding_data, ...userData } = data
+              
+              // Store user data
+              localStorage.setItem('user', JSON.stringify({ ...userData, onboarding_data }))
+              localStorage.setItem('organizations', JSON.stringify(organizations || []))
+              
+              // Store onboarding preferences for easy access
+              if (onboarding_data) {
+                localStorage.setItem('onboardingPreferences', JSON.stringify(onboarding_data))
+              }
+              
+              // Check if user needs onboarding
+              const isFirstTimeUser = !userData.onboarding_completed
+              
+              setStatus('success')
+              setMessage(isFirstTimeUser ? 'Welcome to SkyFlow!' : 'Welcome back!')
+              
+              // Show success for 1.5 seconds before redirect
+              setTimeout(() => {
+                if (isFirstTimeUser) {
+                  router.push("/onboarding")
+                } else {
+                  router.push("/")
+                }
+              }, 1500)
+            })
+            .catch(err => {
+              console.error('Error fetching user data:', err)
+              setStatus('error')
+              setMessage('Authentication failed')
+              
+              // Clear invalid token
+              localStorage.removeItem('token')
+              localStorage.removeItem('user')
+              localStorage.removeItem('organizations')
+              
+              // Redirect to login after showing error
+              setTimeout(() => {
+                router.push("/login")
+              }, 2000)
+            })
+        }, 1000)
+      }, 1000)
     } else {
-      // If no token, redirect to login
       router.push("/login")
     }
   }, [searchParams, router])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Completing sign in...</p>
+        <div className="mb-8">
+          <div className="inline-flex items-center justify-center w-32 h-32 bg-slate-600/80 backdrop-blur-sm rounded-3xl mb-6 shadow-2xl">
+            {status === 'success' ? (
+              <CheckCircle2 className="w-16 h-16 text-white animate-bounce-slow" />
+            ) : (
+              <Cloud className="w-16 h-16 text-white animate-pulse" />
+            )}
+          </div>
+          
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            {status === 'success' ? 'All Set!' : 'Signing You In'}
+          </h2>
+          <p className="text-gray-600">{message}</p>
+        </div>
+
+        {status !== 'success' && status !== 'error' && (
+          <div className="flex justify-center gap-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
+        )}
+
+        {status === 'error' && (
+          <p className="text-sm text-red-600 mt-4">Redirecting to login...</p>
+        )}
       </div>
     </div>
   )

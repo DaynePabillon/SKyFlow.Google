@@ -1,12 +1,20 @@
 "use client"
 
-import { Cloud, Mail, Users, FolderKanban, CheckSquare } from "lucide-react"
+import { Cloud, Mail, Users, FolderKanban, CheckSquare, ArrowRight } from "lucide-react"
+
+// Cloud SVG component for the animated background
+const CloudShape = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 200 100" className={className} fill="currentColor">
+    <path d="M166.257,66.823c-0.135-1.96-0.453-3.869-0.969-5.692c1.909-3.743,2.988-7.994,2.988-12.49 c0-15.473-12.527-28.028-28-28.028c-5.48,0-10.601,1.586-14.93,4.314c-4.711-6.252-12.201-10.314-20.641-10.314 c-12.426,0-22.821,8.78-25.346,20.462c-1.749-0.449-3.576-0.691-5.463-0.691c-11.776,0-21.328,9.552-21.328,21.328 c0,0.233,0.008,0.464,0.016,0.695c-7.352,2.574-12.631,9.584-12.631,17.855c0,10.432,8.458,18.89,18.891,18.89h99.084 c13.186,0,23.875-10.689,23.875-23.874C181.802,77.968,175.234,69.432,166.257,66.823z" />
+  </svg>
+)
 
 export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       const response = await fetch(`http://localhost:3001/api/auth/google`)
       const data = await response.json()
+      // Smooth redirect to Google OAuth
       window.location.href = data.authUrl
     } catch (error) {
       console.error('Failed to initiate Google login:', error)
@@ -33,8 +41,26 @@ export default function LoginPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-palladian flex flex-col">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-fantastic/10 via-burning-flame/5 to-truffle-trouble/10 pointer-events-none" />
+    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-palladian to-white flex flex-col overflow-hidden relative">
+      {/* Animated Clouds Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Cloud layer 1 - slow, back */}
+        <CloudShape className="absolute w-48 h-24 text-white/40 animate-cloud-1 top-[10%]" />
+        <CloudShape className="absolute w-64 h-32 text-white/30 animate-cloud-2 top-[25%]" />
+        <CloudShape className="absolute w-40 h-20 text-white/35 animate-cloud-3 top-[5%]" />
+
+        {/* Cloud layer 2 - medium speed */}
+        <CloudShape className="absolute w-56 h-28 text-white/50 animate-cloud-4 top-[35%]" />
+        <CloudShape className="absolute w-44 h-22 text-white/45 animate-cloud-5 top-[15%]" />
+        <CloudShape className="absolute w-52 h-26 text-white/40 animate-cloud-6 top-[45%]" />
+
+        {/* Cloud layer 3 - faster, front */}
+        <CloudShape className="absolute w-36 h-18 text-white/60 animate-cloud-7 top-[20%]" />
+        <CloudShape className="absolute w-48 h-24 text-white/55 animate-cloud-8 top-[8%]" />
+      </div>
+
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-fantastic/5 via-transparent to-truffle-trouble/5 pointer-events-none" />
 
       <div className="relative flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-2xl">
@@ -62,14 +88,16 @@ export default function LoginPage() {
               <div className="space-y-4">
                 <button
                   onClick={handleGoogleLogin}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg bg-gradient-to-r from-blue-fantastic to-abyssal-anchorfish text-white hover:shadow-lg transition-all duration-200 font-medium"
+                  className="group w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg bg-gradient-to-r from-blue-fantastic to-abyssal-anchorfish text-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300 font-medium relative overflow-hidden"
                 >
-                  <Mail className="w-5 h-5" />
-                  Sign in with Google
+                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                  <Mail className="w-5 h-5 relative z-10" />
+                  <span className="relative z-10">Continue with Google</span>
+                  <ArrowRight className="w-5 h-5 relative z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </button>
 
                 <p className="text-xs text-center text-truffle-trouble">
-                  You'll be redirected to Google to sign in securely.
+                  Secure sign-in powered by Google
                 </p>
               </div>
             </div>

@@ -38,13 +38,13 @@ export default function ManagerTeamView({ user, organization }: ManagerTeamViewP
           'Authorization': `Bearer ${token}`
         }
       })
-      
+
       if (!response.ok) {
         setMembers([])
         setIsLoading(false)
         return
       }
-      
+
       const data = await response.json()
       setMembers(data.members || [])
       setIsLoading(false)
@@ -75,12 +75,9 @@ export default function ManagerTeamView({ user, organization }: ManagerTeamViewP
     member.email.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  // Don't show anything during initial load to avoid flash
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic"></div>
-      </div>
-    )
+    return null
   }
 
   return (

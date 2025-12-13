@@ -24,8 +24,14 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false)
 
   const handleLogout = () => {
+    // Clear all authentication data
     localStorage.removeItem("token")
-    router.push("/")
+    localStorage.removeItem("user")
+    localStorage.removeItem("organizations")
+    localStorage.removeItem("selectedOrganization")
+    
+    // Redirect to login page
+    router.push("/login")
   }
 
   const getRoleBadge = (role: string) => {

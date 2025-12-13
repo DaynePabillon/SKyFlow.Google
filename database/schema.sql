@@ -26,6 +26,8 @@ CREATE TABLE users (
     access_token TEXT,
     refresh_token TEXT,
     token_expiry TIMESTAMP,
+    onboarding_completed BOOLEAN DEFAULT FALSE,
+    onboarding_data JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP

@@ -188,3 +188,65 @@ body {
   animation: wave 6s ease-in-out infinite;
 }
 
+/* Cloud floating animations - each cloud has different speed and starting position */
+@keyframes cloud-drift-1 {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(calc(100vw + 100%)); }
+}
+
+@keyframes cloud-drift-2 {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(calc(100vw + 100%)); }
+}
+
+@keyframes cloud-drift-3 {
+  0% { transform: translateX(-150%); }
+  100% { transform: translateX(calc(100vw + 100%)); }
+}
+
+.animate-cloud-1 {
+  animation: cloud-drift-1 60s linear infinite;
+  left: -200px;
+}
+
+.animate-cloud-2 {
+  animation: cloud-drift-2 80s linear infinite;
+  animation-delay: -20s;
+  left: -200px;
+}
+
+.animate-cloud-3 {
+  animation: cloud-drift-3 70s linear infinite;
+  animation-delay: -35s;
+  left: -200px;
+}
+
+.animate-cloud-4 {
+  animation: cloud-drift-1 50s linear infinite;
+  animation-delay: -10s;
+  left: -200px;
+}
+
+.animate-cloud-5 {
+  animation: cloud-drift-2 65s linear infinite;
+  animation-delay: -45s;
+  left: -200px;
+}
+
+.animate-cloud-6 {
+  animation: cloud-drift-3 55s linear infinite;
+  animation-delay: -25s;
+  left: -200px;
+}
+
+.animate-cloud-7 {
+  animation: cloud-drift-1 40s linear infinite;
+  animation-delay: -15s;
+  left: -200px;
+}
+
+.animate-cloud-8 {
+  animation: cloud-drift-2 45s linear infinite;
+  animation-delay: -30s;
+  left: -200px;
+}

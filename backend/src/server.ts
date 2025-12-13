@@ -8,6 +8,7 @@ import logger from './config/logger';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
 import organizationRoutes from './routes/organization.routes';
 import projectRoutes from './routes/project.routes';
 import taskRoutes from './routes/task.routes';
@@ -45,6 +46,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/organizations', organizationRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { TrendingUp, Users, FolderKanban, CheckSquare, Calendar, X } from "lucide-react"
+import { TrendingUp, Users, FolderKanban, CheckSquare, Calendar, X, FileText, BarChart3, Target, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
 
@@ -11,19 +11,40 @@ interface Organization {
   role: 'admin' | 'manager' | 'member'
 }
 
+interface OnboardingPreferences {
+  purpose?: string
+  role?: string
+  teamSize?: string
+  focusAreas?: string[]
+  hearAbout?: string
+  completedAt?: string
+}
+
 export default function Home() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [preferences, setPreferences] = useState<OnboardingPreferences | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
       const storedToken = localStorage.getItem("token")
       const storedUser = localStorage.getItem("user")
       const storedOrgs = localStorage.getItem("organizations")
-      
+      const selectedOrgStored = localStorage.getItem("selectedOrganization")
+      const storedPreferences = localStorage.getItem("onboardingPreferences")
+
+      // Load preferences from localStorage
+      if (storedPreferences) {
+        try {
+          setPreferences(JSON.parse(storedPreferences))
+        } catch (e) {
+          console.error('Error parsing stored preferences:', e)
+        }
+      }
+
       // Load from localStorage first as fallback
       if (storedUser) {
         try {
@@ -31,14 +52,27 @@ export default function Home() {
           const orgsData = storedOrgs ? JSON.parse(storedOrgs) : []
           setUser(userData)
           setOrganizations(orgsData)
-          if (orgsData.length > 0) {
+
+          // Also load preferences from user data if available
+          if (userData.onboarding_data) {
+            setPreferences(userData.onboarding_data)
+          }
+
+          // Check if user has selected org or if there's only one
+          if (selectedOrgStored) {
+            setSelectedOrg(JSON.parse(selectedOrgStored))
+          } else if (orgsData.length === 1) {
             setSelectedOrg(orgsData[0])
+          } else if (orgsData.length > 1) {
+            // Multiple orgs but none selected - redirect to workspace selection
+            router.push('/select-workspace')
+            return
           }
         } catch (e) {
           console.error('Error parsing stored user data:', e)
         }
       }
-      
+
       if (storedToken) {
         try {
           const res = await fetch('http://localhost:3001/api/auth/me', {
@@ -46,20 +80,36 @@ export default function Home() {
               'Authorization': `Bearer ${storedToken}`
             }
           })
-          
+
           if (!res.ok) {
             throw new Error('Authentication failed')
           }
-          
+
           const data = await res.json()
-          const { organizations, ...userData } = data
+          const { organizations, onboarding_data, ...userData } = data
           setUser(userData)
           setOrganizations(organizations || [])
-          if (organizations && organizations.length > 0) {
-            setSelectedOrg(organizations[0])
+
+          // Set preferences from API response
+          if (onboarding_data) {
+            setPreferences(onboarding_data)
+            localStorage.setItem('onboardingPreferences', JSON.stringify(onboarding_data))
           }
+
+          // Workspace resolution logic
+          if (selectedOrgStored) {
+            setSelectedOrg(JSON.parse(selectedOrgStored))
+          } else if (organizations && organizations.length === 1) {
+            setSelectedOrg(organizations[0])
+            localStorage.setItem('selectedOrganization', JSON.stringify(organizations[0]))
+          } else if (organizations && organizations.length > 1) {
+            // Multiple workspaces - redirect to selection
+            router.push('/select-workspace')
+            return
+          }
+
           // Store in localStorage for future use
-          localStorage.setItem('user', JSON.stringify(userData))
+          localStorage.setItem('user', JSON.stringify({ ...userData, onboarding_data }))
           localStorage.setItem('organizations', JSON.stringify(organizations || []))
         } catch (err) {
           console.error('Failed to fetch user info:', err)
@@ -71,12 +121,12 @@ export default function Home() {
           }
         }
       }
-      
+
       setIsLoading(false)
     }
-    
+
     checkAuth()
-  }, [])
+  }, [router])
 
   if (isLoading) {
     return (
@@ -114,7 +164,18 @@ export default function Home() {
         {/* Dashboard Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Dashboard</h1>
-          <p className="text-gray-600 mt-2 text-lg">Welcome back, {user.name}</p>
+          <p className="text-gray-600 mt-2 text-lg">
+            Welcome back, {user.name}
+            {preferences?.role && (
+              <span className="text-gray-500"> · {preferences.role}</span>
+            )}
+          </p>
+          {preferences?.focusAreas && preferences.focusAreas.length > 0 && (
+            <p className="text-sm text-gray-500 mt-1">
+              Focused on: {preferences.focusAreas.slice(0, 3).join(', ')}
+              {preferences.focusAreas.length > 3 && ` +${preferences.focusAreas.length - 3} more`}
+            </p>
+          )}
         </div>
 
         {/* Stats Grid */}
@@ -192,7 +253,84 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Recent Activity Placeholder */}
+        {/* Recommended For You - Based on Onboarding Preferences */}
+        {preferences?.focusAreas && preferences.focusAreas.length > 0 && (
+          <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg mb-8">
+            <div className="flex items-center gap-2 mb-6">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">Recommended For You</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Based on your focus areas selected during setup</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {preferences.focusAreas.includes('Project management') && (
+                <a href="/projects" className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-xl hover:shadow-md transition-all duration-300 group">
+                  <div className="p-2 bg-blue-500 rounded-lg">
+                    <FolderKanban className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">Start a Project</p>
+                    <p className="text-xs text-gray-500">Create your first project</p>
+                  </div>
+                </a>
+              )}
+              {(preferences.focusAreas.includes('Task management') || preferences.focusAreas.includes('Group assignments')) && (
+                <a href="/tasks" className="flex items-center gap-3 p-4 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl hover:shadow-md transition-all duration-300 group">
+                  <div className="p-2 bg-green-500 rounded-lg">
+                    <CheckSquare className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">Manage Tasks</p>
+                    <p className="text-xs text-gray-500">Organize your work</p>
+                  </div>
+                </a>
+              )}
+              {(preferences.focusAreas.includes('Resource management') || preferences.focusAreas.includes('Student organizations')) && (
+                <a href="/team" className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl hover:shadow-md transition-all duration-300 group">
+                  <div className="p-2 bg-purple-500 rounded-lg">
+                    <Users className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">Invite Team</p>
+                    <p className="text-xs text-gray-500">Collaborate together</p>
+                  </div>
+                </a>
+              )}
+              {(preferences.focusAreas.includes('Academic research') || preferences.focusAreas.includes('Portfolio management')) && (
+                <a href="/drive" className="flex items-center gap-3 p-4 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl hover:shadow-md transition-all duration-300 group">
+                  <div className="p-2 bg-indigo-500 rounded-lg">
+                    <FileText className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">Upload Files</p>
+                    <p className="text-xs text-gray-500">Store your research</p>
+                  </div>
+                </a>
+              )}
+              {(preferences.focusAreas.includes('Curriculum and Syllabus management') || preferences.focusAreas.includes('Administrative work')) && (
+                <a href="/calendar" className="flex items-center gap-3 p-4 bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-200 rounded-xl hover:shadow-md transition-all duration-300 group">
+                  <div className="p-2 bg-rose-500 rounded-lg">
+                    <Calendar className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">Set Schedule</p>
+                    <p className="text-xs text-gray-500">Plan your timeline</p>
+                  </div>
+                </a>
+              )}
+              {(preferences.focusAreas.includes('Goals and strategy') || preferences.focusAreas.includes('Business operations')) && (
+                <a href="/analytics" className="flex items-center gap-3 p-4 bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-xl hover:shadow-md transition-all duration-300 group">
+                  <div className="p-2 bg-amber-500 rounded-lg">
+                    <BarChart3 className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">View Analytics</p>
+                    <p className="text-xs text-gray-500">Track progress</p>
+                  </div>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
         <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-6">Recent Activity</h2>
           <div className="text-center py-8">

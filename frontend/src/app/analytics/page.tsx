@@ -55,7 +55,7 @@ export default function AnalyticsPage() {
     const token = localStorage.getItem("token")
     const storedUser = localStorage.getItem("user")
     const storedOrgs = localStorage.getItem("organizations")
-    
+
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser)
@@ -69,7 +69,7 @@ export default function AnalyticsPage() {
         console.error('Error parsing stored user data:', e)
       }
     }
-    
+
     if (token) {
       fetch('http://localhost:3001/api/auth/me', {
         headers: {
@@ -133,14 +133,14 @@ export default function AnalyticsPage() {
     }
   }
 
-  const completionRate = analytics.totalTasks > 0 
-    ? Math.round((analytics.completedTasks / analytics.totalTasks) * 100) 
+  const completionRate = analytics.totalTasks > 0
+    ? Math.round((analytics.completedTasks / analytics.totalTasks) * 100)
     : 0
 
-  if (isLoading || !user) {
+  if (!user) {
     return (
-      <div className="min-h-screen bg-palladian flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     )
   }

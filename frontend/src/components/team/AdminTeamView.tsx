@@ -39,13 +39,13 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
           'Authorization': `Bearer ${token}`
         }
       })
-      
+
       if (!response.ok) {
         setMembers([])
         setIsLoading(false)
         return
       }
-      
+
       const data = await response.json()
       setMembers(data.members || [])
       setIsLoading(false)
@@ -73,17 +73,14 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
 
   const filteredMembers = members.filter(member => {
     const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchQuery.toLowerCase())
+      member.email.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesFilter = filterRole === 'all' || member.role === filterRole
     return matchesSearch && matchesFilter
   })
 
+  // Don't show anything during initial load to avoid flash
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic"></div>
-      </div>
-    )
+    return null
   }
 
   return (

@@ -66,112 +66,109 @@ export default function AdminProjectView({ user, organization }: AdminProjectVie
     return matchesSearch && matchesFilter
   })
 
+  // Don't show anything during initial load to avoid flash
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-palladian flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic"></div>
-      </div>
-    )
+    return null
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-blue-fantastic">Projects</h1>
-              <p className="text-truffle-trouble mt-1">Manage all projects in {organization.name}</p>
-            </div>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              <span className="font-medium">New Project</span>
-            </button>
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-blue-fantastic">Projects</h1>
+            <p className="text-truffle-trouble mt-1">Manage all projects in {organization.name}</p>
           </div>
-
-          {/* Search and Filter */}
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-truffle-trouble" />
-              <input
-                type="text"
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-oatmeal rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-fantastic"
-              />
-            </div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-oatmeal rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-fantastic"
-            >
-              <option value="all">All Status</option>
-              <option value="planning">Planning</option>
-              <option value="active">Active</option>
-              <option value="on-hold">On Hold</option>
-              <option value="completed">Completed</option>
-            </select>
-          </div>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="font-medium">New Project</span>
+          </button>
         </div>
 
-        {/* Projects Grid */}
-        {filteredProjects.length === 0 ? (
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-12 text-center border border-oatmeal">
-            <FolderKanban className="w-16 h-16 text-truffle-trouble mx-auto mb-4 opacity-50" />
-            <h3 className="text-xl font-semibold text-blue-fantastic mb-2">No projects yet</h3>
-            <p className="text-truffle-trouble mb-6">Create your first project to get started</p>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="px-6 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors"
-            >
-              Create Project
-            </button>
+        {/* Search and Filter */}
+        <div className="flex gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-truffle-trouble" />
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-oatmeal rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-fantastic"
+            />
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <div
-                key={project.id}
-                className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-blue-fantastic mb-1">{project.name}</h3>
-                    <span className={`inline-block text-xs px-2 py-1 rounded-full ${getStatusColor(project.status)}`}>
-                      {project.status}
-                    </span>
-                  </div>
-                  <button className="p-1 hover:bg-oatmeal/30 rounded-lg transition-colors">
-                    <MoreVertical className="w-5 h-5 text-truffle-trouble" />
-                  </button>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-4 py-2 border border-oatmeal rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-fantastic"
+          >
+            <option value="all">All Status</option>
+            <option value="planning">Planning</option>
+            <option value="active">Active</option>
+            <option value="on-hold">On Hold</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Projects Grid */}
+      {filteredProjects.length === 0 ? (
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-12 text-center border border-oatmeal">
+          <FolderKanban className="w-16 h-16 text-truffle-trouble mx-auto mb-4 opacity-50" />
+          <h3 className="text-xl font-semibold text-blue-fantastic mb-2">No projects yet</h3>
+          <p className="text-truffle-trouble mb-6">Create your first project to get started</p>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-6 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors"
+          >
+            Create Project
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((project) => (
+            <div
+              key={project.id}
+              className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-blue-fantastic mb-1">{project.name}</h3>
+                  <span className={`inline-block text-xs px-2 py-1 rounded-full ${getStatusColor(project.status)}`}>
+                    {project.status}
+                  </span>
                 </div>
+                <button className="p-1 hover:bg-oatmeal/30 rounded-lg transition-colors">
+                  <MoreVertical className="w-5 h-5 text-truffle-trouble" />
+                </button>
+              </div>
 
-                <p className="text-sm text-truffle-trouble mb-4 line-clamp-2">
-                  {project.description || 'No description'}
-                </p>
+              <p className="text-sm text-truffle-trouble mb-4 line-clamp-2">
+                {project.description || 'No description'}
+              </p>
 
-                <div className="space-y-2 text-sm text-truffle-trouble">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date(project.start_date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    <span>0 members</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>0 tasks</span>
-                  </div>
+              <div className="space-y-2 text-sm text-truffle-trouble">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{new Date(project.start_date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span>0 members</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>0 tasks</span>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

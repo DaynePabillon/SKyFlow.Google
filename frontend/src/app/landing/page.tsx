@@ -3,6 +3,13 @@
 import { Cloud, Users, FolderKanban, CheckSquare, Calendar, HardDrive, ArrowRight } from "lucide-react"
 import { useRouter } from "next/navigation"
 
+// Cloud SVG component for animated background
+const CloudShape = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 200 100" className={className} fill="currentColor">
+    <path d="M166.257,66.823c-0.135-1.96-0.453-3.869-0.969-5.692c1.909-3.743,2.988-7.994,2.988-12.49 c0-15.473-12.527-28.028-28-28.028c-5.48,0-10.601,1.586-14.93,4.314c-4.711-6.252-12.201-10.314-20.641-10.314 c-12.426,0-22.821,8.78-25.346,20.462c-1.749-0.449-3.576-0.691-5.463-0.691c-11.776,0-21.328,9.552-21.328,21.328 c0,0.233,0.008,0.464,0.016,0.695c-7.352,2.574-12.631,9.584-12.631,17.855c0,10.432,8.458,18.89,18.891,18.89h99.084 c13.186,0,23.875-10.689,23.875-23.874C181.802,77.968,175.234,69.432,166.257,66.823z" />
+  </svg>
+)
+
 export default function LandingPage() {
   const router = useRouter()
 
@@ -35,12 +42,23 @@ export default function LandingPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-300 to-sky-200 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Original blur elements */}
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200/30 rounded-full blur-3xl animate-float-slow"></div>
         <div className="absolute top-40 right-20 w-96 h-96 bg-cyan-200/30 rounded-full blur-3xl animate-bounce-slow"></div>
         <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl animate-wave"></div>
+
+        {/* Floating Cloud Shapes */}
+        <CloudShape className="absolute w-48 h-24 text-white/60 animate-cloud-1 top-[8%]" />
+        <CloudShape className="absolute w-64 h-32 text-white/50 animate-cloud-2 top-[18%]" />
+        <CloudShape className="absolute w-40 h-20 text-white/55 animate-cloud-3 top-[5%]" />
+        <CloudShape className="absolute w-56 h-28 text-white/45 animate-cloud-4 top-[28%]" />
+        <CloudShape className="absolute w-44 h-22 text-white/50 animate-cloud-5 top-[12%]" />
+        <CloudShape className="absolute w-52 h-26 text-white/40 animate-cloud-6 top-[35%]" />
+        <CloudShape className="absolute w-36 h-18 text-white/65 animate-cloud-7 top-[22%]" />
+        <CloudShape className="absolute w-48 h-24 text-white/55 animate-cloud-8 top-[6%]" />
       </div>
 
       {/* Content */}

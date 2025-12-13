@@ -50,13 +50,13 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
           'Authorization': `Bearer ${token}`
         }
       })
-      
+
       if (!response.ok) {
         setTasks([])
         setIsLoading(false)
         return
       }
-      
+
       const data = await response.json()
       setTasks(data.tasks || [])
       setIsLoading(false)
@@ -105,7 +105,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
   const handleDrop = async (e: React.DragEvent, newStatus: Task['status']) => {
     e.preventDefault()
     const taskId = e.dataTransfer.getData('taskId')
-    
+
     try {
       const token = localStorage.getItem('token')
       await fetch(`http://localhost:3001/api/tasks/${taskId}/status`, {
@@ -116,7 +116,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
         },
         body: JSON.stringify({ status: newStatus })
       })
-      
+
       fetchTasks()
     } catch (error) {
       console.error('Error updating task:', error)
@@ -148,12 +148,9 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
     { id: 'done', title: 'Done', color: 'bg-green-100' }
   ]
 
+  // Don't show anything during initial load to avoid flash
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic"></div>
-      </div>
-    )
+    return null
   }
 
   return (
@@ -227,7 +224,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
                   {task.description && (
                     <p className="text-sm text-truffle-trouble mb-3 line-clamp-2">{task.description}</p>
                   )}
-                  
+
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-xs px-2 py-1 rounded-full border ${getPriorityColor(task.priority)}`}>
                       {task.priority}
@@ -252,7 +249,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-blue-fantastic">Create New Task</h2>
-              <button 
+              <button
                 onClick={() => setIsCreateModalOpen(false)}
                 className="p-1 hover:bg-oatmeal/30 rounded-lg transition-colors"
               >
