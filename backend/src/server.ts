@@ -16,6 +16,7 @@ import calendarRoutes from './routes/calendar.routes';
 import driveRoutes from './routes/drive.routes';
 import sheetsRoutes from './routes/sheets.routes';
 import invitationRoutes from './routes/invitation.routes';
+import { runAutoMigrations } from './services/migration.service';
 
 dotenv.config();
 
@@ -76,6 +77,9 @@ const startServer = async () => {
     // Test database connection
     await pool.query('SELECT NOW()');
     logger.info('✅ Database connection established');
+
+    // Run auto-migrations to ensure schema is up to date
+    await runAutoMigrations();
 
     app.listen(PORT, () => {
       logger.info(`🚀 SkyFlow Backend API running on port ${PORT}`);
