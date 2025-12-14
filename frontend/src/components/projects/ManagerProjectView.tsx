@@ -71,52 +71,52 @@ export default function ManagerProjectView({ user, organization }: ManagerProjec
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-blue-fantastic">Projects</h1>
-            <p className="text-truffle-trouble mt-1">Manage projects in {organization.name}</p>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Projects</h1>
+            <p className="text-gray-600 mt-1">Manage projects in {organization.name}</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md hover:shadow-lg">
             <Plus className="w-5 h-5" />
             <span className="font-medium">New Project</span>
           </button>
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-truffle-trouble" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-oatmeal rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-fantastic"
+            className="w-full pl-10 pr-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
           />
         </div>
       </div>
 
       {filteredProjects.length === 0 ? (
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-12 text-center border border-oatmeal">
-          <FolderKanban className="w-16 h-16 text-truffle-trouble mx-auto mb-4 opacity-50" />
-          <h3 className="text-xl font-semibold text-blue-fantastic mb-2">No projects yet</h3>
-          <p className="text-truffle-trouble mb-6">Create your first project to get started</p>
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-12 text-center border border-white/40 shadow-lg">
+          <FolderKanban className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">No projects yet</h3>
+          <p className="text-gray-600 mb-6">Create your first project to get started</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => (
             <div
               key={project.id}
-              className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
             >
               <div className="mb-4">
-                <h3 className="text-lg font-semibold text-blue-fantastic mb-1">{project.name}</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">{project.name}</h3>
                 <span className={`inline-block text-xs px-2 py-1 rounded-full ${getStatusColor(project.status)}`}>
                   {project.status}
                 </span>
               </div>
 
-              <p className="text-sm text-truffle-trouble mb-4 line-clamp-2">
+              <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                 {project.description || 'No description'}
               </p>
 
-              <div className="space-y-2 text-sm text-truffle-trouble">
+              <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   <span>{new Date(project.start_date).toLocaleDateString()}</span>

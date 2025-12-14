@@ -155,77 +155,77 @@ export default function AnalyticsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-blue-fantastic">Analytics</h1>
-            <p className="text-truffle-trouble mt-1">Workspace insights and metrics</p>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Analytics</h1>
+            <p className="text-gray-600 mt-1">Workspace insights and metrics</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 border border-oatmeal text-blue-fantastic rounded-lg hover:bg-oatmeal/30 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors">
             <Download className="w-4 h-4" />
             <span className="font-medium">Export Report</span>
           </button>
         </div>
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
           </div>
         ) : (
           <div className="space-y-8">
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
+              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 bg-blue-100 rounded-lg">
                     <FolderKanban className="w-5 h-5 text-blue-600" />
                   </div>
-                  <span className="text-sm font-medium text-truffle-trouble">Total Projects</span>
+                  <span className="text-sm font-medium text-gray-600">Total Projects</span>
                 </div>
-                <p className="text-3xl font-bold text-blue-fantastic">{analytics.totalProjects}</p>
-                <p className="text-xs text-truffle-trouble mt-1">Active projects</p>
+                <p className="text-3xl font-bold text-gray-800">{analytics.totalProjects}</p>
+                <p className="text-xs text-gray-600 mt-1">Active projects</p>
               </div>
 
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
+              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 bg-green-100 rounded-lg">
                     <CheckSquare className="w-5 h-5 text-green-600" />
                   </div>
-                  <span className="text-sm font-medium text-truffle-trouble">Total Tasks</span>
+                  <span className="text-sm font-medium text-gray-600">Total Tasks</span>
                 </div>
-                <p className="text-3xl font-bold text-blue-fantastic">{analytics.totalTasks}</p>
-                <p className="text-xs text-truffle-trouble mt-1">{analytics.completedTasks} completed</p>
+                <p className="text-3xl font-bold text-gray-800">{analytics.totalTasks}</p>
+                <p className="text-xs text-gray-600 mt-1">{analytics.completedTasks} completed</p>
               </div>
 
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
+              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 bg-purple-100 rounded-lg">
                     <Users className="w-5 h-5 text-purple-600" />
                   </div>
-                  <span className="text-sm font-medium text-truffle-trouble">Team Members</span>
+                  <span className="text-sm font-medium text-gray-600">Team Members</span>
                 </div>
-                <p className="text-3xl font-bold text-blue-fantastic">{analytics.totalMembers}</p>
-                <p className="text-xs text-truffle-trouble mt-1">Active members</p>
+                <p className="text-3xl font-bold text-gray-800">{analytics.totalMembers}</p>
+                <p className="text-xs text-gray-600 mt-1">Active members</p>
               </div>
 
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
+              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 bg-orange-100 rounded-lg">
                     <TrendingUp className="w-5 h-5 text-orange-600" />
                   </div>
-                  <span className="text-sm font-medium text-truffle-trouble">Completion Rate</span>
+                  <span className="text-sm font-medium text-gray-600">Completion Rate</span>
                 </div>
-                <p className="text-3xl font-bold text-blue-fantastic">{completionRate}%</p>
-                <p className="text-xs text-truffle-trouble mt-1">Overall progress</p>
+                <p className="text-3xl font-bold text-gray-800">{completionRate}%</p>
+                <p className="text-xs text-gray-600 mt-1">Overall progress</p>
               </div>
             </div>
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Projects by Status */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
-                <h3 className="text-lg font-semibold text-blue-fantastic mb-4">Projects by Status</h3>
+              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Projects by Status</h3>
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-truffle-trouble">Planning</span>
-                      <span className="text-sm font-medium text-blue-fantastic">{analytics.projectsByStatus.planning}</span>
+                      <span className="text-sm text-gray-600">Planning</span>
+                      <span className="text-sm font-medium text-gray-800">{analytics.projectsByStatus.planning}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '0%' }}></div>
@@ -233,8 +233,8 @@ export default function AnalyticsPage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-truffle-trouble">Active</span>
-                      <span className="text-sm font-medium text-blue-fantastic">{analytics.projectsByStatus.active}</span>
+                      <span className="text-sm text-gray-600">Active</span>
+                      <span className="text-sm font-medium text-gray-800">{analytics.projectsByStatus.active}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }}></div>
@@ -242,8 +242,8 @@ export default function AnalyticsPage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-truffle-trouble">On Hold</span>
-                      <span className="text-sm font-medium text-blue-fantastic">{analytics.projectsByStatus.onHold}</span>
+                      <span className="text-sm text-gray-600">On Hold</span>
+                      <span className="text-sm font-medium text-gray-800">{analytics.projectsByStatus.onHold}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-orange-500 h-2 rounded-full" style={{ width: '0%' }}></div>
@@ -251,8 +251,8 @@ export default function AnalyticsPage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-truffle-trouble">Completed</span>
-                      <span className="text-sm font-medium text-blue-fantastic">{analytics.projectsByStatus.completed}</span>
+                      <span className="text-sm text-gray-600">Completed</span>
+                      <span className="text-sm font-medium text-gray-800">{analytics.projectsByStatus.completed}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-blue-500 h-2 rounded-full" style={{ width: '0%' }}></div>
@@ -262,13 +262,13 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Tasks by Priority */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
-                <h3 className="text-lg font-semibold text-blue-fantastic mb-4">Tasks by Priority</h3>
+              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Tasks by Priority</h3>
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-truffle-trouble">High Priority</span>
-                      <span className="text-sm font-medium text-blue-fantastic">{analytics.tasksByPriority.high}</span>
+                      <span className="text-sm text-gray-600">High Priority</span>
+                      <span className="text-sm font-medium text-gray-800">{analytics.tasksByPriority.high}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-red-500 h-2 rounded-full" style={{ width: '0%' }}></div>
@@ -276,8 +276,8 @@ export default function AnalyticsPage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-truffle-trouble">Medium Priority</span>
-                      <span className="text-sm font-medium text-blue-fantastic">{analytics.tasksByPriority.medium}</span>
+                      <span className="text-sm text-gray-600">Medium Priority</span>
+                      <span className="text-sm font-medium text-gray-800">{analytics.tasksByPriority.medium}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '0%' }}></div>
@@ -285,8 +285,8 @@ export default function AnalyticsPage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-truffle-trouble">Low Priority</span>
-                      <span className="text-sm font-medium text-blue-fantastic">{analytics.tasksByPriority.low}</span>
+                      <span className="text-sm text-gray-600">Low Priority</span>
+                      <span className="text-sm font-medium text-gray-800">{analytics.tasksByPriority.low}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }}></div>
@@ -297,23 +297,23 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Recent Activity */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm">
-              <h3 className="text-lg font-semibold text-blue-fantastic mb-4">Recent Activity</h3>
+            <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
               {analytics.recentActivity.length === 0 ? (
                 <div className="text-center py-8">
-                  <Calendar className="w-12 h-12 text-truffle-trouble mx-auto mb-4 opacity-50" />
-                  <p className="text-truffle-trouble">No recent activity</p>
+                  <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No recent activity</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {analytics.recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3 rounded-lg hover:bg-palladian transition-colors">
+                    <div key={index} className="flex items-start gap-3 p-3 rounded-xl hover:bg-blue-50/50 transition-colors">
                       <div className="p-2 bg-blue-100 rounded-lg">
                         <BarChart3 className="w-4 h-4 text-blue-600" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm text-blue-fantastic font-medium">{activity.description}</p>
-                        <p className="text-xs text-truffle-trouble mt-1">
+                        <p className="text-sm text-gray-800 font-medium">{activity.description}</p>
+                        <p className="text-xs text-gray-600 mt-1">
                           {new Date(activity.timestamp).toLocaleString()}
                         </p>
                       </div>

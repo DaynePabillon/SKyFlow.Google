@@ -131,22 +131,22 @@ export default function SheetsPage() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-blue-fantastic">Google Sheets</h1>
-          <p className="text-truffle-trouble mt-1">Manage your spreadsheets</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Google Sheets</h1>
+          <p className="text-gray-600 mt-1">Manage your spreadsheets</p>
         </div>
         {/* Search and Actions */}
         <div className="mb-8 flex items-center gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-truffle-trouble" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search spreadsheets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-oatmeal rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-fantastic"
+              className="w-full pl-10 pr-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md hover:shadow-lg">
             <Plus className="w-5 h-5" />
             <span className="font-medium">New Sheet</span>
           </button>
@@ -155,14 +155,14 @@ export default function SheetsPage() {
         {/* Spreadsheets Grid */}
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-fantastic"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
           </div>
         ) : filteredSheets.length === 0 ? (
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-12 text-center border border-oatmeal">
-            <FileText className="w-16 h-16 text-truffle-trouble mx-auto mb-4 opacity-50" />
-            <h3 className="text-xl font-semibold text-blue-fantastic mb-2">No spreadsheets found</h3>
-            <p className="text-truffle-trouble mb-6">Create your first spreadsheet to get started</p>
-            <button className="px-6 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors">
+          <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-12 text-center border border-white/40 shadow-lg">
+            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No spreadsheets found</h3>
+            <p className="text-gray-600 mb-6">Create your first spreadsheet to get started</p>
+            <button className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md">
               Create Spreadsheet
             </button>
           </div>
@@ -171,7 +171,7 @@ export default function SheetsPage() {
             {filteredSheets.map((sheet) => (
               <div
                 key={sheet.id}
-                className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-oatmeal shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+                className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -179,35 +179,35 @@ export default function SheetsPage() {
                       <FileText className="w-6 h-6 text-green-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-blue-fantastic truncate">{sheet.name}</h3>
-                      <p className="text-xs text-truffle-trouble">
+                      <h3 className="font-semibold text-gray-800 truncate">{sheet.name}</h3>
+                      <p className="text-xs text-gray-600">
                         {new Date(sheet.modifiedTime).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <button className="p-1 hover:bg-oatmeal/30 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreVertical className="w-5 h-5 text-truffle-trouble" />
+                  <button className="p-1 hover:bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    <MoreVertical className="w-5 h-5 text-gray-500" />
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-truffle-trouble">
+                <div className="flex items-center gap-2 text-xs text-gray-600">
                   <Clock className="w-3 h-3" />
                   <span>Modified {new Date(sheet.modifiedTime).toLocaleDateString()}</span>
                 </div>
 
                 {sheet.owners && sheet.owners.length > 0 && (
-                  <div className="flex items-center gap-2 text-xs text-truffle-trouble mt-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-600 mt-2">
                     <Users className="w-3 h-3" />
                     <span>{sheet.owners[0].displayName}</span>
                   </div>
                 )}
 
-                <div className="flex gap-2 mt-4 pt-4 border-t border-oatmeal">
-                  <button className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-fantastic hover:bg-blue-50 rounded-lg transition-colors">
+                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                  <button className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                     <Share2 className="w-3 h-3" />
                     Share
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-fantastic hover:bg-blue-50 rounded-lg transition-colors">
+                  <button className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                     <Download className="w-3 h-3" />
                     Download
                   </button>

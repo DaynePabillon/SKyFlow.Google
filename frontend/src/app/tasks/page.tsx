@@ -76,9 +76,9 @@ export default function TasksPage() {
 
   if (!selectedOrg) {
     return (
-      <div className="min-h-screen bg-palladian flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-truffle-trouble">No organization selected</p>
+          <p className="text-gray-600">No organization selected</p>
         </div>
       </div>
     )

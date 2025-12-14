@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Cloud, ArrowRight, ArrowLeft, Check } from "lucide-react"
+import OnboardingBackground from "@/components/onboarding/OnboardingBackground"
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -179,11 +180,10 @@ export default function OnboardingPage() {
                     <button
                       key={p}
                       onClick={() => setPurpose(p)}
-                      className={`px-6 py-3 rounded-full border-2 transition-all ${
-                        purpose === p
-                          ? "border-blue-500 bg-blue-500 text-white shadow-md"
-                          : "border-gray-300 bg-white text-gray-700 hover:border-blue-500"
-                      }`}
+                      className={`px-6 py-3 rounded-full border-2 transition-all ${purpose === p
+                        ? "border-blue-500 bg-blue-500 text-white shadow-md"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-blue-500"
+                        }`}
                     >
                       {p}
                     </button>
@@ -200,11 +200,10 @@ export default function OnboardingPage() {
                     <button
                       key={r}
                       onClick={() => setRole(r)}
-                      className={`px-6 py-3 rounded-full border-2 transition-all ${
-                        role === r
-                          ? "border-blue-500 bg-blue-500 text-white shadow-md"
-                          : "border-gray-300 bg-white text-gray-700 hover:border-blue-500"
-                      }`}
+                      className={`px-6 py-3 rounded-full border-2 transition-all ${role === r
+                        ? "border-blue-500 bg-blue-500 text-white shadow-md"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-blue-500"
+                        }`}
                     >
                       {r}
                     </button>
@@ -226,11 +225,10 @@ export default function OnboardingPage() {
                   <button
                     key={size}
                     onClick={() => setTeamSize(size)}
-                    className={`px-6 py-4 rounded-xl border-2 transition-all text-left ${
-                      teamSize === size
-                        ? "border-blue-500 bg-blue-500 text-white shadow-md"
-                        : "border-gray-300 bg-white text-gray-700 hover:border-blue-500"
-                    }`}
+                    className={`px-6 py-4 rounded-xl border-2 transition-all text-left ${teamSize === size
+                      ? "border-blue-500 bg-blue-500 text-white shadow-md"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-blue-500"
+                      }`}
                   >
                     {size}
                   </button>
@@ -256,11 +254,10 @@ export default function OnboardingPage() {
                   <button
                     key={option}
                     onClick={() => toggleFocusArea(option)}
-                    className={`px-4 py-3 rounded-full border-2 transition-all ${
-                      focusAreas.includes(option)
-                        ? "border-blue-500 bg-blue-500 text-white shadow-md"
-                        : "border-gray-300 bg-white text-gray-700 hover:border-blue-500"
-                    }`}
+                    className={`px-4 py-3 rounded-full border-2 transition-all ${focusAreas.includes(option)
+                      ? "border-blue-500 bg-blue-500 text-white shadow-md"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-blue-500"
+                      }`}
                   >
                     {option}
                   </button>
@@ -276,23 +273,21 @@ export default function OnboardingPage() {
                 One last question, how did you hear about us?
               </h1>
 
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
                 {hearAboutOptions.map((option) => (
                   <button
                     key={option}
                     onClick={() => setHearAbout(option)}
-                    className={`w-full px-6 py-3 rounded-xl border-2 transition-all text-left flex items-center gap-3 ${
-                      hearAbout === option
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-300 bg-white hover:border-blue-500"
-                    }`}
+                    className={`px-4 py-3 rounded-xl border-2 transition-all text-left flex items-center gap-2 ${hearAbout === option
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-300 bg-white hover:border-blue-500"
+                      }`}
                   >
-                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                      hearAbout === option ? "border-blue-500 bg-blue-500" : "border-gray-300"
-                    }`}>
-                      {hearAbout === option && <Check className="w-3 h-3 text-white" />}
+                    <div className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center ${hearAbout === option ? "border-blue-500 bg-blue-500" : "border-gray-300"
+                      }`}>
+                      {hearAbout === option && <Check className="w-2.5 h-2.5 text-white" />}
                     </div>
-                    <span className="text-gray-700">{option}</span>
+                    <span className="text-gray-700 text-sm">{option}</span>
                   </button>
                 ))}
               </div>
@@ -388,11 +383,10 @@ export default function OnboardingPage() {
             <button
               onClick={handleNext}
               disabled={!canProceed()}
-              className={`flex items-center gap-2 px-8 py-3 rounded-xl font-medium transition-all ${
-                canProceed()
-                  ? "bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
+              className={`flex items-center gap-2 px-8 py-3 rounded-xl font-medium transition-all ${canProceed()
+                ? "bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
             >
               {currentStep === totalSteps ? "Get started" : "Continue"}
               <ArrowRight className="w-5 h-5" />
@@ -401,16 +395,44 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Right Side - Illustration */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-400 items-center justify-center p-12">
-        <div className="text-center text-white">
-          <div className="w-64 h-64 mx-auto mb-8 bg-white/10 rounded-3xl backdrop-blur-sm flex items-center justify-center">
-            <Cloud className="w-32 h-32 text-white/80" />
+      {/* Right Side - Animated City to Clouds */}
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+        <OnboardingBackground currentStep={currentStep} totalSteps={totalSteps} />
+
+        {/* Overlay content - positioned at bottom for better visibility */}
+        <div className="absolute inset-0 flex items-end justify-center pb-16 z-10">
+          <div className="text-center">
+            {/* Glass card for text */}
+            <div className="bg-slate-800/80 backdrop-blur-md rounded-2xl px-10 py-6 border border-white/10 shadow-2xl">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <Cloud className="w-8 h-8 text-cyan-400" />
+                <span className="text-cyan-400 font-semibold text-sm uppercase tracking-wider">SkyFlow</span>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-4">
+                {currentStep === 1 && "Welcome to SkyFlow"}
+                {currentStep === 2 && "Build Your Team"}
+                {currentStep === 3 && "Define Your Focus"}
+                {currentStep === 4 && "Great to Have You!"}
+                {currentStep === 5 && "Invite Your Team"}
+                {currentStep === 6 && "Almost There!"}
+              </h2>
+
+              {/* Step progress dots */}
+              <div className="flex justify-center gap-2">
+                {Array.from({ length: totalSteps }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`h-2 rounded-full transition-all duration-300 ${i + 1 === currentStep
+                      ? 'w-8 bg-cyan-400'
+                      : i + 1 < currentStep
+                        ? 'w-2 bg-cyan-400/60'
+                        : 'w-2 bg-white/30'
+                      }`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
-          <h2 className="text-3xl font-bold mb-4">Welcome to SkyFlow</h2>
-          <p className="text-lg text-white/90">
-            Streamline your projects and collaborate with your team
-          </p>
         </div>
       </div>
     </div>

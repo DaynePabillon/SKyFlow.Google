@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Cloud, LogOut, Menu, X, Calendar, FileText, FolderOpen, BarChart3, Users, FolderKanban, CheckSquare, Building2, ChevronDown, Plus, UserPlus } from "lucide-react"
+import { Cloud, LogOut, Menu, X, Calendar, FileText, FolderOpen, BarChart3, Users, FolderKanban, CheckSquare, Building2, ChevronDown, Plus, UserPlus, Plane } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface Organization {
@@ -29,7 +29,7 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
     localStorage.removeItem("user")
     localStorage.removeItem("organizations")
     localStorage.removeItem("selectedOrganization")
-    
+
     // Redirect to login page
     router.push("/login")
   }
@@ -98,9 +98,8 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
                             onOrgChange(org)
                             setIsOrgDropdownOpen(false)
                           }}
-                          className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-blue-50 transition-colors rounded-lg mx-1 ${
-                            selectedOrg?.id === org.id ? 'bg-blue-100' : ''
-                          }`}
+                          className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-blue-50 transition-colors rounded-lg mx-1 ${selectedOrg?.id === org.id ? 'bg-blue-100' : ''
+                            }`}
                         >
                           <Building2 className="w-4 h-4 text-blue-600" />
                           <div className="flex-1 text-left">
@@ -156,6 +155,10 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
                 <a href="/tasks" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
                   <CheckSquare className="w-5 h-5 group-hover:text-white transition-colors" />
                   <span>Tasks</span>
+                </a>
+                <a href="/boards" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-amber-500 hover:to-orange-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
+                  <Plane className="w-5 h-5 group-hover:text-white transition-colors" />
+                  <span>Boards</span>
                 </a>
                 <a href="/team" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
                   <Users className="w-5 h-5 group-hover:text-white transition-colors" />

@@ -15,6 +15,7 @@ import taskRoutes from './routes/task.routes';
 import calendarRoutes from './routes/calendar.routes';
 import driveRoutes from './routes/drive.routes';
 import sheetsRoutes from './routes/sheets.routes';
+import invitationRoutes from './routes/invitation.routes';
 
 dotenv.config();
 
@@ -37,8 +38,8 @@ app.use(morgan('combined', {
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'SkyFlow Backend API'
   });
@@ -53,6 +54,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/drive', driveRoutes);
 app.use('/api/sheets', sheetsRoutes);
+app.use('/api/invitations', invitationRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

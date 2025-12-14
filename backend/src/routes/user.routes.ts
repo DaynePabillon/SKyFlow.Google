@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AuthRequest, authenticateToken } from '../middleware/auth.middleware';
 import { query } from '../config/database';
 import logger from '../config/logger';
+import { sendInvitationEmail, isEmailConfigured } from '../services/email.service';
 
 const router = Router();
 
@@ -66,6 +67,10 @@ router.post('/onboarding', authenticateToken, async (req: AuthRequest, res) => {
 
       // Send invitations to team members if provided
       if (teamMembers && Array.isArray(teamMembers)) {
+        // Get inviter details for the email
+        const inviterResult = await query('SELECT name, email FROM users WHERE id = $1', [userId]);
+        const inviter = inviterResult.rows[0];
+
         for (const member of teamMembers) {
           if (member.email && member.email.trim()) {
             const token = require('crypto').randomBytes(32).toString('hex');
@@ -86,7 +91,21 @@ router.post('/onboarding', authenticateToken, async (req: AuthRequest, res) => {
               ]
             );
 
-            logger.info(`Invitation sent to ${member.email} for organization ${organizationId}`);
+            // Send invitation email
+            const emailResult = await sendInvitationEmail({
+              to: member.email.trim(),
+              inviterName: inviter?.name || 'A team member',
+              inviterEmail: inviter?.email || '',
+              organizationName: workspaceName.trim(),
+              role: member.role || 'member',
+              token: token
+            });
+
+            if (emailResult.success) {
+              logger.info(`✅ Invitation sent to ${member.email} for organization ${organizationId}`);
+            } else {
+              logger.warn(`⚠️ Invitation email failed for ${member.email}: ${emailResult.error}`);
+            }
           }
         }
       }

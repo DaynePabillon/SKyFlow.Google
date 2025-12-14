@@ -50,7 +50,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *`,
       [project_id, title, description, status || 'todo', priority || 'medium',
-       due_date, estimated_hours, assigned_to, userId, parent_task_id]
+        due_date, estimated_hours, assigned_to, userId, parent_task_id]
     );
 
     logger.info(`Task created: ${result.rows[0].id} by user ${userId}`);
@@ -246,6 +246,19 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res: Res
       return res.status(400).json({ error: 'Status is required' });
     }
 
+    // Map frontend status values to database values
+    const statusMap: Record<string, string> = {
+      'todo': 'todo',
+      'in-progress': 'in_progress',
+      'in_progress': 'in_progress',
+      'review': 'review',
+      'done': 'completed',
+      'completed': 'completed',
+      'archived': 'archived'
+    };
+
+    const dbStatus = statusMap[status] || status;
+
     // Check access
     const accessCheck = await query(
       `SELECT 1 FROM tasks t
@@ -261,18 +274,73 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res: Res
 
     const result = await query(
       `UPDATE tasks
-       SET status = $1,
-           completed_at = CASE WHEN $1 = 'done' THEN NOW() ELSE completed_at END
-       WHERE id = $2
+       SET status = $1::text,
+           completed_at = CASE WHEN $1::text IN ('done', 'completed') THEN NOW() ELSE completed_at END
+       WHERE id = $2::uuid
        RETURNING *`,
-      [status, id]
+      [dbStatus, id]
     );
 
-    logger.info(`Task ${id} status updated to ${status} by user ${userId}`);
+    logger.info(`Task ${id} status updated to ${dbStatus} by user ${userId}`);
     res.json(result.rows[0]);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error updating task status:', error);
+    // Include more detail for constraint violations
+    if (error.code === '23514') {
+      return res.status(400).json({
+        error: 'Invalid status value',
+        detail: 'Allowed values: todo, in_progress, review, done, completed',
+        received: req.body.status
+      });
+    }
     res.status(500).json({ error: 'Failed to update task status' });
+  }
+});
+
+/**
+ * PATCH /api/tasks/:id
+ * Update task fields (assignment, title, description, etc.)
+ */
+router.patch('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { assigned_to, title, description, priority, due_date } = req.body;
+    const userId = req.user!.id;
+
+    // Check access
+    const accessCheck = await query(
+      `SELECT 1 FROM tasks t
+       INNER JOIN projects p ON t.project_id = p.id
+       INNER JOIN organization_members om ON p.organization_id = om.organization_id
+       WHERE t.id = $1 AND om.user_id = $2 AND om.status = $3`,
+      [id, userId, 'active']
+    );
+
+    if (accessCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const result = await query(
+      `UPDATE tasks
+       SET assigned_to = COALESCE($1, assigned_to),
+           title = COALESCE($2, title),
+           description = COALESCE($3, description),
+           priority = COALESCE($4, priority),
+           due_date = COALESCE($5, due_date)
+       WHERE id = $6
+       RETURNING *`,
+      [assigned_to, title, description, priority, due_date, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    logger.info(`Task ${id} updated by user ${userId}`);
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    logger.error('Error updating task:', error);
+    res.status(500).json({ error: 'Failed to update task' });
   }
 });
 

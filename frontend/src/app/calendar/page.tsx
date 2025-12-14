@@ -251,29 +251,29 @@ export default function CalendarPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-blue-fantastic">Google Calendar</h1>
-          <p className="text-truffle-trouble mt-1">Manage your schedule and events</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Google Calendar</h1>
+          <p className="text-gray-600 mt-1">Manage your schedule and events</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendar Section */}
           <div className="lg:col-span-2 space-y-6">
             {/* Month Navigation */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-oatmeal p-6">
+            <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-white/40 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-blue-fantastic">{monthName}</h2>
+                <h2 className="text-lg font-semibold text-gray-800">{monthName}</h2>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-                    className="p-2 hover:bg-oatmeal/30 rounded-lg transition-colors"
+                    className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
                   >
-                    <ChevronLeft className="w-5 h-5 text-truffle-trouble" />
+                    <ChevronLeft className="w-5 h-5 text-gray-500" />
                   </button>
                   <button
                     onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-                    className="p-2 hover:bg-oatmeal/30 rounded-lg transition-colors"
+                    className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
                   >
-                    <ChevronRight className="w-5 h-5 text-truffle-trouble" />
+                    <ChevronRight className="w-5 h-5 text-gray-500" />
                   </button>
                 </div>
               </div>
@@ -281,7 +281,7 @@ export default function CalendarPage() {
               {/* Calendar Grid */}
               <div className="grid grid-cols-7 gap-2">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                  <div key={day} className="text-center text-xs font-medium text-truffle-trouble py-2">
+                  <div key={day} className="text-center text-xs font-medium text-blue-600 py-2">
                     {day}
                   </div>
                 ))}
@@ -298,14 +298,14 @@ export default function CalendarPage() {
                     <button
                       key={day}
                       onClick={() => handleDateClick(day)}
-                      className={`aspect-square p-2 rounded-lg border transition-all hover:border-blue-fantastic hover:bg-blue-50 ${isToday ? "bg-blue-fantastic text-white font-bold border-blue-fantastic" : "border-oatmeal hover:shadow-sm"
+                      className={`aspect-square p-2 rounded-lg border transition-all hover:border-blue-500 hover:bg-blue-50 ${isToday ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold border-blue-500" : "border-gray-200 hover:shadow-sm"
                         }`}
                     >
                       <div className="text-sm">{day}</div>
                       {dayEvents.length > 0 && (
                         <div className="flex justify-center gap-1 mt-1">
                           {dayEvents.slice(0, 3).map((_, idx) => (
-                            <div key={idx} className={`w-1 h-1 rounded-full ${isToday ? "bg-white" : "bg-blue-fantastic"}`} />
+                            <div key={idx} className={`w-1 h-1 rounded-full ${isToday ? "bg-white" : "bg-blue-500"}`} />
                           ))}
                         </div>
                       )}
@@ -316,8 +316,8 @@ export default function CalendarPage() {
             </div>
 
             {/* Upcoming Events Mini List */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-oatmeal p-6">
-              <h3 className="text-sm font-semibold text-blue-fantastic mb-4">Upcoming</h3>
+            <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-white/40 p-6">
+              <h3 className="text-sm font-semibold text-gray-800 mb-4">Upcoming</h3>
               <div className="space-y-2">
                 {upcomingEvents.slice(0, 3).map((event, idx) => {
                   const color = getEventColor(idx)
@@ -325,8 +325,8 @@ export default function CalendarPage() {
                     <div key={event.id} className={`flex items-center gap-3 p-2 rounded ${color.bg}`}>
                       <div className={`w-1 h-8 rounded ${color.border.replace("border-l-", "bg-")}`} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-blue-fantastic truncate">{event.summary}</p>
-                        <p className="text-xs text-truffle-trouble">{formatEventTime(event)}</p>
+                        <p className="text-sm font-medium text-gray-800 truncate">{event.summary}</p>
+                        <p className="text-xs text-gray-600">{formatEventTime(event)}</p>
                       </div>
                     </div>
                   )
@@ -336,32 +336,32 @@ export default function CalendarPage() {
           </div>
 
           {/* Upcoming Events List */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-oatmeal p-6">
-            <h2 className="text-lg font-semibold text-blue-fantastic mb-4">Upcoming Events</h2>
+          <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-white/40 p-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Upcoming Events</h2>
             <div className="space-y-4">
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-fantastic" />
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
                 </div>
               ) : upcomingEvents.length === 0 ? (
-                <p className="text-sm text-truffle-trouble text-center py-8">No upcoming events</p>
+                <p className="text-sm text-gray-600 text-center py-8">No upcoming events</p>
               ) : (
                 upcomingEvents.map((event, idx) => {
                   const color = getEventColor(idx)
                   return (
                     <div key={event.id} className={`border-l-4 ${color.border} ${color.bg} rounded-r-lg p-4`}>
-                      <h3 className="font-semibold text-blue-fantastic mb-1">{event.summary}</h3>
-                      <div className="flex items-center gap-2 text-xs text-truffle-trouble mb-2">
+                      <h3 className="font-semibold text-gray-800 mb-1">{event.summary}</h3>
+                      <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
                         <Clock className="w-3 h-3" />
                         <span>{formatEventTime(event)}</span>
                       </div>
                       {event.attendees && event.attendees.length > 0 && (
-                        <div className="flex items-center gap-2 text-xs text-truffle-trouble">
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
                           <Users className="w-3 h-3" />
                           <span>{event.attendees.length} attendees</span>
                         </div>
                       )}
-                      <p className="text-xs text-truffle-trouble mt-2">{formatEventDate(event)}</p>
+                      <p className="text-xs text-gray-600 mt-2">{formatEventDate(event)}</p>
                     </div>
                   )
                 })
@@ -374,53 +374,53 @@ export default function CalendarPage() {
       {/* Event Modal */}
       {showEventModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/40">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-blue-fantastic">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                 {selectedDate ? `New Event - ${selectedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "New Event"}
               </h2>
-              <button onClick={() => setShowEventModal(false)} className="p-2 hover:bg-oatmeal/30 rounded-lg">
-                <X className="w-5 h-5 text-truffle-trouble" />
+              <button onClick={() => setShowEventModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-truffle-trouble mb-2">Event Title</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Event Title</label>
                 <input
                   type="text"
                   value={newEvent.title}
                   onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-oatmeal rounded-lg focus:ring-2 focus:ring-blue-fantastic focus:border-transparent"
+                  className="w-full px-4 py-2 bg-white/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                   placeholder="Team Standup"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-truffle-trouble mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Description</label>
                 <textarea
                   value={newEvent.description}
                   onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-oatmeal rounded-lg focus:ring-2 focus:ring-blue-fantastic focus:border-transparent"
+                  className="w-full px-4 py-2 bg-white/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                   rows={3}
                   placeholder="Add notes or details..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-truffle-trouble mb-2">Start Time</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Start Time</label>
                   <input
                     type="datetime-local"
                     value={newEvent.startTime}
                     onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
-                    className="w-full px-4 py-2 border border-oatmeal rounded-lg focus:ring-2 focus:ring-blue-fantastic focus:border-transparent"
+                    className="w-full px-4 py-2 bg-white/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-truffle-trouble mb-2">End Time</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">End Time</label>
                   <input
                     type="datetime-local"
                     value={newEvent.endTime}
                     onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
-                    className="w-full px-4 py-2 border border-oatmeal rounded-lg focus:ring-2 focus:ring-blue-fantastic focus:border-transparent"
+                    className="w-full px-4 py-2 bg-white/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -429,21 +429,21 @@ export default function CalendarPage() {
                   type="checkbox"
                   checked={newEvent.allDay}
                   onChange={(e) => setNewEvent({ ...newEvent, allDay: e.target.checked })}
-                  className="w-4 h-4 text-blue-fantastic border-oatmeal rounded focus:ring-blue-fantastic"
+                  className="w-4 h-4 text-blue-500 border-gray-200 rounded focus:ring-blue-400"
                 />
-                <label className="text-sm text-truffle-trouble">All day event</label>
+                <label className="text-sm text-gray-600">All day event</label>
               </div>
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowEventModal(false)}
-                  className="flex-1 px-4 py-2 border border-oatmeal text-blue-fantastic rounded-lg hover:bg-oatmeal/30 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-200 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateEvent}
                   disabled={!newEvent.title}
-                  className="flex-1 px-4 py-2 bg-blue-fantastic text-white rounded-lg hover:bg-abyssal-anchorfish transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Create Event
                 </button>
