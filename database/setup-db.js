@@ -5,9 +5,9 @@ const path = require('path');
 const pool = new Pool({
   host: 'localhost',
   port: 5432,
-  database: 'SkyFlow_Db',
+  database: 'SkyFlow_DB',
   user: 'postgres',
-  password: 'lovejesus123day'
+  password: '019435'
 });
 
 async function setupDatabase() {
