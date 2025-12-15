@@ -3,9 +3,9 @@ const { Pool } = require('pg');
 const pool = new Pool({
   host: 'localhost',
   port: 5432,
-  database: 'SkyFlow_Db',
+  database: 'SkyFlow_DB',
   user: 'postgres',
-  password: 'lovejesus123day' // Update this to match your PostgreSQL password
+  password: '019435' // Update this to match your PostgreSQL password
 });
 
 async function enableUuidExtension() {
