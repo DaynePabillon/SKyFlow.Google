@@ -36,6 +36,8 @@ export default function DrivePage() {
   const [uploading, setUploading] = useState(false)
   const [showFolderModal, setShowFolderModal] = useState(false)
   const [folderName, setFolderName] = useState("")
+  const [selectedFile, setSelectedFile] = useState<DriveFile | null>(null)
+  const [showFileModal, setShowFileModal] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -129,9 +131,29 @@ export default function DrivePage() {
   }
 
   const handleFileClick = (file: DriveFile) => {
-    if (file.webViewLink) {
-      window.open(file.webViewLink, "_blank")
+    setSelectedFile(file)
+    setShowFileModal(true)
+  }
+
+  const getEmbedUrl = (file: DriveFile) => {
+    if (file.mimeType.includes('google-apps.document')) {
+      return `https://docs.google.com/document/d/${file.id}/preview`
     }
+    if (file.mimeType.includes('google-apps.spreadsheet')) {
+      return `https://docs.google.com/spreadsheets/d/${file.id}/preview`
+    }
+    if (file.mimeType.includes('google-apps.presentation')) {
+      return `https://docs.google.com/presentation/d/${file.id}/preview`
+    }
+    if (file.mimeType.includes('image')) {
+      return file.thumbnailLink?.replace('=s220', '=s800') || `https://drive.google.com/uc?export=view&id=${file.id}`
+    }
+    return `https://drive.google.com/file/d/${file.id}/preview`
+  }
+
+  const canPreview = (file: DriveFile) => {
+    const previewable = ['image', 'pdf', 'google-apps.document', 'google-apps.spreadsheet', 'google-apps.presentation', 'video', 'text', 'audio', 'document']
+    return previewable.some(type => file.mimeType.includes(type))
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -401,6 +423,53 @@ export default function DrivePage() {
                   Create
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* File Preview Modal */}
+      {showFileModal && selectedFile && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col border border-white/40">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                {getFileIcon(selectedFile.mimeType)}
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800 truncate max-w-md">{selectedFile.name}</h2>
+                  <p className="text-sm text-gray-500">{formatSize(selectedFile.size)} • Modified {formatDate(selectedFile.modifiedTime)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {selectedFile.webViewLink && (
+                  <a href={selectedFile.webViewLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 border border-blue-200 rounded-xl hover:bg-blue-50 transition-colors">
+                    Open in Drive
+                  </a>
+                )}
+                <button onClick={() => { setShowFileModal(false); setSelectedFile(null); }} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 bg-gray-100 overflow-hidden">
+              {canPreview(selectedFile) ? (
+                selectedFile.mimeType.includes('image') ? (
+                  <div className="w-full h-full flex items-center justify-center p-4">
+                    <img src={getEmbedUrl(selectedFile)} alt={selectedFile.name} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
+                  </div>
+                ) : (
+                  <iframe src={getEmbedUrl(selectedFile)} className="w-full h-full border-0" title={selectedFile.name} allow="autoplay" />
+                )
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
+                  {getFileIcon(selectedFile.mimeType)}
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2 mt-4">Preview not available</h3>
+                  <p className="text-gray-600 mb-6">This file type cannot be previewed.</p>
+                  {selectedFile.webViewLink && (
+                    <a href={selectedFile.webViewLink} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl">Open in Google Drive</a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

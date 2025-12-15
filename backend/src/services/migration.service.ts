@@ -5,11 +5,11 @@ import logger from '../config/logger';
  * Auto-migration service that ensures database schema is up to date on startup
  */
 export async function runAutoMigrations(): Promise<void> {
-    logger.info('🔄 Running auto-migrations...');
+  logger.info('🔄 Running auto-migrations...');
 
-    try {
-        // Create migrations tracking table if it doesn't exist
-        await query(`
+  try {
+    // Create migrations tracking table if it doesn't exist
+    await query(`
       CREATE TABLE IF NOT EXISTS _migrations (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE,
@@ -17,28 +17,28 @@ export async function runAutoMigrations(): Promise<void> {
       )
     `);
 
-        // Run base schema setup
-        await ensureBaseSchema();
+    // Run base schema setup
+    await ensureBaseSchema();
 
-        // Run incremental migrations
-        await runMigrations();
+    // Run incremental migrations
+    await runMigrations();
 
-        logger.info('✅ Auto-migrations completed successfully');
-    } catch (error) {
-        logger.error('❌ Auto-migration failed:', error);
-        throw error;
-    }
+    logger.info('✅ Auto-migrations completed successfully');
+  } catch (error) {
+    logger.error('❌ Auto-migration failed:', error);
+    throw error;
+  }
 }
 
 /**
  * Ensures all base tables and extensions exist
  */
 async function ensureBaseSchema(): Promise<void> {
-    // Enable UUID extension
-    await query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+  // Enable UUID extension
+  await query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
-    // Create organizations table
-    await query(`
+  // Create organizations table
+  await query(`
     CREATE TABLE IF NOT EXISTS organizations (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       name VARCHAR(255) NOT NULL,
@@ -51,8 +51,8 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    // Create users table
-    await query(`
+  // Create users table
+  await query(`
     CREATE TABLE IF NOT EXISTS users (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       google_id VARCHAR(255) UNIQUE NOT NULL,
@@ -70,8 +70,8 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    // Create organization_members table
-    await query(`
+  // Create organization_members table
+  await query(`
     CREATE TABLE IF NOT EXISTS organization_members (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
@@ -85,8 +85,8 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    // Create projects table
-    await query(`
+  // Create projects table
+  await query(`
     CREATE TABLE IF NOT EXISTS projects (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
@@ -105,8 +105,8 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    // Create project_members table
-    await query(`
+  // Create project_members table
+  await query(`
     CREATE TABLE IF NOT EXISTS project_members (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
@@ -118,8 +118,8 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    // Create tasks table
-    await query(`
+  // Create tasks table
+  await query(`
     CREATE TABLE IF NOT EXISTS tasks (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
@@ -139,8 +139,8 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    // Create organization_invitations table
-    await query(`
+  // Create organization_invitations table
+  await query(`
     CREATE TABLE IF NOT EXISTS organization_invitations (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
@@ -155,8 +155,8 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    // Create other essential tables
-    await query(`
+  // Create other essential tables
+  await query(`
     CREATE TABLE IF NOT EXISTS task_comments (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
@@ -167,7 +167,7 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    await query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS milestones (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
@@ -181,7 +181,7 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    await query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS drive_files (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       google_drive_id VARCHAR(255) UNIQUE NOT NULL,
@@ -200,7 +200,7 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    await query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS calendar_events (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       google_event_id VARCHAR(255) UNIQUE NOT NULL,
@@ -221,7 +221,7 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    await query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS activity_logs (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
       organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
@@ -236,17 +236,17 @@ async function ensureBaseSchema(): Promise<void> {
     )
   `);
 
-    logger.info('📦 Base schema verified');
+  logger.info('📦 Base schema verified');
 }
 
 /**
  * Run individual migrations that haven't been applied yet
  */
 async function runMigrations(): Promise<void> {
-    const migrations: { name: string; sql: string }[] = [
-        {
-            name: '001_add_archived_status',
-            sql: `
+  const migrations: { name: string; sql: string }[] = [
+    {
+      name: '001_add_archived_status',
+      sql: `
         DO $$ 
         BEGIN
           ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_status_check;
@@ -256,41 +256,78 @@ async function runMigrations(): Promise<void> {
           WHEN others THEN NULL;
         END $$;
       `
-        },
-        {
-            name: '002_add_onboarding_fields',
-            sql: `
+    },
+    {
+      name: '002_add_onboarding_fields',
+      sql: `
         ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE;
         ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_data JSONB;
       `
-        },
-        {
-            name: '003_create_indexes',
-            sql: `
-        CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
-        CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-        CREATE INDEX IF NOT EXISTS idx_organization_members_org_id ON organization_members(organization_id);
-        CREATE INDEX IF NOT EXISTS idx_projects_organization_id ON projects(organization_id);
-        CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id);
-        CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to);
-        CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+    },
+    {
+      name: '003_create_indexes',
+      sql: `
+        DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id); EXCEPTION WHEN others THEN NULL; END $$;
+        DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_users_email ON users(email); EXCEPTION WHEN others THEN NULL; END $$;
+        DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_organization_members_org_id ON organization_members(organization_id); EXCEPTION WHEN others THEN NULL; END $$;
+        DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_projects_organization_id ON projects(organization_id); EXCEPTION WHEN others THEN NULL; END $$;
+        DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id); EXCEPTION WHEN others THEN NULL; END $$;
+        DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to); EXCEPTION WHEN others THEN NULL; END $$;
+        DO $$ BEGIN CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status); EXCEPTION WHEN others THEN NULL; END $$;
       `
-        }
-    ];
-
-    for (const migration of migrations) {
-        const applied = await query(
-            'SELECT 1 FROM _migrations WHERE name = $1',
-            [migration.name]
-        );
-
-        if (applied.rows.length === 0) {
-            logger.info(`  📝 Applying migration: ${migration.name}`);
-            await query(migration.sql);
-            await query(
-                'INSERT INTO _migrations (name) VALUES ($1)',
-                [migration.name]
-            );
-        }
+    },
+    {
+      name: '004_fix_missing_columns',
+      sql: `
+        -- Add organization_id to projects if missing
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+        
+        -- Add organization_id to organization_members if missing
+        ALTER TABLE organization_members ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+        
+        -- Add user_id to organization_members if missing
+        ALTER TABLE organization_members ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE;
+      `
+    },
+    {
+      name: '005_fix_projects_columns',
+      sql: `
+        -- Add all missing columns to projects table
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS description TEXT;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active';
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'medium';
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS start_date DATE;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS end_date DATE;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS budget DECIMAL(15, 2);
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS calendar_id VARCHAR(255);
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS drive_folder_id VARCHAR(255);
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+        ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      `
+    },
+    {
+      name: '006_fix_organizations_columns',
+      sql: `
+        -- Add created_by to organizations if missing
+        ALTER TABLE organizations ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL;
+      `
     }
+  ];
+
+  for (const migration of migrations) {
+    const applied = await query(
+      'SELECT 1 FROM _migrations WHERE name = $1',
+      [migration.name]
+    );
+
+    if (applied.rows.length === 0) {
+      logger.info(`  📝 Applying migration: ${migration.name}`);
+      await query(migration.sql);
+      await query(
+        'INSERT INTO _migrations (name) VALUES ($1)',
+        [migration.name]
+      );
+    }
+  }
 }
