@@ -5,7 +5,7 @@ const pool = new Pool({
   port: 5432,
   database: 'SkyFlow_Db',
   user: 'postgres',
-  password: 'lovejesus123day' // Update this to match your PostgreSQL password
+  password: 'lowensaga' // Update this to match your PostgreSQL password
 });
 
 async function enableUuidExtension() {

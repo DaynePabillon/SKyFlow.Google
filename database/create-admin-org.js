@@ -5,7 +5,7 @@ const pool = new Pool({
   port: 5432,
   database: 'SkyFlow_Db',
   user: 'postgres',
-  password: 'lovejesus123day'
+  password: 'lowensaga'
 });
 
 async function createAdminOrganization() {
@@ -13,7 +13,7 @@ async function createAdminOrganization() {
     // Find the user
     const userRes = await pool.query(
       'SELECT id, email, name FROM users WHERE email = $1',
-      ['waynepabillon667@gmail.com']
+      ['sagaralearljericho@gmail.com']
     );
 
     if (userRes.rows.length === 0) {
