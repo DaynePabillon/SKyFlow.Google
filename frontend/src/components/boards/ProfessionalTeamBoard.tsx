@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Search, Plus, MoreHorizontal, User, Clock, CheckCircle2, AlertCircle, Trash2, BarChart3 } from 'lucide-react'
 import ChartWidgetPicker from '@/components/widgets/ChartWidgetPicker'
 import ChartWidget from '@/components/widgets/ChartWidget'
+import Portal from '@/components/ui/Portal'
 
 interface Task {
     id: string
@@ -359,12 +360,14 @@ export default function ProfessionalTeamBoard({
                 </div>
             )}
 
-            {/* Widget Picker Modal */}
-            <ChartWidgetPicker
-                isOpen={showWidgetPicker}
-                onClose={() => setShowWidgetPicker(false)}
-                onSelectWidget={handleAddWidget}
-            />
+            {/* Widget Picker Modal - using Portal to escape overflow:hidden */}
+            <Portal>
+                <ChartWidgetPicker
+                    isOpen={showWidgetPicker}
+                    onClose={() => setShowWidgetPicker(false)}
+                    onSelectWidget={handleAddWidget}
+                />
+            </Portal>
         </div>
     )
 }

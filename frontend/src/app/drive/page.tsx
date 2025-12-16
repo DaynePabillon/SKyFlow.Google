@@ -40,6 +40,7 @@ export default function DrivePage() {
   const [selectedFile, setSelectedFile] = useState<DriveFile | null>(null)
   const [showFileModal, setShowFileModal] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [actionMenuId, setActionMenuId] = useState<string | null>(null)
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -95,6 +96,15 @@ export default function DrivePage() {
       fetchFiles()
     }
   }, [user])
+
+  // Close action menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setActionMenuId(null)
+    if (actionMenuId) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [actionMenuId])
 
   const fetchFiles = async () => {
     setLoading(true)
@@ -390,15 +400,57 @@ export default function DrivePage() {
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {formatSize(file.size)}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right relative">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
+                          setActionMenuId(actionMenuId === file.id ? null : file.id)
                         }}
                         className="p-1 hover:bg-gray-100 rounded-lg"
                       >
                         <MoreVertical className="w-5 h-5 text-gray-500" />
                       </button>
+
+                      {/* Dropdown Menu */}
+                      {actionMenuId === file.id && (
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              window.open(file.webViewLink, '_blank')
+                              setActionMenuId(null)
+                            }}
+                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                          >
+                            <FolderOpen className="w-4 h-4" />
+                            Open in Drive
+                          </button>
+                          {canPreview(file) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleFileClick(file)
+                                setActionMenuId(null)
+                              }}
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                            >
+                              <Eye className="w-4 h-4" />
+                              Preview
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              window.open(`https://drive.google.com/uc?export=download&id=${file.id}`, '_blank')
+                              setActionMenuId(null)
+                            }}
+                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                          >
+                            <Upload className="w-4 h-4 rotate-180" />
+                            Download
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

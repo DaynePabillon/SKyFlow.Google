@@ -87,7 +87,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
     }
 
     const orgResult = await query('SELECT * FROM organizations WHERE id = $1', [id]);
-    
+
     if (orgResult.rows.length === 0) {
       return res.status(404).json({ error: 'Organization not found' });
     }
@@ -408,7 +408,7 @@ router.post('/:id/tasks', authenticateToken, async (req: AuthRequest, res: Respo
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *`,
       [projectId, title, description, status || 'todo', priority || 'medium',
-       due_date, assigned_to, userId]
+        due_date, assigned_to, userId]
     );
 
     logger.info(`Task created in organization ${id}: ${taskResult.rows[0].id}`);
@@ -416,6 +416,103 @@ router.post('/:id/tasks', authenticateToken, async (req: AuthRequest, res: Respo
   } catch (error) {
     logger.error('Error creating organization task:', error);
     res.status(500).json({ error: 'Failed to create task' });
+  }
+});
+
+/**
+ * PATCH /api/organizations/:orgId/members/:memberId/role
+ * Update a member's role (Admin only)
+ */
+router.patch('/:orgId/members/:memberId/role', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { orgId, memberId } = req.params;
+    const { role } = req.body;
+    const userId = req.user!.id;
+
+    if (!['admin', 'manager', 'member'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role. Must be admin, manager, or member' });
+    }
+
+    // Check if current user is admin
+    const adminCheck = await query(
+      `SELECT role FROM organization_members WHERE organization_id = $1 AND user_id = $2 AND status = 'active'`,
+      [orgId, userId]
+    );
+
+    if (adminCheck.rows.length === 0 || adminCheck.rows[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can change member roles' });
+    }
+
+    // Prevent demoting yourself if you're the only admin
+    if (memberId === userId && role !== 'admin') {
+      const adminCount = await query(
+        `SELECT COUNT(*) FROM organization_members WHERE organization_id = $1 AND role = 'admin' AND status = 'active'`,
+        [orgId]
+      );
+      if (parseInt(adminCount.rows[0].count) <= 1) {
+        return res.status(400).json({ error: 'Cannot demote the only admin' });
+      }
+    }
+
+    // Update role
+    const result = await query(
+      `UPDATE organization_members SET role = $1 WHERE organization_id = $2 AND user_id = $3 RETURNING *`,
+      [role, orgId, memberId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+
+    logger.info(`Role updated: user ${memberId} is now ${role} in org ${orgId}`);
+    res.json({ success: true, role });
+  } catch (error) {
+    logger.error('Error updating member role:', error);
+    res.status(500).json({ error: 'Failed to update role' });
+  }
+});
+
+/**
+ * DELETE /api/organizations/:orgId/members/:memberId
+ * Remove a member from organization (Admin only)
+ */
+router.delete('/:orgId/members/:memberId', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { orgId, memberId } = req.params;
+    const userId = req.user!.id;
+
+    // Check if current user is admin
+    const adminCheck = await query(
+      `SELECT role FROM organization_members WHERE organization_id = $1 AND user_id = $2 AND status = 'active'`,
+      [orgId, userId]
+    );
+
+    if (adminCheck.rows.length === 0 || adminCheck.rows[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can remove members' });
+    }
+
+    // Prevent removing yourself if you're the only admin
+    if (memberId === userId) {
+      const adminCount = await query(
+        `SELECT COUNT(*) FROM organization_members WHERE organization_id = $1 AND role = 'admin' AND status = 'active'`,
+        [orgId]
+      );
+      if (parseInt(adminCount.rows[0].count) <= 1) {
+        return res.status(400).json({ error: 'Cannot remove the only admin' });
+      }
+    }
+
+    // Remove member
+    await query(
+      `DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`,
+      [orgId, memberId]
+    );
+
+    logger.info(`Member ${memberId} removed from organization ${orgId}`);
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Error removing member:', error);
+    res.status(500).json({ error: 'Failed to remove member' });
   }
 });
 

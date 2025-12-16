@@ -76,5 +76,48 @@ router.get('/:sheetId', async (req, res) => {
         return res.status(500).json({ error: 'Failed to fetch spreadsheet' });
     }
 });
+// POST /api/sheets/create - Create a new spreadsheet
+router.post('/create', async (req, res) => {
+    try {
+        const userId = (req as any).user.id;
+        const { title } = req.body;
+
+        // Get user's tokens
+        const userResult = await query(
+            'SELECT access_token, refresh_token FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (!userResult.rows[0]) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const { access_token, refresh_token } = userResult.rows[0];
+        const { sheets } = getGoogleClients(access_token, refresh_token);
+
+        // Create new spreadsheet
+        const response = await sheets.spreadsheets.create({
+            requestBody: {
+                properties: {
+                    title: title || 'Untitled Spreadsheet'
+                }
+            }
+        });
+
+        const spreadsheet = response.data;
+        logger.info(`Created new spreadsheet ${spreadsheet.spreadsheetId} for user ${userId}`);
+
+        return res.status(201).json({
+            spreadsheet: {
+                id: spreadsheet.spreadsheetId,
+                name: spreadsheet.properties?.title,
+                webViewLink: spreadsheet.spreadsheetUrl
+            }
+        });
+    } catch (error) {
+        logger.error('Error creating spreadsheet:', error);
+        return res.status(500).json({ error: 'Failed to create spreadsheet' });
+    }
+});
 
 export default router;

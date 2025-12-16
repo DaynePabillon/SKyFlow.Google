@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, UserPlus, Search, Mail, Shield, MoreVertical, Crown, Briefcase, User } from "lucide-react"
+import { Users, UserPlus, Search, Mail, Shield, MoreVertical, Crown, Briefcase, User, Settings } from "lucide-react"
+import RoleManagement from "./RoleManagement"
 
 interface TeamMember {
   id: string
@@ -53,6 +54,48 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
       console.error('Error fetching members:', error)
       setMembers([])
       setIsLoading(false)
+    }
+  }
+
+  const handleRoleChange = async (memberId: string, newRole: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(
+        `http://localhost:3001/api/organizations/${organization.id}/members/${memberId}/role`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ role: newRole })
+        }
+      )
+
+      if (response.ok) {
+        fetchMembers() // Refresh member list
+      }
+    } catch (error) {
+      console.error('Error changing role:', error)
+    }
+  }
+
+  const handleRemoveMember = async (memberId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(
+        `http://localhost:3001/api/organizations/${organization.id}/members/${memberId}`,
+        {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      )
+
+      if (response.ok) {
+        fetchMembers() // Refresh member list
+      }
+    } catch (error) {
+      console.error('Error removing member:', error)
     }
   }
 
@@ -228,6 +271,22 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
             <p className="text-blue-600">No members found</p>
           </div>
         )}
+      </div>
+
+      {/* Role Management Section */}
+      <div className="mt-6">
+        <RoleManagement
+          members={members.map(m => ({
+            id: m.id,
+            name: m.name,
+            email: m.email,
+            role: m.role
+          }))}
+          organizationId={organization.id}
+          currentUserId={user.id}
+          onRoleChange={handleRoleChange}
+          onRemoveMember={handleRemoveMember}
+        />
       </div>
     </div>
   )

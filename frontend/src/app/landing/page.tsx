@@ -213,8 +213,26 @@ export default function LandingPage() {
 
         {/* Footer */}
         <footer className="py-8 px-4 border-t border-gray-200 bg-white/50 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto text-center text-gray-600 text-sm">
-            © 2025 SkyFlow. Built for organizational excellence.
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="text-gray-600 text-sm">
+                © 2025 SkyFlow. Built for organizational excellence.
+              </div>
+              <div className="flex items-center gap-6 text-sm">
+                <a
+                  href="/privacy"
+                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  Privacy Policy
+                </a>
+                <a
+                  href="/terms"
+                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  Terms of Service
+                </a>
+              </div>
+            </div>
           </div>
         </footer>
       </div>

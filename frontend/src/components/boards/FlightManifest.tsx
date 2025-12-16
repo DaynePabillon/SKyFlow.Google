@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from "react"
 import { Plane, Users, Clock, MapPin, AlertCircle, Plus, Search, Filter, ChevronDown, MoreHorizontal, UserPlus, Edit3, Trash2, ArrowRight, BarChart3 } from "lucide-react"
 import ChartWidgetPicker from '@/components/widgets/ChartWidgetPicker'
 import ChartWidget from '@/components/widgets/ChartWidget'
+import Portal from '@/components/ui/Portal'
 
 interface Task {
     id: string
@@ -520,12 +521,14 @@ export default function FlightManifest({
                 </div>
             )}
 
-            {/* Widget Picker Modal */}
-            <ChartWidgetPicker
-                isOpen={showWidgetPicker}
-                onClose={() => setShowWidgetPicker(false)}
-                onSelectWidget={handleAddWidget}
-            />
+            {/* Widget Picker Modal - using Portal to escape overflow:hidden */}
+            <Portal>
+                <ChartWidgetPicker
+                    isOpen={showWidgetPicker}
+                    onClose={() => setShowWidgetPicker(false)}
+                    onSelectWidget={handleAddWidget}
+                />
+            </Portal>
         </div>
     )
 }
