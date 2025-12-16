@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FolderOpen, File, FileText, Image, Video, Music, Upload, Search, Grid3x3, List, MoreVertical, Plus, X } from "lucide-react"
+import { FolderOpen, File, FileText, Image, Video, Music, Upload, Search, Grid3x3, List, MoreVertical, Plus, X, Edit3, Maximize2, Eye } from "lucide-react"
 import { useRouter } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
+import Portal from "@/components/ui/Portal"
 
 interface DriveFile {
   id: string
@@ -38,6 +39,7 @@ export default function DrivePage() {
   const [folderName, setFolderName] = useState("")
   const [selectedFile, setSelectedFile] = useState<DriveFile | null>(null)
   const [showFileModal, setShowFileModal] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -154,6 +156,51 @@ export default function DrivePage() {
   const canPreview = (file: DriveFile) => {
     const previewable = ['image', 'pdf', 'google-apps.document', 'google-apps.spreadsheet', 'google-apps.presentation', 'video', 'text', 'audio', 'document']
     return previewable.some(type => file.mimeType.includes(type))
+  }
+
+  // Check if file can be edited in embedded mode
+  const canEdit = (file: DriveFile) => {
+    const editable = [
+      'google-apps.document',
+      'google-apps.spreadsheet',
+      'google-apps.presentation',
+      // Office formats that can be opened in Google editors
+      'application/vnd.openxmlformats-officedocument.wordprocessingml',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml',
+      'application/vnd.openxmlformats-officedocument.presentationml',
+      'application/msword',
+      'application/vnd.ms-excel',
+      'application/vnd.ms-powerpoint'
+    ]
+    return editable.some(type => file.mimeType.includes(type))
+  }
+
+  // Get the edit URL for Google Docs/Sheets/Slides or Office files
+  const getEditUrl = (file: DriveFile) => {
+    // Native Google files
+    if (file.mimeType.includes('google-apps.document')) {
+      return `https://docs.google.com/document/d/${file.id}/edit?embedded=true`
+    }
+    if (file.mimeType.includes('google-apps.spreadsheet')) {
+      return `https://docs.google.com/spreadsheets/d/${file.id}/edit?embedded=true`
+    }
+    if (file.mimeType.includes('google-apps.presentation')) {
+      return `https://docs.google.com/presentation/d/${file.id}/edit?embedded=true`
+    }
+    // Word documents - open in Google Docs
+    if (file.mimeType.includes('wordprocessingml') || file.mimeType.includes('msword')) {
+      return `https://docs.google.com/document/d/${file.id}/edit?embedded=true`
+    }
+    // Excel files - open in Google Sheets
+    if (file.mimeType.includes('spreadsheetml') || file.mimeType.includes('ms-excel')) {
+      return `https://docs.google.com/spreadsheets/d/${file.id}/edit?embedded=true`
+    }
+    // PowerPoint files - open in Google Slides
+    if (file.mimeType.includes('presentationml') || file.mimeType.includes('ms-powerpoint')) {
+      return `https://docs.google.com/presentation/d/${file.id}/edit?embedded=true`
+    }
+    // Default fallback to Google Docs
+    return `https://docs.google.com/document/d/${file.id}/edit?embedded=true`
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -384,7 +431,7 @@ export default function DrivePage() {
       </div>
 
       {showFolderModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
           <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/40">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">New Folder</h2>
@@ -428,51 +475,84 @@ export default function DrivePage() {
         </div>
       )}
 
-      {/* File Preview Modal */}
+      {/* File Preview Modal - Using Portal to render above header */}
       {showFileModal && selectedFile && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col border border-white/40">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                {getFileIcon(selectedFile.mimeType)}
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-800 truncate max-w-md">{selectedFile.name}</h2>
-                  <p className="text-sm text-gray-500">{formatSize(selectedFile.size)} • Modified {formatDate(selectedFile.modifiedTime)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {selectedFile.webViewLink && (
-                  <a href={selectedFile.webViewLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 border border-blue-200 rounded-xl hover:bg-blue-50 transition-colors">
-                    Open in Drive
-                  </a>
-                )}
-                <button onClick={() => { setShowFileModal(false); setSelectedFile(null); }} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 bg-gray-100 overflow-hidden">
-              {canPreview(selectedFile) ? (
-                selectedFile.mimeType.includes('image') ? (
-                  <div className="w-full h-full flex items-center justify-center p-4">
-                    <img src={getEmbedUrl(selectedFile)} alt={selectedFile.name} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
-                  </div>
-                ) : (
-                  <iframe src={getEmbedUrl(selectedFile)} className="w-full h-full border-0" title={selectedFile.name} allow="autoplay" />
-                )
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
+        <Portal>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+            <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col border border-white/40">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <div className="flex items-center gap-3">
                   {getFileIcon(selectedFile.mimeType)}
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2 mt-4">Preview not available</h3>
-                  <p className="text-gray-600 mb-6">This file type cannot be previewed.</p>
-                  {selectedFile.webViewLink && (
-                    <a href={selectedFile.webViewLink} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl">Open in Google Drive</a>
-                  )}
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800 truncate max-w-md">{selectedFile.name}</h2>
+                    <p className="text-sm text-gray-500">{formatSize(selectedFile.size)} • Modified {formatDate(selectedFile.modifiedTime)}</p>
+                  </div>
                 </div>
-              )}
+                <div className="flex items-center gap-2">
+                  {/* Preview/Edit Toggle for editable files */}
+                  {canEdit(selectedFile) && (
+                    <div className="flex bg-gray-100 rounded-xl p-1">
+                      <button
+                        onClick={() => setIsEditMode(false)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${!isEditMode
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:bg-gray-50'
+                          }`}
+                      >
+                        <Eye className="w-4 h-4" />
+                        Preview
+                      </button>
+                      <button
+                        onClick={() => setIsEditMode(true)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isEditMode
+                          ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm'
+                          : 'text-gray-600 hover:bg-gray-50'
+                          }`}
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        Edit
+                      </button>
+                    </div>
+                  )}
+                  {selectedFile.webViewLink && (
+                    <a href={selectedFile.webViewLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 border border-blue-200 rounded-xl hover:bg-blue-50 transition-colors">
+                      <Maximize2 className="w-4 h-4" />
+                      Open in Drive
+                    </a>
+                  )}
+                  <button onClick={() => { setShowFileModal(false); setSelectedFile(null); setIsEditMode(false); }} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 bg-gray-100 overflow-hidden">
+                {canPreview(selectedFile) ? (
+                  selectedFile.mimeType.includes('image') ? (
+                    <div className="w-full h-full flex items-center justify-center p-4">
+                      <img src={getEmbedUrl(selectedFile)} alt={selectedFile.name} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
+                    </div>
+                  ) : (
+                    <iframe
+                      src={isEditMode && canEdit(selectedFile) ? getEditUrl(selectedFile) : getEmbedUrl(selectedFile)}
+                      className="w-full h-full border-0"
+                      title={selectedFile.name}
+                      allow="autoplay"
+                    />
+                  )
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
+                    {getFileIcon(selectedFile.mimeType)}
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2 mt-4">Preview not available</h3>
+                    <p className="text-gray-600 mb-6">This file type cannot be previewed.</p>
+                    {selectedFile.webViewLink && (
+                      <a href={selectedFile.webViewLink} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl">Open in Google Drive</a>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
     </AppLayout>
   )

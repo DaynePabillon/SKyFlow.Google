@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Cloud, LogOut, Menu, X, Calendar, FileText, FolderOpen, BarChart3, Users, FolderKanban, CheckSquare, Building2, ChevronDown, Plus, UserPlus, Plane } from "lucide-react"
+import { Cloud, LogOut, Menu, X, Calendar, FileText, FolderOpen, BarChart3, Users, FolderKanban, CheckSquare, Building2, ChevronDown, Plus, UserPlus, Plane, Settings, LayoutDashboard } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useThemeMode, useThemeLabels } from "@/context/ThemeContext"
+import NotificationBell from "@/components/notifications/NotificationBell"
 
 interface Organization {
   id: string
@@ -20,6 +22,8 @@ interface AppLayoutProps {
 
 export default function AppLayout({ user, organizations, selectedOrg, onOrgChange, children }: AppLayoutProps) {
   const router = useRouter()
+  const { isAviationMode } = useThemeMode()
+  const labels = useThemeLabels()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false)
 
@@ -53,7 +57,7 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-white/40 bg-white/70 backdrop-blur-xl sticky top-0 z-50 shadow-lg">
+      <header className="border-b border-white/40 bg-white/70 backdrop-blur-xl sticky top-0 z-40 shadow-lg">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -114,6 +118,10 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
                   )}
                 </div>
               )}
+
+              {/* Notification Bell */}
+              <NotificationBell />
+
               <div className="flex flex-col items-end">
                 <p className="text-sm font-medium text-gray-800">{user?.name || 'Loading...'}</p>
                 <p className="text-xs text-gray-600">{user?.email || ''}</p>
@@ -154,15 +162,15 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
                 </a>
                 <a href="/tasks" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
                   <CheckSquare className="w-5 h-5 group-hover:text-white transition-colors" />
-                  <span>Tasks</span>
+                  <span>{labels.tasks}</span>
                 </a>
-                <a href="/boards" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-amber-500 hover:to-orange-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
-                  <Plane className="w-5 h-5 group-hover:text-white transition-colors" />
-                  <span>Boards</span>
+                <a href="/boards" className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r ${isAviationMode ? 'hover:from-amber-500 hover:to-orange-500' : 'hover:from-blue-500 hover:to-cyan-500'} hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md`}>
+                  {isAviationMode ? <Plane className="w-5 h-5 group-hover:text-white transition-colors" /> : <FolderKanban className="w-5 h-5 group-hover:text-white transition-colors" />}
+                  <span>{labels.boards}</span>
                 </a>
                 <a href="/team" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
                   <Users className="w-5 h-5 group-hover:text-white transition-colors" />
-                  <span>Team</span>
+                  <span>{labels.team}</span>
                 </a>
               </nav>
             </div>
@@ -186,6 +194,13 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
                 <a href="/analytics" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
                   <BarChart3 className="w-5 h-5 group-hover:text-white transition-colors" />
                   <span>Analytics</span>
+                </a>
+
+                {/* Settings */}
+                <div className="border-t border-gray-200 my-2 mx-2" />
+                <a href="/settings" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-gray-500 hover:to-gray-600 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
+                  <Settings className="w-5 h-5 group-hover:text-white transition-colors" />
+                  <span>Settings</span>
                 </a>
               </nav>
             </div>

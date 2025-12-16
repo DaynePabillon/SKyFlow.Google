@@ -2,12 +2,13 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
+import { ThemeProvider } from "@/context/ThemeContext"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "SkyFlow - Academic Collaboration Platform",
-  description: "Unified academic productivity suite for students, teachers, and school admins",
+  title: "SkyFlow - Project Management Platform",
+  description: "Unified project management suite for teams and organizations",
   generator: "v0.app",
   icons: {
     icon: [
@@ -36,8 +37,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )
 }
+

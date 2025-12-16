@@ -128,4 +128,81 @@ router.post('/onboarding', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * GET /api/users/preferences
+ * Get user preferences including theme mode
+ */
+router.get('/preferences', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const result = await query(
+      'SELECT theme_mode FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.json({
+      theme_mode: result.rows[0].theme_mode || 'professional'
+    });
+  } catch (error) {
+    logger.error('Error fetching user preferences:', error);
+    return res.status(500).json({ error: 'Failed to fetch preferences' });
+  }
+});
+
+/**
+ * PATCH /api/users/preferences
+ * Update user preferences (theme mode, etc.)
+ */
+router.patch('/preferences', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { theme_mode } = req.body;
+
+    // Validate theme_mode
+    if (theme_mode && !['professional', 'aviation'].includes(theme_mode)) {
+      return res.status(400).json({ error: 'Invalid theme_mode. Must be "professional" or "aviation"' });
+    }
+
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (theme_mode) {
+      updates.push(`theme_mode = $${paramIndex++}`);
+      values.push(theme_mode);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    values.push(userId);
+
+    await query(
+      `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${paramIndex}`,
+      values
+    );
+
+    logger.info(`User ${userId} updated preferences: theme_mode=${theme_mode}`);
+
+    return res.json({ success: true, theme_mode });
+  } catch (error) {
+    logger.error('Error updating user preferences:', error);
+    return res.status(500).json({ error: 'Failed to update preferences' });
+  }
+});
+
 export default router;
+

@@ -16,6 +16,11 @@ import calendarRoutes from './routes/calendar.routes';
 import driveRoutes from './routes/drive.routes';
 import sheetsRoutes from './routes/sheets.routes';
 import invitationRoutes from './routes/invitation.routes';
+import activityRoutes from './routes/activity.routes';
+import notificationRoutes from './routes/notification.routes';
+import commentRoutes from './routes/comment.routes';
+import timeEntryRoutes from './routes/timeEntry.routes';
+import widgetRoutes from './routes/widget.routes';
 import { runAutoMigrations } from './services/migration.service';
 
 dotenv.config();
@@ -56,6 +61,11 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/drive', driveRoutes);
 app.use('/api/sheets', sheetsRoutes);
 app.use('/api/invitations', invitationRoutes);
+app.use('/api', activityRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api', commentRoutes);
+app.use('/api', timeEntryRoutes);
+app.use('/api', widgetRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

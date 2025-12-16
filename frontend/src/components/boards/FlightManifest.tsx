@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useMemo, useRef, useEffect } from "react"
-import { Plane, Users, Clock, MapPin, AlertCircle, Plus, Search, Filter, ChevronDown, MoreHorizontal, UserPlus, Edit3, Trash2, ArrowRight } from "lucide-react"
+import { Plane, Users, Clock, MapPin, AlertCircle, Plus, Search, Filter, ChevronDown, MoreHorizontal, UserPlus, Edit3, Trash2, ArrowRight, BarChart3 } from "lucide-react"
+import ChartWidgetPicker from '@/components/widgets/ChartWidgetPicker'
+import ChartWidget from '@/components/widgets/ChartWidget'
 
 interface Task {
     id: string
@@ -25,6 +27,12 @@ interface TeamMember {
     role: string
 }
 
+interface Widget {
+    id: string
+    widget_type: string
+    title: string
+}
+
 interface FlightManifestProps {
     tasks: Task[]
     members: TeamMember[]
@@ -32,6 +40,7 @@ interface FlightManifestProps {
     onStatusChange?: (taskId: string, status: Task['status']) => void
     onDeleteTask?: (taskId: string) => void
     onAddTask?: () => void
+    organizationId?: string
 }
 
 export default function FlightManifest({
@@ -40,13 +49,77 @@ export default function FlightManifest({
     onAssignMember,
     onStatusChange,
     onDeleteTask,
-    onAddTask
+    onAddTask,
+    organizationId
 }: FlightManifestProps) {
     const [searchQuery, setSearchQuery] = useState("")
     const [filterStatus, setFilterStatus] = useState<string>("all")
     const [selectedRow, setSelectedRow] = useState<string | null>(null)
     const [assignDropdownOpen, setAssignDropdownOpen] = useState<string | null>(null)
     const [actionsMenuOpen, setActionsMenuOpen] = useState<string | null>(null)
+    const [widgets, setWidgets] = useState<Widget[]>([])
+    const [showWidgetPicker, setShowWidgetPicker] = useState(false)
+
+    // Fetch widgets on mount
+    useEffect(() => {
+        if (organizationId) {
+            fetchWidgets()
+        }
+    }, [organizationId])
+
+    const fetchWidgets = async () => {
+        try {
+            const token = localStorage.getItem('token')
+            const response = await fetch(
+                `http://localhost:3001/api/organizations/${organizationId}/widgets`,
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            )
+            if (response.ok) {
+                const data = await response.json()
+                setWidgets(data.widgets || [])
+            }
+        } catch (error) {
+            console.error('Error fetching widgets:', error)
+        }
+    }
+
+    const handleAddWidget = async (widgetType: string, title: string) => {
+        try {
+            const token = localStorage.getItem('token')
+            const response = await fetch(
+                `http://localhost:3001/api/organizations/${organizationId}/widgets`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ widget_type: widgetType, title })
+                }
+            )
+            if (response.ok) {
+                fetchWidgets()
+            }
+        } catch (error) {
+            console.error('Error adding widget:', error)
+        }
+    }
+
+    const handleRemoveWidget = async (widgetId: string) => {
+        try {
+            const token = localStorage.getItem('token')
+            await fetch(
+                `http://localhost:3001/api/widgets/${widgetId}`,
+                {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            )
+            fetchWidgets()
+        } catch (error) {
+            console.error('Error removing widget:', error)
+        }
+    }
 
     // Close dropdowns when clicking outside - using capture phase
     useEffect(() => {
@@ -407,6 +480,52 @@ export default function FlightManifest({
                     </div>
                 </div>
             </div>
+
+            {/* Chart Widgets Area - Aviation Theme */}
+            {organizationId && (
+                <div className="p-4 bg-slate-800/30 border-t border-slate-700">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                            <BarChart3 className="w-4 h-4 text-purple-400" />
+                            Flight Analytics
+                        </h3>
+                        <button
+                            onClick={() => setShowWidgetPicker(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-300 hover:bg-purple-500/20 rounded-lg border border-purple-500/30 transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Widget
+                        </button>
+                    </div>
+
+                    {widgets.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {widgets.map(widget => (
+                                <ChartWidget
+                                    key={widget.id}
+                                    type={widget.widget_type}
+                                    title={widget.title}
+                                    tasks={tasks}
+                                    members={members}
+                                    onRemove={() => handleRemoveWidget(widget.id)}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-6 text-slate-500">
+                            <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No analytics widgets. Click "Add Widget" to visualize your flight data.</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Widget Picker Modal */}
+            <ChartWidgetPicker
+                isOpen={showWidgetPicker}
+                onClose={() => setShowWidgetPicker(false)}
+                onSelectWidget={handleAddWidget}
+            />
         </div>
     )
 }

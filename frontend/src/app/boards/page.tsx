@@ -4,7 +4,9 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
 import FlightManifest from "@/components/boards/FlightManifest"
-import { Plane, X } from "lucide-react"
+import ProfessionalTeamBoard from "@/components/boards/ProfessionalTeamBoard"
+import { Plane, X, Users, FolderKanban } from "lucide-react"
+import { useThemeMode } from "@/context/ThemeContext"
 
 interface Task {
     id: string
@@ -35,6 +37,7 @@ interface Organization {
 
 export default function BoardsPage() {
     const router = useRouter()
+    const { isProfessionalMode, isAviationMode } = useThemeMode()
     const [user, setUser] = useState<any>(null)
     const [organizations, setOrganizations] = useState<Organization[]>([])
     const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
@@ -212,23 +215,54 @@ export default function BoardsPage() {
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
-                        <Plane className="w-8 h-8 text-amber-500" />
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                            Flight Manifest
-                        </h1>
+                        {isProfessionalMode ? (
+                            <>
+                                <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl">
+                                    <Users className="w-6 h-6 text-white" />
+                                </div>
+                                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                                    Team Board
+                                </h1>
+                            </>
+                        ) : (
+                            <>
+                                <Plane className="w-8 h-8 text-amber-500" />
+                                <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                                    Flight Manifest
+                                </h1>
+                            </>
+                        )}
                     </div>
-                    <p className="text-gray-600">Team task assignments for {selectedOrg.name}</p>
+                    <p className="text-gray-600">
+                        {isProfessionalMode
+                            ? `Team task assignments for ${selectedOrg.name}`
+                            : `Team task assignments for ${selectedOrg.name}`}
+                    </p>
                 </div>
 
-                {/* Flight Manifest Board */}
-                <FlightManifest
-                    tasks={tasks}
-                    members={members}
-                    onAssignMember={handleAssignMember}
-                    onStatusChange={handleStatusChange}
-                    onDeleteTask={handleDeleteTask}
-                    onAddTask={() => setIsCreateModalOpen(true)}
-                />
+                {/* Team Board - Professional or Aviation */}
+                {isProfessionalMode ? (
+                    <ProfessionalTeamBoard
+                        tasks={tasks}
+                        members={members}
+                        onAssignMember={handleAssignMember}
+                        onStatusChange={handleStatusChange as any}
+                        onDeleteTask={handleDeleteTask}
+                        onAddTask={() => setIsCreateModalOpen(true)}
+                        organizationName={selectedOrg.name}
+                        organizationId={selectedOrg.id}
+                    />
+                ) : (
+                    <FlightManifest
+                        tasks={tasks}
+                        members={members}
+                        onAssignMember={handleAssignMember}
+                        onStatusChange={handleStatusChange}
+                        onDeleteTask={handleDeleteTask}
+                        onAddTask={() => setIsCreateModalOpen(true)}
+                        organizationId={selectedOrg.id}
+                    />
+                )}
             </div>
 
             {/* Create Task Modal */}

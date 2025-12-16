@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FileText, Plus, Search, MoreVertical, Clock, Users, Download, Share2, X } from "lucide-react"
+import { FileText, Plus, Search, MoreVertical, Clock, Users, Download, Share2, X, Edit3, Eye, Maximize2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
+import Portal from "@/components/ui/Portal"
 
 interface Spreadsheet {
   id: string
@@ -31,6 +32,7 @@ export default function SheetsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSheet, setSelectedSheet] = useState<Spreadsheet | null>(null)
   const [showSheetModal, setShowSheetModal] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   const handleSheetClick = (sheet: Spreadsheet) => {
     setSelectedSheet(sheet)
@@ -228,59 +230,86 @@ export default function SheetsPage() {
         </div>
       </AppLayout>
 
-      {/* Sheet Preview Modal - Outside AppLayout to fix z-index stacking */}
+      {/* Sheet Preview Modal - Using Portal to render above header */}
       {showSheetModal && selectedSheet && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col border border-white/40">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FileText className="w-6 h-6 text-green-600" />
+        <Portal>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+            <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col border border-white/40">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <FileText className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800 truncate max-w-md">{selectedSheet.name}</h2>
+                    <p className="text-sm text-gray-500">
+                      Modified {new Date(selectedSheet.modifiedTime).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-800 truncate max-w-md">{selectedSheet.name}</h2>
-                  <p className="text-sm text-gray-500">
-                    Modified {new Date(selectedSheet.modifiedTime).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {selectedSheet.webViewLink && (
-                  <a
-                    href={selectedSheet.webViewLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-green-600 border border-green-200 rounded-xl hover:bg-green-50 transition-colors"
+                <div className="flex items-center gap-2">
+                  {/* Preview/Edit Toggle */}
+                  <div className="flex bg-gray-100 rounded-xl p-1">
+                    <button
+                      onClick={() => setIsEditMode(false)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${!isEditMode
+                        ? 'bg-white text-green-600 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                    >
+                      <Eye className="w-4 h-4" />
+                      Preview
+                    </button>
+                    <button
+                      onClick={() => setIsEditMode(true)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isEditMode
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      Edit
+                    </button>
+                  </div>
+                  {selectedSheet.webViewLink && (
+                    <a
+                      href={selectedSheet.webViewLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-green-600 border border-green-200 rounded-xl hover:bg-green-50 transition-colors"
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                      Open in Sheets
+                    </a>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowSheetModal(false)
+                      setSelectedSheet(null)
+                      setIsEditMode(false)
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    Open in Sheets
-                  </a>
-                )}
-                <button
-                  onClick={() => {
-                    setShowSheetModal(false)
-                    setSelectedSheet(null)
-                  }}
-                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Sheet Preview Content */}
-            <div className="flex-1 bg-gray-100 overflow-hidden">
-              <iframe
-                src={`https://docs.google.com/spreadsheets/d/${selectedSheet.id}/preview`}
-                className="w-full h-full border-0"
-                title={selectedSheet.name}
-              />
+              {/* Sheet Content - Preview or Edit */}
+              <div className="flex-1 bg-gray-100 overflow-hidden">
+                <iframe
+                  src={isEditMode
+                    ? `https://docs.google.com/spreadsheets/d/${selectedSheet.id}/edit?embedded=true`
+                    : `https://docs.google.com/spreadsheets/d/${selectedSheet.id}/preview`
+                  }
+                  className="w-full h-full border-0"
+                  title={selectedSheet.name}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
     </>
   )
