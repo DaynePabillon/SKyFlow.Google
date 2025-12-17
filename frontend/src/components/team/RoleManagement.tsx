@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Shield, Crown, User, ChevronDown, Trash2, X } from 'lucide-react'
 
 interface Member {
@@ -53,6 +53,18 @@ export default function RoleManagement({
     const [openDropdown, setOpenDropdown] = useState<string | null>(null)
     const [loading, setLoading] = useState<string | null>(null)
     const [confirmRemove, setConfirmRemove] = useState<string | null>(null)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpenDropdown(null)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     const handleRoleChange = async (memberId: string, newRole: string) => {
         setLoading(memberId)
@@ -75,7 +87,7 @@ export default function RoleManagement({
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200">
             <div className="p-4 bg-gradient-to-r from-slate-800 to-slate-700 text-white">
                 <h3 className="font-semibold flex items-center gap-2">
                     <Shield className="w-5 h-5" />
@@ -135,7 +147,10 @@ export default function RoleManagement({
                                     </button>
 
                                     {openDropdown === member.id && (
-                                        <div className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50">
+                                        <div
+                                            ref={dropdownRef}
+                                            className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-[9999]"
+                                        >
                                             {Object.entries(ROLE_CONFIG).map(([role, config]) => {
                                                 const Icon = config.icon
                                                 return (

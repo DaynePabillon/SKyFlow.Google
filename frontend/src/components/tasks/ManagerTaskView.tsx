@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { CheckSquare, Plus, Search, LayoutGrid, Table, X, Calendar, AlertCircle, User } from "lucide-react"
+import { CheckSquare, Plus, Search, LayoutGrid, Table, X, Calendar, AlertCircle, User, Edit3 } from "lucide-react"
 import BoardingPassCard from "./BoardingPassCard"
 import CloudGroup from "./CloudGroup"
 import ProfessionalTaskCard from "./ProfessionalTaskCard"
@@ -44,6 +44,8 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
     priority: 'medium' as 'low' | 'medium' | 'high',
     due_date: ''
   })
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   useEffect(() => {
     fetchTasks()
@@ -106,6 +108,42 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
       fetchTasks()
     } catch (error) {
       console.error('Error updating status:', error)
+    }
+  }
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task)
+    setIsEditModalOpen(true)
+  }
+
+  const handleUpdateTask = async () => {
+    if (!editingTask) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`http://localhost:3001/api/tasks/${editingTask.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: editingTask.title,
+          description: editingTask.description,
+          priority: editingTask.priority,
+          due_date: editingTask.due_date,
+          assigned_to: editingTask.assigned_to
+        })
+      })
+      if (response.ok) {
+        setIsEditModalOpen(false)
+        setEditingTask(null)
+        fetchTasks()
+      } else {
+        console.error('Failed to update task')
+      }
+    } catch (error) {
+      console.error('Error updating task:', error)
     }
   }
 
@@ -225,7 +263,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
         isProfessionalMode ? (
           <ProfessionalKanban
             tasks={tasks.filter(t => t.status !== 'archived') as any}
-            onTaskClick={(task) => console.log('Task clicked:', task)}
+            onTaskClick={(task) => handleEditTask(task as Task)}
             onAddTask={() => setIsCreateModalOpen(true)}
           />
         ) : (
@@ -245,6 +283,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                     key={task.id}
                     task={task}
                     onDragStart={handleDragStart}
+                    onClick={() => handleEditTask(task)}
                   />
                 ))}
               </CloudGroup>
@@ -264,25 +303,26 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                 <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">{isProfessionalMode ? 'Priority' : 'Class'}</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Due Date</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">{isProfessionalMode ? 'Assignee' : 'Crew'}</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {tasks.filter(t => t.status !== 'archived').map((task) => (
-                <tr key={task.id} className="hover:bg-blue-50/50">
+                <tr key={task.id} className="hover:bg-blue-50/50 cursor-pointer" onClick={() => handleEditTask(task)}>
                   <td className="px-6 py-4 font-medium text-gray-800">{task.title}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${task.status === 'done' ? 'bg-green-100 text-green-700' :
-                        task.status === 'review' ? 'bg-yellow-100 text-yellow-700' :
-                          task.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-                            'bg-gray-100 text-gray-700'
+                      task.status === 'review' ? 'bg-yellow-100 text-yellow-700' :
+                        task.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-700'
                       }`}>
                       {task.status.replace('-', ' ')}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${task.priority === 'high' ? 'bg-red-100 text-red-700' :
-                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
+                      task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
                       }`}>
                       {isProfessionalMode
                         ? (task.priority === 'high' ? 'High' : task.priority === 'medium' ? 'Medium' : 'Low')
@@ -294,6 +334,14 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {task.assigned_to_name || 'Unassigned'}
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleEditTask(task); }}
+                      className="p-1 hover:bg-blue-100 rounded-lg transition-colors"
+                    >
+                      <Edit3 className="w-4 h-4 text-blue-600" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -362,6 +410,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                   <input
                     type="date"
                     value={newTask.due_date}
+                    min={new Date().toISOString().split('T')[0]}
                     onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-xl"
                   />
@@ -374,6 +423,85 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
               >
                 {isProfessionalMode ? 'Create Task' : 'Schedule Flight'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {isEditModalOpen && editingTask && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                {isProfessionalMode ? '✏️ Edit Task' : '✏️ Edit Flight'}
+              </h2>
+              <button onClick={() => { setIsEditModalOpen(false); setEditingTask(null); }} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {isProfessionalMode ? 'Task Title' : 'Flight Name'}
+                </label>
+                <input
+                  type="text"
+                  value={editingTask.title}
+                  onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={editingTask.description || ''}
+                  onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {isProfessionalMode ? 'Priority' : 'Class'}
+                  </label>
+                  <select
+                    value={editingTask.priority}
+                    onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value as any })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                  >
+                    <option value="high">{isProfessionalMode ? '🔴 High Priority' : '✈️ First Class'}</option>
+                    <option value="medium">{isProfessionalMode ? '🟡 Medium Priority' : '💼 Business'}</option>
+                    <option value="low">{isProfessionalMode ? '🟢 Low Priority' : '🎫 Economy'}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setEditingTask({ ...editingTask, due_date: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => { setIsEditModalOpen(false); setEditingTask(null); }}
+                  className="flex-1 py-3 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateTask}
+                  disabled={!editingTask.title.trim()}
+                  className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-medium disabled:opacity-50 hover:from-blue-600 hover:to-cyan-600"
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>

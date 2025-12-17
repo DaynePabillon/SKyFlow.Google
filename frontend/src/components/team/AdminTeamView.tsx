@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, UserPlus, Search, Mail, Shield, MoreVertical, Crown, Briefcase, User, Settings } from "lucide-react"
+import { Users, UserPlus, Search, Mail, Shield, MoreVertical, Crown, Briefcase, User, Settings, X, Copy, Check } from "lucide-react"
 import RoleManagement from "./RoleManagement"
 
 interface TeamMember {
@@ -27,6 +27,12 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterRole, setFilterRole] = useState<string>("all")
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState("")
+  const [inviteRole, setInviteRole] = useState<string>("member")
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     fetchMembers()
@@ -99,6 +105,55 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
     }
   }
 
+  const handleInvite = async () => {
+    if (!inviteEmail) return
+
+    setInviteLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(
+        `http://localhost:3001/api/organizations/${organization.id}/invite`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ email: inviteEmail, role: inviteRole })
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        setInviteUrl(data.inviteUrl)
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to send invitation')
+      }
+    } catch (error) {
+      console.error('Error sending invitation:', error)
+      alert('Failed to send invitation')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
+  const handleCopyUrl = () => {
+    if (inviteUrl) {
+      navigator.clipboard.writeText(inviteUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const closeInviteModal = () => {
+    setIsInviteModalOpen(false)
+    setInviteEmail('')
+    setInviteRole('member')
+    setInviteUrl(null)
+    setCopied(false)
+  }
+
   const getRoleIcon = (role: string) => {
     if (role === 'admin') return <Crown className="w-4 h-4" />
     if (role === 'manager') return <Briefcase className="w-4 h-4" />
@@ -135,7 +190,10 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Team Members</h1>
             <p className="text-gray-600 mt-1">Manage members in {organization.name}</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md hover:shadow-lg">
+          <button
+            onClick={() => setIsInviteModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md hover:shadow-lg"
+          >
             <UserPlus className="w-5 h-5" />
             <span className="font-medium">Invite Member</span>
           </button>
@@ -288,6 +346,99 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
           onRemoveMember={handleRemoveMember}
         />
       </div>
+
+      {/* Invite Member Modal */}
+      {isInviteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                👋 Invite Team Member
+              </h2>
+              <button onClick={closeInviteModal} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {!inviteUrl ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="colleague@example.com"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Role
+                  </label>
+                  <select
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                  >
+                    <option value="member">👤 Member</option>
+                    <option value="manager">💼 Manager</option>
+                    <option value="admin">👑 Admin</option>
+                  </select>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={closeInviteModal}
+                    className="flex-1 py-3 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleInvite}
+                    disabled={!inviteEmail || inviteLoading}
+                    className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-medium disabled:opacity-50 hover:from-blue-600 hover:to-cyan-600"
+                  >
+                    {inviteLoading ? 'Sending...' : 'Send Invite'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <p className="text-green-700 font-medium mb-2">✅ Invitation Created!</p>
+                  <p className="text-sm text-green-600">Share this link with {inviteEmail}:</p>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={inviteUrl}
+                    readOnly
+                    className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono truncate"
+                  />
+                  <button
+                    onClick={handleCopyUrl}
+                    className={`px-4 py-2 rounded-xl font-medium flex items-center gap-2 ${copied
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <button
+                  onClick={closeInviteModal}
+                  className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-cyan-600"
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -241,7 +241,7 @@ router.get('/:id/members', authenticateToken, async (req: AuthRequest, res: Resp
       [id]
     );
 
-    res.json(result.rows);
+    res.json({ members: result.rows });
   } catch (error) {
     logger.error('Error fetching members:', error);
     res.status(500).json({ error: 'Failed to fetch members' });
