@@ -34,15 +34,19 @@ router.post('/tasks/:taskId/comments', authenticateToken, async (req: Request, r
         const { content } = req.body;
         const user = (req as any).user;
 
+        console.log('Comment request body:', req.body);
+        console.log('Content value:', content);
+
         if (!content || !content.trim()) {
             return res.status(400).json({ error: 'Comment content is required' });
         }
 
-        // Get task info for notifications
+        // Get task info for notifications (tasks -> projects -> organizations)
         const taskResult = await pool.query(
-            `SELECT t.*, o.id as org_id FROM tasks t 
-       JOIN organizations o ON t.organization_id = o.id 
-       WHERE t.id = $1`,
+            `SELECT t.*, p.organization_id as org_id 
+             FROM tasks t 
+             LEFT JOIN projects p ON t.project_id = p.id 
+             WHERE t.id = $1`,
             [taskId]
         );
 
@@ -54,10 +58,10 @@ router.post('/tasks/:taskId/comments', authenticateToken, async (req: Request, r
 
         // Insert comment
         const result = await pool.query(
-            `INSERT INTO task_comments (task_id, user_id, user_name, content)
-       VALUES ($1, $2, $3, $4)
+            `INSERT INTO task_comments (task_id, user_id, comment)
+       VALUES ($1, $2, $3)
        RETURNING *`,
-            [taskId, user.id, user.name, content.trim()]
+            [taskId, user.id, content.trim()]
         );
 
         // Log activity

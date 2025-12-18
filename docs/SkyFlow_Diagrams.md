@@ -803,7 +803,9 @@ classDiagram
 
 ---
 
-## Complete ERD (Entity Relationship Diagram)
+## Data Design
+
+### ERD (Entity Relationship Diagram)
 
 ```mermaid
 erDiagram
@@ -816,6 +818,7 @@ erDiagram
         text access_token
         text refresh_token
         jsonb onboarding_data
+        string theme_mode
         timestamp created_at
     }
 
@@ -836,12 +839,26 @@ erDiagram
         timestamp joined_at
     }
 
+    ORGANIZATION_INVITATIONS {
+        uuid id PK
+        uuid organization_id FK
+        string email
+        string role
+        string token UK
+        uuid invited_by FK
+        timestamp expires_at
+        timestamp accepted_at
+    }
+
     PROJECTS {
         uuid id PK
         uuid organization_id FK
         string name
         text description
         string status
+        string priority
+        date start_date
+        date end_date
         uuid created_by FK
         timestamp created_at
     }
@@ -860,11 +877,26 @@ erDiagram
         timestamp completed_at
     }
 
+    TASK_ASSIGNEES {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        uuid assigned_by FK
+        timestamp assigned_at
+    }
+
+    TASK_FOLLOWERS {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        timestamp followed_at
+    }
+
     TASK_COMMENTS {
         uuid id PK
         uuid task_id FK
         uuid user_id FK
-        text content
+        text comment
         timestamp created_at
     }
 
@@ -874,7 +906,8 @@ erDiagram
         uuid user_id FK
         decimal hours
         text notes
-        date entry_date
+        date date
+        timestamp created_at
     }
 
     NOTIFICATIONS {
@@ -884,7 +917,7 @@ erDiagram
         string title
         text message
         boolean is_read
-        uuid related_task_id FK
+        uuid task_id FK
         timestamp created_at
     }
 
@@ -912,15 +945,254 @@ erDiagram
 
     USERS ||--o{ ORGANIZATION_MEMBERS : belongs_to
     ORGANIZATIONS ||--o{ ORGANIZATION_MEMBERS : has
+    ORGANIZATIONS ||--o{ ORGANIZATION_INVITATIONS : sends
     ORGANIZATIONS ||--o{ PROJECTS : contains
     ORGANIZATIONS ||--o{ ACTIVITY_LOG : logs
     ORGANIZATIONS ||--o{ BOARD_WIDGETS : displays
     PROJECTS ||--o{ TASKS : contains
     USERS ||--o{ TASKS : assigned_to
     USERS ||--o{ TASKS : created_by
+    TASKS ||--o{ TASK_ASSIGNEES : has
+    TASKS ||--o{ TASK_FOLLOWERS : followed_by
     TASKS ||--o{ TASK_COMMENTS : has
     TASKS ||--o{ TIME_ENTRIES : tracks
     USERS ||--o{ NOTIFICATIONS : receives
     USERS ||--o{ TASK_COMMENTS : writes
     USERS ||--o{ TIME_ENTRIES : logs
 ```
+
+---
+
+## User Interface Design
+
+### UI Flow Diagram
+
+```mermaid
+graph LR
+    subgraph PUBLIC["Public Pages"]
+        Landing["Landing Page"]
+        Auth["Auth Callback"]
+    end
+
+    subgraph ONBOARD["Onboarding"]
+        Welcome["Welcome Step"]
+        Role["Role Selection"]
+        Setup["Team Setup"]
+    end
+
+    subgraph MAIN["Main Application"]
+        Dashboard["Dashboard"]
+        Tasks["Tasks Page"]
+        Projects["Projects Page"]
+        Team["Team Page"]
+        Boards["Team Boards"]
+        Drive["Google Drive"]
+        Sheets["Google Sheets"]
+        Calendar["Calendar"]
+        Settings["Settings"]
+    end
+
+    Landing -->|"Sign In"| Auth
+    Auth -->|"New User"| Welcome
+    Auth -->|"Existing User"| Dashboard
+    Welcome --> Role --> Setup --> Dashboard
+    
+    Dashboard <--> Tasks
+    Dashboard <--> Projects
+    Dashboard <--> Team
+    Dashboard <--> Boards
+    Dashboard <--> Drive
+    Dashboard <--> Sheets
+    Dashboard <--> Calendar
+    Dashboard <--> Settings
+```
+
+---
+
+## Front-end Components
+
+### Layout Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **AppLayout** | Main application wrapper with header, sidebar, and content area. Manages theme, organization switching, and user session. | Layout Component (TSX) |
+| **Header** | Top navigation bar with logo, organization selector, search, theme toggle, notifications, and user menu. | Header Component (TSX) |
+| **Sidebar** | Left navigation with collapsible menu items for Dashboard, Tasks, Projects, Team, Boards, Drive, Sheets, Calendar, Settings. | Navigation Component (TSX) |
+| **Portal** | React Portal wrapper for rendering modals and dropdowns outside DOM hierarchy to avoid z-index issues. | Utility Component (TSX) |
+
+### Authentication Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **LandingPage** | Marketing landing page with animated features, hero section, and Google Sign-In button. Professional/Aviation theme support. | Page Component (TSX) |
+| **OnboardingFlow** | Multi-step wizard for new user setup: purpose, role, team size, focus areas. Saves preferences to user profile. | Page Component (TSX) |
+| **AuthCallback** | Handles OAuth callback, token exchange, and redirects user to dashboard or onboarding. | Page Component (TSX) |
+
+### Dashboard Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **DashboardPage** | Main dashboard showing stats cards, activity feed, upcoming tasks, and quick actions. Role-based content filtering. | Page Component (TSX) |
+| **StatsCard** | Reusable card displaying metric with icon, value, label, and optional trend indicator. | UI Component (TSX) |
+| **ActivityFeed** | Scrollable list of recent organization activities with icons, timestamps, and user avatars. | Data Component (TSX) |
+| **QuickActions** | Grid of action buttons for common tasks: create task, invite member, create project. | UI Component (TSX) |
+
+### Task Management Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **AdminTaskView** | Full-featured task management for admins with Kanban board, table view, radar view, filters, and archive. | Page Component (TSX) |
+| **ManagerTaskView** | Task management for managers with board/table views, create/edit capabilities. | Page Component (TSX) |
+| **MemberTaskView** | Read-only task view for members showing assigned tasks with status update capability. | Page Component (TSX) |
+| **ProfessionalKanban** | Drag-and-drop Kanban board with columns for Todo, In Progress, Review, Done. Horizontal scroll navigation. | Board Component (TSX) |
+| **ProfessionalTaskCard** | Task card displaying title, priority, assignee, due date with status indicators. | Card Component (TSX) |
+| **BoardingPassCard** | Aviation-themed task card styled like an airline boarding pass. | Card Component (TSX) |
+| **CloudGroup** | Aviation-themed Kanban column with cloud styling and status animations. | Column Component (TSX) |
+| **ControlTower** | Radar-style visualization showing tasks by priority and due date proximity. | Visualization Component (TSX) |
+| **TaskTimeline** | Right panel showing task comments, activity history, and time tracking with inline commenting. | Panel Component (TSX) |
+| **MultiAssigneeSelect** | Multi-select dropdown for assigning multiple users to a task with add/remove API calls. | Form Component (TSX) |
+
+### Team & Organization Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **AdminTeamView** | Full team management with member list, role changes, invitations, and removal. View/manage all members. | Page Component (TSX) |
+| **ManagerTeamView** | Team overview for managers with limited role change capabilities. | Page Component (TSX) |
+| **MemberTeamView** | Read-only team directory showing member cards with contact info. | Page Component (TSX) |
+| **InviteMemberModal** | Modal form for sending email invitations with role selection. | Modal Component (TSX) |
+| **RoleDropdown** | Dropdown selector for changing member roles with permission checking. | Form Component (TSX) |
+
+### Team Board Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **ProfessionalTeamBoard** | Table-style team task board with inline assignee dropdown, status selector, and task management. | Board Component (TSX) |
+| **FlightManifest** | Aviation-themed team board styled like airport departure board with flight numbers and gates. | Board Component (TSX) |
+
+### Project Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **ProjectList** | Grid/list view of organization projects with create button and filters. | List Component (TSX) |
+| **ProjectCard** | Project card showing name, status, task count, and progress indicator. | Card Component (TSX) |
+| **ProjectDetails** | Project detail page with tasks, members, timeline, and settings. | Page Component (TSX) |
+
+### Google Integration Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **DrivePage** | Google Drive file browser with grid/list views, folder navigation, upload, and file preview modal. | Page Component (TSX) |
+| **SheetsPage** | Google Sheets manager with embedded spreadsheet editor and create/delete functionality. | Page Component (TSX) |
+| **CalendarPage** | Google Calendar integration showing events in month/week/day views. | Page Component (TSX) |
+
+### Widget Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **ChartWidget** | Configurable chart widget supporting bar, pie, line, and area charts using Recharts. | Chart Component (TSX) |
+| **ChartWidgetPicker** | Modal for selecting widget type when adding new dashboard charts. | Picker Component (TSX) |
+
+### Notification Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **NotificationBell** | Header bell icon with unread count badge, dropdown list, and mark-as-read actions. | UI Component (TSX) |
+| **NotificationItem** | Individual notification row with icon, message, timestamp, and click-to-navigate. | Item Component (TSX) |
+
+### Utility Components
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **ThemeContext** | React Context providing theme mode (professional/aviation) with localStorage persistence. | Context Provider (TSX) |
+| **LoadingSpinner** | Centered loading indicator with optional message text. | UI Component (TSX) |
+| **Modal** | Reusable modal wrapper with backdrop, close button, and configurable width. | UI Component (TSX) |
+| **ConfirmDialog** | Confirmation modal for destructive actions with cancel/confirm buttons. | Dialog Component (TSX) |
+
+---
+
+## Back-end Components
+
+### API Routes
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **auth.routes.ts** | Authentication endpoints: Google OAuth callback, token refresh, logout, get current user. | Express Router |
+| **user.routes.ts** | User profile management: get profile, update preferences, change theme mode. | Express Router |
+| **organization.routes.ts** | Organization CRUD, member management, role changes, invitation handling. | Express Router |
+| **task.routes.ts** | Task CRUD, status updates, assignment, comments, time entries, following. | Express Router |
+| **project.routes.ts** | Project CRUD, member assignment, project statistics. | Express Router |
+| **notification.routes.ts** | Get notifications, mark as read, mark all as read, delete notification. | Express Router |
+| **invitation.routes.ts** | Validate invitation tokens, accept invitations, cancel invitations. | Express Router |
+| **widget.routes.ts** | Dashboard widget CRUD for charts and analytics. | Express Router |
+| **drive.routes.ts** | Google Drive proxy: list files, upload, download, create folders. | Express Router |
+| **sheets.routes.ts** | Google Sheets proxy: list spreadsheets, create, get data, update cells. | Express Router |
+| **calendar.routes.ts** | Google Calendar proxy: list events, create event, update event. | Express Router |
+| **timeEntry.routes.ts** | Time tracking: log hours, list entries, delete entries under tasks. | Express Router |
+
+### Middleware
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **auth.middleware.ts** | JWT token validation, user extraction from token, request augmentation with user data. | Express Middleware |
+| **permission.middleware.ts** | Role-based access control (RBAC), permission checking, role hierarchy enforcement. | Express Middleware |
+
+### Services
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **notification.service.ts** | Create notifications, send assignment alerts, comment notifications, mark as read. | Service Class |
+| **activity.service.ts** | Log user activities, track entity changes, generate activity feed data. | Service Class |
+| **migration.service.ts** | Database schema management, automatic migrations, version tracking. | Service Class |
+
+### Configuration
+
+| Component Name | Description & Purpose | Type/Format |
+|----------------|----------------------|-------------|
+| **database.ts** | PostgreSQL connection pool configuration, query wrapper with logging. | Config Module |
+| **google.ts** | Google OAuth2 client setup, Drive/Sheets/Calendar API client initialization. | Config Module |
+| **logger.ts** | Winston logger configuration with console and file transports. | Config Module |
+
+### Database Schema (Migrations)
+
+| Migration | Description & Purpose | Type/Format |
+|-----------|----------------------|-------------|
+| **001_add_personal_flag** | Add is_personal flag to organizations for personal workspace detection. | SQL Migration |
+| **002_add_onboarding_data** | Add onboarding_data JSON field to users table. | SQL Migration |
+| **003_add_organization_invitations** | Create organization invitations table for email invites. | SQL Migration |
+| **004_add_board_widgets** | Create board_widgets table for dashboard charts. | SQL Migration |
+| **005_add_activity_entity_name** | Add entity_name field to activity_log for display. | SQL Migration |
+| **006_add_time_entries** | Create time_entries table for time tracking. | SQL Migration |
+| **007_add_task_comments** | Create task_comments table for task discussions. | SQL Migration |
+| **008_add_theme_mode** | Add theme_mode preference field to users. | SQL Migration |
+| **009_add_task_followers** | Create task_followers junction table for task subscriptions. | SQL Migration |
+| **010_add_notification_task_id** | Add task_id foreign key to notifications for task linking. | SQL Migration |
+| **011_task_assignees** | Create task_assignees junction table for multi-assignee support. | SQL Migration |
+
+---
+
+## Object-Oriented Components Summary
+
+The system follows object-oriented design principles:
+
+### Domain Models
+- **User**: Core entity representing authenticated users with profile and preferences
+- **Organization**: Workspace container with members and role-based access
+- **Project**: Grouping of tasks within an organization
+- **Task**: Primary work item with status, priority, assignments, and comments
+- **Notification**: User alerts for assignments, comments, and updates
+
+### Service Layer
+- **AuthService**: Handles OAuth flow and JWT generation
+- **NotificationService**: Creates and delivers user notifications
+- **ActivityService**: Logs user actions for audit trail
+- **MigrationService**: Manages database schema evolution
+
+### Access Control
+- **AuthMiddleware**: Validates JWT tokens on protected routes
+- **PermissionMiddleware**: Enforces role-based permissions (Admin > Manager > Member)
+
+### Integration Adapters
+- **GoogleDriveAdapter**: Proxies requests to Google Drive API
+- **GoogleSheetsAdapter**: Proxies requests to Google Sheets API
+- **GoogleCalendarAdapter**: Proxies requests to Google Calendar API
+

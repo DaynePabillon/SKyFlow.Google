@@ -57,7 +57,7 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
       </div>
 
       {/* Header */}
-      <header className="border-b border-white/40 bg-white/70 backdrop-blur-xl sticky top-0 z-40 shadow-lg">
+      <header className="border-b border-white/40 bg-white/70 backdrop-blur-xl sticky top-0 z-30 shadow-lg">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -140,7 +140,7 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
       </header>
 
       {/* Main Layout with Sidebar */}
-      <div className="flex relative z-10">
+      <div className="flex relative z-20">
         {/* Sidebar */}
         <aside className="hidden lg:flex lg:flex-col w-64 bg-white/70 backdrop-blur-xl border-r border-white/40 min-h-[calc(100vh-73px)] sticky top-[73px] shadow-lg">
           <div className="p-6">
