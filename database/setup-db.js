@@ -7,7 +7,7 @@ const pool = new Pool({
   port: 5432,
   database: 'SkyFlow_Db',
   user: 'postgres',
-  password: 'lovejesus123day'
+  password: 'lowensaga'
 });
 
 async function setupDatabase() {
