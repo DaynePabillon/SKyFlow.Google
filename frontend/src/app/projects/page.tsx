@@ -93,12 +93,18 @@ export default function ProjectsPage() {
     content = <MemberProjectView user={user} organization={selectedOrg} />
   }
 
+  // Handler to persist org change to localStorage
+  const handleOrgChange = (org: Organization) => {
+    setSelectedOrg(org)
+    localStorage.setItem('selectedOrganization', JSON.stringify(org))
+  }
+
   return (
     <AppLayout
       user={user}
       organizations={organizations}
       selectedOrg={selectedOrg}
-      onOrgChange={setSelectedOrg}
+      onOrgChange={handleOrgChange}
     >
       {content}
     </AppLayout>

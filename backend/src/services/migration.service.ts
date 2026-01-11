@@ -391,6 +391,53 @@ async function runMigrations(): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_time_entries_task ON time_entries(task_id);
         CREATE INDEX IF NOT EXISTS idx_widgets_org ON board_widgets(organization_id);
       `
+    },
+    {
+      name: '009_task_followers',
+      sql: `
+        -- Task followers for comment notifications
+        CREATE TABLE IF NOT EXISTS task_followers (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
+          user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+          followed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(task_id, user_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_task_followers_task ON task_followers(task_id);
+        CREATE INDEX IF NOT EXISTS idx_task_followers_user ON task_followers(user_id);
+      `
+    },
+    {
+      name: '010_fix_notifications_task_id',
+      sql: `
+        -- Add task_id column to notifications if it doesn't exist
+        ALTER TABLE notifications ADD COLUMN IF NOT EXISTS task_id UUID REFERENCES tasks(id) ON DELETE CASCADE;
+      `
+    },
+    {
+      name: '011_task_assignees',
+      sql: `
+        -- Task assignees junction table for multi-assignee support
+        CREATE TABLE IF NOT EXISTS task_assignees (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
+          user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+          assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          assigned_by UUID REFERENCES users(id) ON DELETE SET NULL,
+          UNIQUE(task_id, user_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_task_assignees_task ON task_assignees(task_id);
+        CREATE INDEX IF NOT EXISTS idx_task_assignees_user ON task_assignees(user_id);
+
+        -- Migrate existing assigned_to data to new table
+        INSERT INTO task_assignees (task_id, user_id, assigned_at)
+        SELECT id, assigned_to, updated_at
+        FROM tasks
+        WHERE assigned_to IS NOT NULL
+        ON CONFLICT (task_id, user_id) DO NOTHING;
+      `
     }
   ];
 

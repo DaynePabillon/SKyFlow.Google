@@ -516,4 +516,93 @@ router.delete('/:orgId/members/:memberId', authenticateToken, async (req: AuthRe
   }
 });
 
+/**
+ * POST /api/organizations/:id/leave
+ * Leave an organization (any member can leave)
+ */
+router.post('/:id/leave', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Check if user is a member
+    const memberCheck = await query(
+      'SELECT role FROM organization_members WHERE organization_id = $1 AND user_id = $2 AND status = $3',
+      [id, userId, 'active']
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'You are not a member of this organization' });
+    }
+
+    const userRole = memberCheck.rows[0].role;
+
+    // If user is admin, check if they're the only admin
+    if (userRole === 'admin') {
+      const adminCount = await query(
+        `SELECT COUNT(*) FROM organization_members WHERE organization_id = $1 AND role = 'admin' AND status = 'active'`,
+        [id]
+      );
+      if (parseInt(adminCount.rows[0].count) <= 1) {
+        // Check if there are other members who could become admin
+        const memberCount = await query(
+          `SELECT COUNT(*) FROM organization_members WHERE organization_id = $1 AND status = 'active'`,
+          [id]
+        );
+        if (parseInt(memberCount.rows[0].count) > 1) {
+          return res.status(400).json({
+            error: 'You are the only admin. Please promote another member to admin before leaving, or delete the workspace.'
+          });
+        }
+        // If only member, just delete the org
+        await query('DELETE FROM organizations WHERE id = $1', [id]);
+        logger.info(`Organization ${id} deleted as last admin left`);
+        return res.json({ success: true, message: 'Workspace deleted as you were the only member' });
+      }
+    }
+
+    // Remove user from organization
+    await query(
+      'DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2',
+      [id, userId]
+    );
+
+    logger.info(`User ${userId} left organization ${id}`);
+    res.json({ success: true, message: 'Successfully left the workspace' });
+  } catch (error) {
+    logger.error('Error leaving organization:', error);
+    res.status(500).json({ error: 'Failed to leave organization' });
+  }
+});
+
+/**
+ * DELETE /api/organizations/:id
+ * Delete an organization (admin only)
+ */
+router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Check if user is admin
+    const roleCheck = await query(
+      'SELECT role FROM organization_members WHERE organization_id = $1 AND user_id = $2 AND status = $3',
+      [id, userId, 'active']
+    );
+
+    if (roleCheck.rows.length === 0 || roleCheck.rows[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can delete workspaces' });
+    }
+
+    // Delete organization (cascade will handle members, projects, tasks)
+    await query('DELETE FROM organizations WHERE id = $1', [id]);
+
+    logger.info(`Organization ${id} deleted by user ${userId}`);
+    res.json({ success: true, message: 'Workspace deleted successfully' });
+  } catch (error) {
+    logger.error('Error deleting organization:', error);
+    res.status(500).json({ error: 'Failed to delete organization' });
+  }
+});
+
 export default router;

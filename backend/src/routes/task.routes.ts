@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { AuthRequest, authenticateToken } from '../middleware/auth.middleware';
 import { query } from '../config/database';
 import logger from '../config/logger';
+import notificationService from '../services/notification.service';
 
 const router = Router();
 
@@ -20,7 +21,6 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       due_date,
       estimated_hours,
       assigned_to,
-      parent_task_id,
     } = req.body;
     const userId = req.user!.id;
 
@@ -46,11 +46,11 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const result = await query(
       `INSERT INTO tasks (
         project_id, title, description, status, priority,
-        due_date, estimated_hours, assigned_to, created_by, parent_task_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        due_date, estimated_hours, assigned_to, created_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *`,
       [project_id, title, description, status || 'todo', priority || 'medium',
-        due_date, estimated_hours, assigned_to, userId, parent_task_id]
+        due_date, estimated_hours, assigned_to, userId]
     );
 
     logger.info(`Task created: ${result.rows[0].id} by user ${userId}`);
@@ -91,7 +91,8 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     }
 
     if (assigned_to) {
-      queryText += ` AND t.assigned_to = $${params.length + 1}`;
+      // Filter by tasks that have this user as an assignee in the junction table
+      queryText += ` AND EXISTS (SELECT 1 FROM task_assignees ta WHERE ta.task_id = t.id AND ta.user_id = $${params.length + 1})`;
       params.push(assigned_to);
     }
 
@@ -108,6 +109,38 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     queryText += ' ORDER BY t.due_date ASC NULLS LAST, t.created_at DESC';
 
     const result = await query(queryText, params);
+
+    // Fetch assignees for each task
+    const taskIds = result.rows.map(t => t.id);
+    if (taskIds.length > 0) {
+      const assigneesResult = await query(
+        `SELECT ta.task_id, ta.user_id, u.name, u.email, u.profile_picture
+         FROM task_assignees ta
+         JOIN users u ON ta.user_id = u.id
+         WHERE ta.task_id = ANY($1)`,
+        [taskIds]
+      );
+
+      // Group assignees by task_id
+      const assigneesByTask: Record<string, any[]> = {};
+      for (const a of assigneesResult.rows) {
+        if (!assigneesByTask[a.task_id]) {
+          assigneesByTask[a.task_id] = [];
+        }
+        assigneesByTask[a.task_id].push({
+          user_id: a.user_id,
+          name: a.name,
+          email: a.email,
+          profile_picture: a.profile_picture
+        });
+      }
+
+      // Add assignees to each task
+      for (const task of result.rows) {
+        task.assignees = assigneesByTask[task.id] || [];
+      }
+    }
+
     res.json(result.rows);
   } catch (error) {
     logger.error('Error fetching tasks:', error);
@@ -161,10 +194,21 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       [id]
     );
 
+    // Get assignees from junction table
+    const assigneesResult = await query(
+      `SELECT ta.user_id, u.name, u.email, u.profile_picture, ta.assigned_at
+       FROM task_assignees ta
+       JOIN users u ON ta.user_id = u.id
+       WHERE ta.task_id = $1
+       ORDER BY ta.assigned_at ASC`,
+      [id]
+    );
+
     const task = {
       ...result.rows[0],
       subtasks: subtasks.rows,
       comments: comments.rows,
+      assignees: assigneesResult.rows,
     };
 
     res.json(task);
@@ -304,14 +348,20 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res: Res
 router.patch('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { assigned_to, title, description, priority, due_date } = req.body;
+    const { title, description, priority, due_date } = req.body;
     const userId = req.user!.id;
+    const userName = req.user!.name;
 
-    // Check access
+    // Check if assigned_to was explicitly provided (even if null)
+    const assignedToProvided = 'assigned_to' in req.body;
+    const assigned_to = req.body.assigned_to;
+
+    // Check access and get current task data
     const accessCheck = await query(
-      `SELECT 1 FROM tasks t
+      `SELECT t.*, u.name as assigner_name FROM tasks t
        INNER JOIN projects p ON t.project_id = p.id
        INNER JOIN organization_members om ON p.organization_id = om.organization_id
+       LEFT JOIN users u ON u.id = $2
        WHERE t.id = $1 AND om.user_id = $2 AND om.status = $3`,
       [id, userId, 'active']
     );
@@ -320,24 +370,50 @@ router.patch('/:id', authenticateToken, async (req: AuthRequest, res: Response) 
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    const oldTask = accessCheck.rows[0];
+
+    // Build dynamic update query to allow setting assigned_to to null
     const result = await query(
       `UPDATE tasks
-       SET assigned_to = COALESCE($1, assigned_to),
-           title = COALESCE($2, title),
-           description = COALESCE($3, description),
-           priority = COALESCE($4, priority),
-           due_date = COALESCE($5, due_date)
-       WHERE id = $6
+       SET assigned_to = CASE WHEN $1 THEN $2 ELSE assigned_to END,
+           title = COALESCE($3, title),
+           description = COALESCE($4, description),
+           priority = COALESCE($5, priority),
+           due_date = COALESCE($6, due_date)
+       WHERE id = $7
        RETURNING *`,
-      [assigned_to, title, description, priority, due_date, id]
+      [assignedToProvided, assigned_to, title, description, priority, due_date, id]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Task not found' });
     }
 
+    const updatedTask = result.rows[0];
+
+    // If assignment changed, notify and auto-follow
+    if (assigned_to && assigned_to !== oldTask.assigned_to) {
+      // Notify the new assignee
+      await notificationService.notifyTaskAssignment(
+        id,
+        updatedTask.title,
+        assigned_to,
+        userName || 'Someone'
+      );
+
+      // Auto-follow task for the new assignee
+      await query(
+        `INSERT INTO task_followers (task_id, user_id)
+         VALUES ($1, $2)
+         ON CONFLICT (task_id, user_id) DO NOTHING`,
+        [id, assigned_to]
+      );
+
+      logger.info(`Task ${id} assigned to ${assigned_to}, notification sent`);
+    }
+
     logger.info(`Task ${id} updated by user ${userId}`);
-    res.json(result.rows[0]);
+    res.json(updatedTask);
   } catch (error: any) {
     logger.error('Error updating task:', error);
     res.status(500).json({ error: 'Failed to update task' });
@@ -390,28 +466,49 @@ router.post('/:id/comments', authenticateToken, async (req: AuthRequest, res: Re
     const { id } = req.params;
     const { comment } = req.body;
     const userId = req.user!.id;
+    const userName = req.user!.name;
 
     if (!comment) {
       return res.status(400).json({ error: 'Comment is required' });
     }
 
-    // Check access
-    const accessCheck = await query(
-      `SELECT 1 FROM tasks t
+    // Check access and get task info
+    const taskCheck = await query(
+      `SELECT t.title FROM tasks t
        INNER JOIN projects p ON t.project_id = p.id
        INNER JOIN organization_members om ON p.organization_id = om.organization_id
        WHERE t.id = $1 AND om.user_id = $2 AND om.status = $3`,
       [id, userId, 'active']
     );
 
-    if (accessCheck.rows.length === 0) {
+    if (taskCheck.rows.length === 0) {
       return res.status(403).json({ error: 'Access denied' });
     }
+
+    const taskTitle = taskCheck.rows[0].title;
 
     const result = await query(
       'INSERT INTO task_comments (task_id, user_id, comment) VALUES ($1, $2, $3) RETURNING *',
       [id, userId, comment]
     );
+
+    // Auto-follow commenter (if not already following)
+    await query(
+      `INSERT INTO task_followers (task_id, user_id)
+       VALUES ($1, $2)
+       ON CONFLICT (task_id, user_id) DO NOTHING`,
+      [id, userId]
+    );
+
+    // Notify all followers except the commenter
+    const followers = await query(
+      `SELECT user_id FROM task_followers WHERE task_id = $1 AND user_id != $2`,
+      [id, userId]
+    );
+
+    for (const follower of followers.rows) {
+      await notificationService.notifyNewComment(id, taskTitle, follower.user_id, userName || 'Someone');
+    }
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -453,6 +550,224 @@ router.post('/:id/time', authenticateToken, async (req: AuthRequest, res: Respon
   } catch (error) {
     logger.error('Error logging time:', error);
     res.status(500).json({ error: 'Failed to log time' });
+  }
+});
+
+/**
+ * POST /api/tasks/:id/follow
+ * Follow a task to receive comment notifications
+ */
+router.post('/:id/follow', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Check access to task
+    const accessCheck = await query(
+      `SELECT 1 FROM tasks t
+       INNER JOIN projects p ON t.project_id = p.id
+       INNER JOIN organization_members om ON p.organization_id = om.organization_id
+       WHERE t.id = $1 AND om.user_id = $2 AND om.status = $3`,
+      [id, userId, 'active']
+    );
+
+    if (accessCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Insert or ignore if already following
+    await query(
+      `INSERT INTO task_followers (task_id, user_id)
+       VALUES ($1, $2)
+       ON CONFLICT (task_id, user_id) DO NOTHING`,
+      [id, userId]
+    );
+
+    res.json({ following: true });
+  } catch (error) {
+    logger.error('Error following task:', error);
+    res.status(500).json({ error: 'Failed to follow task' });
+  }
+});
+
+/**
+ * DELETE /api/tasks/:id/follow
+ * Unfollow a task to stop receiving comment notifications
+ */
+router.delete('/:id/follow', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    await query(
+      `DELETE FROM task_followers WHERE task_id = $1 AND user_id = $2`,
+      [id, userId]
+    );
+
+    res.json({ following: false });
+  } catch (error) {
+    logger.error('Error unfollowing task:', error);
+    res.status(500).json({ error: 'Failed to unfollow task' });
+  }
+});
+
+/**
+ * GET /api/tasks/:id/following
+ * Check if current user is following a task
+ */
+router.get('/:id/following', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    const result = await query(
+      `SELECT 1 FROM task_followers WHERE task_id = $1 AND user_id = $2`,
+      [id, userId]
+    );
+
+    res.json({ following: result.rows.length > 0 });
+  } catch (error) {
+    logger.error('Error checking follow status:', error);
+    res.status(500).json({ error: 'Failed to check follow status' });
+  }
+});
+
+/**
+ * GET /api/tasks/:id/assignees
+ * Get all assignees for a task
+ */
+router.get('/:id/assignees', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      `SELECT ta.user_id, u.name, u.email, u.profile_picture, ta.assigned_at
+       FROM task_assignees ta
+       JOIN users u ON ta.user_id = u.id
+       WHERE ta.task_id = $1
+       ORDER BY ta.assigned_at ASC`,
+      [id]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    logger.error('Error fetching assignees:', error);
+    res.status(500).json({ error: 'Failed to fetch assignees' });
+  }
+});
+
+/**
+ * POST /api/tasks/:id/assignees
+ * Add assignees to a task (admin/manager only)
+ */
+router.post('/:id/assignees', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { user_ids } = req.body; // Array of user IDs to add
+    const userId = req.user!.id;
+    const userName = req.user!.name;
+
+    if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({ error: 'user_ids array is required' });
+    }
+
+    // Check if user is admin or manager in the organization
+    const roleCheck = await query(
+      `SELECT om.role, t.title FROM tasks t
+       INNER JOIN projects p ON t.project_id = p.id
+       INNER JOIN organization_members om ON p.organization_id = om.organization_id
+       WHERE t.id = $1 AND om.user_id = $2 AND om.status = 'active'`,
+      [id, userId]
+    );
+
+    if (roleCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const role = roleCheck.rows[0].role;
+    const taskTitle = roleCheck.rows[0].title;
+
+    if (role !== 'admin' && role !== 'manager') {
+      return res.status(403).json({ error: 'Only admins and managers can modify assignees' });
+    }
+
+    // Add each assignee
+    for (const assigneeId of user_ids) {
+      await query(
+        `INSERT INTO task_assignees (task_id, user_id, assigned_by)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (task_id, user_id) DO NOTHING`,
+        [id, assigneeId, userId]
+      );
+
+      // Send notification to new assignee (if not self)
+      if (assigneeId !== userId) {
+        await notificationService.notifyTaskAssignment(id, taskTitle, assigneeId, userName || 'Someone');
+      }
+
+      // Auto-follow task for new assignee
+      await query(
+        `INSERT INTO task_followers (task_id, user_id)
+         VALUES ($1, $2)
+         ON CONFLICT (task_id, user_id) DO NOTHING`,
+        [id, assigneeId]
+      );
+    }
+
+    // Return updated assignees list
+    const result = await query(
+      `SELECT ta.user_id, u.name, u.email, u.profile_picture, ta.assigned_at
+       FROM task_assignees ta
+       JOIN users u ON ta.user_id = u.id
+       WHERE ta.task_id = $1
+       ORDER BY ta.assigned_at ASC`,
+      [id]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    logger.error('Error adding assignees:', error);
+    res.status(500).json({ error: 'Failed to add assignees' });
+  }
+});
+
+/**
+ * DELETE /api/tasks/:id/assignees/:userId
+ * Remove an assignee from a task (admin/manager only)
+ */
+router.delete('/:id/assignees/:assigneeId', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id, assigneeId } = req.params;
+    const userId = req.user!.id;
+
+    // Check if user is admin or manager in the organization
+    const roleCheck = await query(
+      `SELECT om.role FROM tasks t
+       INNER JOIN projects p ON t.project_id = p.id
+       INNER JOIN organization_members om ON p.organization_id = om.organization_id
+       WHERE t.id = $1 AND om.user_id = $2 AND om.status = 'active'`,
+      [id, userId]
+    );
+
+    if (roleCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const role = roleCheck.rows[0].role;
+    if (role !== 'admin' && role !== 'manager') {
+      return res.status(403).json({ error: 'Only admins and managers can modify assignees' });
+    }
+
+    // Remove the assignee
+    await query(
+      'DELETE FROM task_assignees WHERE task_id = $1 AND user_id = $2',
+      [id, assigneeId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Error removing assignee:', error);
+    res.status(500).json({ error: 'Failed to remove assignee' });
   }
 });
 

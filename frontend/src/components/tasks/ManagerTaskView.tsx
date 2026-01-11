@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { CheckSquare, Plus, Search, LayoutGrid, Table, X, Calendar, AlertCircle, User, Edit3 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { CheckSquare, Plus, Search, LayoutGrid, Table, X, Calendar, AlertCircle, User, Users, Edit3, Archive, RotateCcw, ChevronDown, ChevronRight } from "lucide-react"
 import BoardingPassCard from "./BoardingPassCard"
 import CloudGroup from "./CloudGroup"
 import ProfessionalTaskCard from "./ProfessionalTaskCard"
 import ProfessionalKanban from "./ProfessionalKanban"
+import TaskTimeline from "./TaskTimeline"
 import { useThemeMode } from "@/context/ThemeContext"
 
 interface Task {
@@ -22,6 +24,12 @@ interface Task {
   project_name?: string
 }
 
+interface Member {
+  user_id: string
+  name: string
+  email: string
+}
+
 interface ManagerTaskViewProps {
   user: any
   organization: {
@@ -33,11 +41,13 @@ interface ManagerTaskViewProps {
 
 export default function ManagerTaskView({ user, organization }: ManagerTaskViewProps) {
   const { isProfessionalMode, isAviationMode } = useThemeMode()
+  const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [viewMode, setViewMode] = useState<'board' | 'table'>('board')
+  const [isArchiveExpanded, setIsArchiveExpanded] = useState(false)
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -46,9 +56,11 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
   })
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [members, setMembers] = useState<Member[]>([])
 
   useEffect(() => {
     fetchTasks()
+    fetchMembers()
   }, [organization.id])
 
   const fetchTasks = async () => {
@@ -67,6 +79,21 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
       console.error('Error fetching tasks:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchMembers = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`http://localhost:3001/api/organizations/${organization.id}/members`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setMembers(data.members || [])
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error)
     }
   }
 
@@ -114,6 +141,46 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
   const handleEditTask = (task: Task) => {
     setEditingTask(task)
     setIsEditModalOpen(true)
+  }
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!confirm('Are you sure you want to delete this flight?')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        fetchTasks()
+      } else {
+        console.error('Failed to delete task')
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error)
+    }
+  }
+
+  const handleArchiveTask = async (taskId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      await fetch(`http://localhost:3001/api/tasks/${taskId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'archived' })
+      })
+
+      fetchTasks()
+    } catch (error) {
+      console.error('Error archiving task:', error)
+    }
   }
 
   const handleUpdateTask = async () => {
@@ -263,8 +330,10 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
         isProfessionalMode ? (
           <ProfessionalKanban
             tasks={tasks.filter(t => t.status !== 'archived') as any}
-            onTaskClick={(task) => handleEditTask(task as Task)}
+            onTaskClick={(task) => router.push(`/tasks/${task.id}`)}
             onAddTask={() => setIsCreateModalOpen(true)}
+            onDeleteTask={handleDeleteTask}
+            onArchiveTask={handleArchiveTask}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -283,6 +352,8 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                     key={task.id}
                     task={task}
                     onDragStart={handleDragStart}
+                    onDelete={handleDeleteTask}
+                    onArchive={handleArchiveTask}
                     onClick={() => handleEditTask(task)}
                   />
                 ))}
@@ -290,6 +361,67 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
             ))}
           </div>
         )
+      )}
+
+      {/* Archived Section */}
+      {getStatusColumn('archived').length > 0 && (
+        <div className="mt-8">
+          <button
+            onClick={() => setIsArchiveExpanded(!isArchiveExpanded)}
+            className="flex items-center gap-3 w-full text-left p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 hover:bg-white/70 transition-colors"
+          >
+            {isArchiveExpanded ? (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronRight className="w-5 h-5 text-gray-500" />
+            )}
+            <Archive className="w-5 h-5 text-amber-500" />
+            <span className="font-semibold text-gray-700">
+              {isProfessionalMode ? '📦 Archived Tasks' : '📦 Archived Flights'}
+            </span>
+            <span className="text-sm text-gray-500 ml-2">
+              ({getStatusColumn('archived').length} {getStatusColumn('archived').length === 1
+                ? (isProfessionalMode ? 'task' : 'flight')
+                : (isProfessionalMode ? 'tasks' : 'flights')})
+            </span>
+          </button>
+
+          {isArchiveExpanded && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {getStatusColumn('archived').map((task) => (
+                <div key={task.id} className="relative">
+                  <div className="absolute top-2 right-2 z-20">
+                    <button
+                      onClick={() => handleStatusChange(task.id, 'todo')}
+                      className="p-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md transition-all"
+                      title={isProfessionalMode ? "Restore to Todo" : "Restore to Boarding"}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-white" />
+                    </button>
+                  </div>
+                  <div className="opacity-70 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-300">
+                    {isProfessionalMode ? (
+                      <ProfessionalTaskCard
+                        task={task as any}
+                        onClick={() => handleEditTask(task)}
+                        onDelete={handleDeleteTask}
+                        onArchive={handleArchiveTask}
+                      />
+                    ) : (
+                      <BoardingPassCard
+                        task={task}
+                        onDragStart={handleDragStart}
+                        onDelete={handleDeleteTask}
+                        onArchive={handleArchiveTask}
+                        onClick={() => handleEditTask(task)}
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Table View */}
@@ -431,7 +563,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
       {/* Edit Task Modal */}
       {isEditModalOpen && editingTask && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-lg w-full p-6">
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                 {isProfessionalMode ? '✏️ Edit Task' : '✏️ Edit Flight'}
@@ -440,67 +572,80 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {isProfessionalMode ? 'Task Title' : 'Flight Name'}
-                </label>
-                <input
-                  type="text"
-                  value={editingTask.title}
-                  onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  value={editingTask.description || ''}
-                  onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+
+            {/* Two-column layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left: Edit Form */}
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {isProfessionalMode ? 'Priority' : 'Class'}
+                    {isProfessionalMode ? 'Task Title' : 'Flight Name'}
                   </label>
-                  <select
-                    value={editingTask.priority}
-                    onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
-                  >
-                    <option value="high">{isProfessionalMode ? '🔴 High Priority' : '✈️ First Class'}</option>
-                    <option value="medium">{isProfessionalMode ? '🟡 Medium Priority' : '💼 Business'}</option>
-                    <option value="low">{isProfessionalMode ? '🟢 Low Priority' : '🎫 Economy'}</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
                   <input
-                    type="date"
-                    value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setEditingTask({ ...editingTask, due_date: e.target.value })}
+                    type="text"
+                    value={editingTask.title}
+                    onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={editingTask.description || ''}
+                    onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                    rows={3}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {isProfessionalMode ? 'Priority' : 'Class'}
+                    </label>
+                    <select
+                      value={editingTask.priority}
+                      onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value as any })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                    >
+                      <option value="high">{isProfessionalMode ? 'High Priority' : 'First Class'}</option>
+                      <option value="medium">{isProfessionalMode ? 'Medium Priority' : 'Business'}</option>
+                      <option value="low">{isProfessionalMode ? 'Low Priority' : 'Economy'}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                    <input
+                      type="date"
+                      value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => setEditingTask({ ...editingTask, due_date: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => { setIsEditModalOpen(false); setEditingTask(null); }}
+                    className="flex-1 py-3 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdateTask}
+                    disabled={!editingTask.title.trim()}
+                    className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-medium disabled:opacity-50 hover:from-blue-600 hover:to-cyan-600"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => { setIsEditModalOpen(false); setEditingTask(null); }}
-                  className="flex-1 py-3 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpdateTask}
-                  disabled={!editingTask.title.trim()}
-                  className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-medium disabled:opacity-50 hover:from-blue-600 hover:to-cyan-600"
-                >
-                  Save Changes
-                </button>
+
+              {/* Right: Task Timeline */}
+              <div>
+                <TaskTimeline
+                  taskId={editingTask.id}
+                  currentUserId={user?.id}
+                />
               </div>
             </div>
           </div>

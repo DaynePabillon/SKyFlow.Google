@@ -80,9 +80,46 @@ graph TB
 
 ---
 
-## Module 1: Authentication & User Management
+# Module 1: Authentication & User Management
 
-### 1.1 User Login via Google OAuth - Sequence Diagram
+## 1.1 User Login via Google OAuth
+
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["User Interface Flow"]
+        Landing["Landing Page<br/>Google Sign-In Button"]
+        Consent["Google Consent Screen"]
+        Callback["Auth Callback Page<br/>Loading State"]
+        Dashboard["Dashboard<br/>Authenticated View"]
+    end
+    
+    Landing -->|"Click Sign In"| Consent
+    Consent -->|"Grant Access"| Callback
+    Callback -->|"Token Stored"| Dashboard
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **LandingPage** | Marketing page with hero section, animated features showcase, and prominent Google Sign-In button. Supports Professional/Aviation themes. | Page Component (TSX) |
+| **GoogleSignInButton** | Styled button that redirects to Google OAuth consent screen. Displays Google logo and loading state. | Button Component (TSX) |
+| **AuthCallback** | Handles OAuth callback URL, extracts authorization code, exchanges for tokens, stores JWT in localStorage. | Page Component (TSX) |
+| **LoadingSpinner** | Displays centered spinner during authentication process with optional message. | UI Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **auth.routes.ts** | Express router handling `/api/auth/google/callback` for OAuth token exchange and JWT generation. | Express Router |
+| **auth.middleware.ts** | JWT validation middleware that extracts user from token and attaches to request object. | Express Middleware |
+| **google.ts** | Google OAuth2 client configuration with client ID, secret, and redirect URI. | Config Module |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -110,7 +147,7 @@ sequenceDiagram
     F->>U: Redirect to dashboard
 ```
 
-### 1.1 User Login via Google OAuth - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -154,9 +191,64 @@ classDiagram
     AuthService --> User : creates
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    USERS {
+        uuid id PK
+        string google_id UK
+        string email UK
+        string name
+        string profile_picture
+        text access_token
+        text refresh_token
+        jsonb onboarding_data
+        string theme_mode
+        timestamp created_at
+        timestamp updated_at
+    }
+```
+
 ---
 
-### 1.2 User Onboarding - Sequence Diagram
+## 1.2 User Onboarding
+
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph ONBOARD["Onboarding Flow"]
+        Welcome["Welcome Screen<br/>Purpose Selection"]
+        Role["Role Selection<br/>Admin/Manager/Member"]
+        Team["Team Size<br/>Focus Areas"]
+        Complete["Completion<br/>Redirect to Dashboard"]
+    end
+    
+    Welcome -->|"Next"| Role
+    Role -->|"Next"| Team
+    Team -->|"Complete"| Complete
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **OnboardingFlow** | Multi-step wizard component managing onboarding state with step indicators and navigation. | Page Component (TSX) |
+| **StepPurpose** | First onboarding step where user selects their primary purpose (Work, School, Personal). | Step Component (TSX) |
+| **StepRole** | Role selection step for choosing organizational role preference. | Step Component (TSX) |
+| **StepTeamSize** | Team configuration step with size selection and focus area checkboxes. | Step Component (TSX) |
+| **StepIndicator** | Visual progress indicator showing current step and completed steps. | UI Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **user.routes.ts** | Express router with `PATCH /api/users/preferences` endpoint for saving onboarding data. | Express Router |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -176,7 +268,7 @@ sequenceDiagram
     F->>U: Redirect to personalized dashboard
 ```
 
-### 1.2 User Onboarding - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -206,11 +298,68 @@ classDiagram
     UserService --> User : updates
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    USERS {
+        uuid id PK
+        string email UK
+        string name
+        jsonb onboarding_data
+        timestamp created_at
+    }
+    
+    ONBOARDING_DATA {
+        string purpose
+        string role
+        string teamSize
+        array focusAreas
+        timestamp completedAt
+    }
+    
+    USERS ||--|| ONBOARDING_DATA : "stored as JSON in"
+```
+
 ---
 
-## Module 2: Organization & Team Management
+# Module 2: Organization & Team Management
 
-### 2.1 Create Organization - Sequence Diagram
+## 2.1 Create Organization
+
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Create Organization Flow"]
+        Dashboard["Dashboard<br/>+ New Organization"]
+        Modal["Create Modal<br/>Name Input"]
+        Success["Success State<br/>Organization Created"]
+        OrgView["Organization View<br/>Member List"]
+    end
+    
+    Dashboard -->|"Click Create"| Modal
+    Modal -->|"Submit"| Success
+    Success -->|"Continue"| OrgView
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **CreateOrganizationModal** | Modal dialog with form for entering organization name and optional description. | Modal Component (TSX) |
+| **OrganizationSelector** | Header dropdown for switching between organizations the user belongs to. | Dropdown Component (TSX) |
+| **OrganizationCard** | Card displaying organization info with member count and quick actions. | Card Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **organization.routes.ts** | Express router with `POST /api/organizations` for creating new organizations. | Express Router |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -231,7 +380,7 @@ sequenceDiagram
     F->>U: Show new organization
 ```
 
-### 2.1 Create Organization - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -240,6 +389,7 @@ classDiagram
         +String name
         +String description
         +String domain
+        +Boolean is_personal
         +Timestamp created_at
         +create()
         +update()
@@ -267,9 +417,76 @@ classDiagram
     User "1" --o "*" OrganizationMember : belongs to
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    ORGANIZATIONS {
+        uuid id PK
+        string name
+        text description
+        string domain
+        boolean is_personal
+        timestamp created_at
+    }
+
+    ORGANIZATION_MEMBERS {
+        uuid id PK
+        uuid organization_id FK
+        uuid user_id FK
+        string role
+        string status
+        timestamp joined_at
+    }
+
+    USERS {
+        uuid id PK
+        string name
+        string email
+    }
+
+    ORGANIZATIONS ||--o{ ORGANIZATION_MEMBERS : has
+    USERS ||--o{ ORGANIZATION_MEMBERS : belongs_to
+```
+
 ---
 
-### 2.2 Manage Team Roles - Sequence Diagram
+## 2.2 Manage Team Roles
+
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Role Management Flow"]
+        Team["Team Page<br/>Member List"]
+        Dropdown["Role Dropdown<br/>Admin/Manager/Member"]
+        Confirm["Confirmation<br/>Role Changed"]
+    end
+    
+    Team -->|"Click Role"| Dropdown
+    Dropdown -->|"Select New Role"| Confirm
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **AdminTeamView** | Full team management page for admins with member list, role dropdowns, invite button, and remove action. | Page Component (TSX) |
+| **ManagerTeamView** | Team view for managers with limited role change capabilities (can only change to member). | Page Component (TSX) |
+| **MemberTeamView** | Read-only team directory showing member cards with contact info. | Page Component (TSX) |
+| **RoleDropdown** | Dropdown selector with role options filtered by current user's permissions. | Form Component (TSX) |
+| **MemberCard** | Card displaying member avatar, name, email, role badge, and action buttons. | Card Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **organization.routes.ts** | `PATCH /api/organizations/:orgId/members/:memberId/role` endpoint for role changes. | Express Router |
+| **permission.middleware.ts** | RBAC middleware enforcing role hierarchy (Admin > Manager > Member). | Express Middleware |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -292,7 +509,7 @@ sequenceDiagram
     F->>A: Show updated role
 ```
 
-### 2.2 Manage Team Roles - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -324,11 +541,197 @@ classDiagram
     RoleManagement --> OrganizationMember : manages
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    ORGANIZATION_MEMBERS {
+        uuid id PK
+        uuid organization_id FK
+        uuid user_id FK
+        string role "admin|manager|member"
+        string status "active|pending|removed"
+        timestamp joined_at
+    }
+
+    ORGANIZATIONS {
+        uuid id PK
+        string name
+    }
+
+    USERS {
+        uuid id PK
+        string name
+        string email
+    }
+
+    ORGANIZATIONS ||--o{ ORGANIZATION_MEMBERS : has
+    USERS ||--o{ ORGANIZATION_MEMBERS : belongs_to
+```
+
 ---
 
-## Module 3: Project Management
+## 2.3 Invite Team Members
 
-### 3.1 Create Project - Sequence Diagram
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Invitation Flow"]
+        Team["Team Page<br/>Invite Button"]
+        Modal["Invite Modal<br/>Email + Role"]
+        Sent["Email Sent<br/>Confirmation"]
+        Accept["Accept Page<br/>Join Organization"]
+    end
+    
+    Team -->|"Click Invite"| Modal
+    Modal -->|"Send Invite"| Sent
+    Sent -.->|"Email Link"| Accept
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **InviteMemberModal** | Modal with email input, role selector, and send button. Validates email format. | Modal Component (TSX) |
+| **PendingInvitesList** | List of pending invitations with resend and cancel actions. | List Component (TSX) |
+| **AcceptInvitePage** | Public page for accepting invitation via token link. | Page Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **organization.routes.ts** | `POST /api/organizations/:orgId/invitations` for sending invites. | Express Router |
+| **invitation.routes.ts** | `GET /api/invitations/validate` and `POST /api/invitations/accept` for invitation handling. | Express Router |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant A as Admin
+    participant F as Frontend
+    participant B as Backend
+    participant DB as Database
+    participant E as Email Service
+    participant I as Invitee
+
+    A->>F: Enter email and role
+    F->>B: POST /api/organizations/:orgId/invitations
+    B->>DB: INSERT INTO organization_invitations
+    DB->>B: Return invitation with token
+    B->>E: Send invitation email
+    B->>F: 201 Created
+    F->>A: Show success message
+    E->>I: Invitation email with link
+    I->>F: Click invitation link
+    F->>B: GET /api/invitations/validate?token=xxx
+    B->>DB: Find valid invitation
+    DB->>B: Return invitation details
+    B->>F: Return org name and role
+    I->>F: Click Accept
+    F->>B: POST /api/invitations/accept
+    B->>DB: INSERT organization_member + mark invitation accepted
+    B->>F: 200 OK
+    F->>I: Redirect to organization
+```
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class OrganizationInvitation {
+        +UUID id
+        +UUID organization_id
+        +String email
+        +String role
+        +String token
+        +UUID invited_by
+        +Timestamp expires_at
+        +Timestamp accepted_at
+        +create()
+        +validate()
+        +accept()
+        +cancel()
+    }
+
+    class InvitationService {
+        +sendInvitation(orgId, email, role) Invitation
+        +validateToken(token) Invitation
+        +acceptInvitation(token, userId) OrganizationMember
+    }
+
+    InvitationService --> OrganizationInvitation : manages
+```
+
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    ORGANIZATION_INVITATIONS {
+        uuid id PK
+        uuid organization_id FK
+        string email
+        string role
+        string token UK
+        uuid invited_by FK
+        timestamp expires_at
+        timestamp accepted_at
+        timestamp created_at
+    }
+
+    ORGANIZATIONS {
+        uuid id PK
+        string name
+    }
+
+    USERS {
+        uuid id PK
+        string email
+    }
+
+    ORGANIZATIONS ||--o{ ORGANIZATION_INVITATIONS : sends
+    USERS ||--o{ ORGANIZATION_INVITATIONS : invited_by
+```
+
+---
+
+# Module 3: Project Management
+
+## 3.1 Create Project
+
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Create Project Flow"]
+        Projects["Projects Page<br/>+ New Project"]
+        Modal["Create Modal<br/>Name, Description, Dates"]
+        Success["Project Created<br/>Redirect to Details"]
+    end
+    
+    Projects -->|"Click Create"| Modal
+    Modal -->|"Submit"| Success
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **ProjectList** | Grid/list view of organization projects with create button, search, and status filters. | Page Component (TSX) |
+| **CreateProjectModal** | Modal form with name, description, priority, start/end date inputs. | Modal Component (TSX) |
+| **ProjectCard** | Card showing project name, status badge, task count, and progress bar. | Card Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **project.routes.ts** | Express router with `POST /api/organizations/:orgId/projects` for project creation. | Express Router |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -347,7 +750,7 @@ sequenceDiagram
     F->>M: Show success message
 ```
 
-### 3.1 Create Project - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -357,6 +760,9 @@ classDiagram
         +String name
         +String description
         +String status
+        +String priority
+        +Date start_date
+        +Date end_date
         +UUID created_by
         +Timestamp created_at
         +create()
@@ -381,9 +787,71 @@ classDiagram
     Project "1" --o "*" Task : contains
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    PROJECTS {
+        uuid id PK
+        uuid organization_id FK
+        string name
+        text description
+        string status "planning|active|completed|on_hold"
+        string priority "low|medium|high|critical"
+        date start_date
+        date end_date
+        decimal budget
+        uuid created_by FK
+        timestamp created_at
+    }
+
+    ORGANIZATIONS {
+        uuid id PK
+        string name
+    }
+
+    ORGANIZATIONS ||--o{ PROJECTS : contains
+```
+
 ---
 
-### 3.2 View Project Dashboard - Sequence Diagram
+## 3.2 View Project Dashboard
+
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Project Dashboard"]
+        Header["Project Header<br/>Name, Status, Actions"]
+        Stats["Stats Cards<br/>Tasks, Progress, Members"]
+        Widgets["Chart Widgets<br/>Customizable"]
+        Tasks["Task List<br/>Kanban/Table View"]
+    end
+    
+    Header --> Stats
+    Stats --> Widgets
+    Widgets --> Tasks
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **ProjectDetails** | Main project page with header, stats, task board, and settings. | Page Component (TSX) |
+| **ProjectStatsCards** | Row of stats cards showing task counts by status, progress percentage. | UI Component (TSX) |
+| **ChartWidget** | Configurable chart (bar, pie, line) displaying project analytics using Recharts. | Chart Component (TSX) |
+| **ChartWidgetPicker** | Modal for selecting and adding new chart widgets to dashboard. | Picker Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **project.routes.ts** | `GET /api/projects/:id` returns project with task stats and member count. | Express Router |
+| **widget.routes.ts** | CRUD endpoints for dashboard widgets at `/api/organizations/:id/widgets`. | Express Router |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -405,7 +873,7 @@ sequenceDiagram
     F->>U: Display project dashboard
 ```
 
-### 3.2 View Project Dashboard - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -439,11 +907,81 @@ classDiagram
     ProjectDashboard --> ChartWidgetPicker : opens
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    PROJECTS {
+        uuid id PK
+        uuid organization_id FK
+        string name
+        string status
+        uuid created_by FK
+    }
+
+    BOARD_WIDGETS {
+        uuid id PK
+        uuid organization_id FK
+        string widget_type
+        string title
+        jsonb config
+        int position
+        uuid created_by FK
+        timestamp created_at
+    }
+
+    TASKS {
+        uuid id PK
+        uuid project_id FK
+        string status
+    }
+
+    PROJECTS ||--o{ TASKS : contains
+    ORGANIZATIONS ||--o{ BOARD_WIDGETS : displays
+```
+
 ---
 
-## Module 4: Task Management
+# Module 4: Task Management
 
-### 4.1 Create Task - Sequence Diagram
+## 4.1 Create Task
+
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Create Task Flow"]
+        Board["Kanban Board<br/>+ Add Task Button"]
+        Modal["Create Modal<br/>Title, Description, Priority"]
+        Card["New Task Card<br/>In Todo Column"]
+    end
+    
+    Board -->|"Click Add"| Modal
+    Modal -->|"Submit"| Card
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **AdminTaskView** | Full-featured task management with Kanban, table, radar views, filters, and archive. Admin-only features. | Page Component (TSX) |
+| **ManagerTaskView** | Task management for managers with create/edit capabilities and board/table views. | Page Component (TSX) |
+| **MemberTaskView** | Read-only task view showing assigned tasks with status update capability. | Page Component (TSX) |
+| **CreateTaskModal** | Modal form with title, description, priority, due date, and assignee fields. | Modal Component (TSX) |
+| **ProfessionalKanban** | Drag-and-drop Kanban board with columns for Todo, In Progress, Review, Done. Horizontal scroll. | Board Component (TSX) |
+| **ProfessionalTaskCard** | Task card displaying title, priority badge, assignee avatar, due date. | Card Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **task.routes.ts** | `POST /api/tasks` for creating tasks with automatic activity logging and notifications. | Express Router |
+| **notification.service.ts** | Creates notifications for task assignee when assigned. | Service Class |
+| **activity.service.ts** | Logs task creation in organization activity feed. | Service Class |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -466,7 +1004,7 @@ sequenceDiagram
     F->>M: Show success
 ```
 
-### 4.1 Create Task - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -481,6 +1019,7 @@ classDiagram
         +UUID assigned_to
         +UUID created_by
         +Timestamp created_at
+        +Timestamp completed_at
         +create()
         +update()
         +delete()
@@ -492,7 +1031,7 @@ classDiagram
         +UUID id
         +UUID task_id
         +UUID user_id
-        +String content
+        +String comment
         +Timestamp created_at
         +create()
         +delete()
@@ -504,7 +1043,7 @@ classDiagram
         +UUID user_id
         +Decimal hours
         +String notes
-        +Date entry_date
+        +Date date
         +create()
         +delete()
     }
@@ -513,9 +1052,77 @@ classDiagram
     Task "1" --o "*" TimeEntry : tracks
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    TASKS {
+        uuid id PK
+        uuid project_id FK
+        string title
+        text description
+        string status "todo|in_progress|review|done|archived"
+        string priority "low|medium|high|critical"
+        timestamp due_date
+        decimal estimated_hours
+        decimal actual_hours
+        uuid assigned_to FK
+        uuid created_by FK
+        timestamp created_at
+        timestamp completed_at
+    }
+
+    PROJECTS {
+        uuid id PK
+        string name
+    }
+
+    USERS {
+        uuid id PK
+        string name
+    }
+
+    PROJECTS ||--o{ TASKS : contains
+    USERS ||--o{ TASKS : assigned_to
+    USERS ||--o{ TASKS : created_by
+```
+
 ---
 
-### 4.2 Update Task Status (Kanban) - Sequence Diagram
+## 4.2 Update Task Status (Kanban)
+
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Status Change Flow"]
+        Todo["Todo Column<br/>Task Card"]
+        InProgress["In Progress Column<br/>Drop Target"]
+        Done["Done Column<br/>Completed"]
+    end
+    
+    Todo -->|"Drag"| InProgress
+    InProgress -->|"Drag"| Done
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **ProfessionalKanban** | Kanban board with drag-drop between columns. Optimistic UI updates. | Board Component (TSX) |
+| **BoardingPassCard** | Aviation-themed task card styled like airline boarding pass for Aviation mode. | Card Component (TSX) |
+| **CloudGroup** | Aviation-themed column with animated clouds for status visualization. | Column Component (TSX) |
+| **ControlTower** | Radar visualization showing tasks by priority and urgency. | Visualization Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **task.routes.ts** | `PATCH /api/tasks/:id` updates status, sets `completed_at` when done. | Express Router |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -534,7 +1141,7 @@ sequenceDiagram
     F->>U: Confirm status change
 ```
 
-### 4.2 Update Task Status (Kanban) - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -563,11 +1170,312 @@ classDiagram
     KanbanColumn "1" --o "*" TaskCard : displays
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    TASKS {
+        uuid id PK
+        string status "todo|in_progress|review|done"
+        timestamp completed_at "Set when status=done"
+        timestamp updated_at
+    }
+```
+
 ---
 
-## Module 5: Google Workspace Integration
+## 4.3 Task Assignment
 
-### 5.1 Access Google Drive - Sequence Diagram
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Assignment Flow"]
+        Board["Team Board<br/>Task Row"]
+        Dropdown["Assignee Dropdown<br/>Member List"]
+        Updated["Updated View<br/>New Assignee Avatar"]
+    end
+    
+    Board -->|"Click Assignee"| Dropdown
+    Dropdown -->|"Select Member"| Updated
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **ProfessionalTeamBoard** | Table-style board with inline assignee dropdown for each task row. | Board Component (TSX) |
+| **FlightManifest** | Aviation-themed team board styled like airport departure board. | Board Component (TSX) |
+| **MultiAssigneeSelect** | Multi-select dropdown for assigning multiple users to a task. | Form Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **task.routes.ts** | `PATCH /api/tasks/:id` with `assigned_to` field, sends notifications. | Express Router |
+| **task.routes.ts** | `POST/DELETE /api/tasks/:id/assignees/:userId` for multi-assignee support. | Express Router |
+| **notification.service.ts** | `notifyTaskAssignment()` creates notification for new assignee. | Service Class |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant M as Manager
+    participant F as Frontend
+    participant B as Backend
+    participant NS as NotificationService
+    participant DB as Database
+
+    M->>F: Select assignee from dropdown
+    F->>B: PATCH /api/tasks/:id {assigned_to: userId}
+    B->>DB: UPDATE tasks SET assigned_to
+    DB->>B: Return updated task
+    B->>NS: notifyTaskAssignment(taskId, userId)
+    NS->>DB: INSERT INTO notifications
+    B->>DB: INSERT INTO task_followers (auto-follow)
+    B->>F: 200 OK with task
+    F->>F: Update task card with new assignee
+    F->>M: Show updated assignment
+```
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class Task {
+        +UUID id
+        +UUID assigned_to
+        +assign(userId)
+        +unassign()
+    }
+
+    class TaskAssignee {
+        +UUID id
+        +UUID task_id
+        +UUID user_id
+        +UUID assigned_by
+        +Timestamp assigned_at
+    }
+
+    class NotificationService {
+        +notifyTaskAssignment(taskId, title, assigneeId, assignerName)
+    }
+
+    Task "1" --o "*" TaskAssignee : has
+    NotificationService --> Task : notifies on
+```
+
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    TASKS {
+        uuid id PK
+        uuid assigned_to FK
+    }
+
+    TASK_ASSIGNEES {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        uuid assigned_by FK
+        timestamp assigned_at
+    }
+
+    TASK_FOLLOWERS {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        timestamp followed_at
+    }
+
+    USERS {
+        uuid id PK
+        string name
+    }
+
+    TASKS ||--o{ TASK_ASSIGNEES : has
+    TASKS ||--o{ TASK_FOLLOWERS : followed_by
+    USERS ||--o{ TASK_ASSIGNEES : assigned_to
+    USERS ||--o{ TASK_FOLLOWERS : follows
+```
+
+---
+
+## 4.4 Task Comments & Timeline
+
+### User Interface Design
+
+```mermaid
+graph TB
+    subgraph UI["Task Timeline Panel"]
+        Task["Task Details<br/>Click to Edit"]
+        Timeline["Activity Timeline<br/>Comments, Changes"]
+        Input["Comment Input<br/>Add Comment"]
+    end
+    
+    Task --> Timeline
+    Timeline --> Input
+    Input -->|"Submit"| Timeline
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **TaskTimeline** | Side panel showing task history with comments, status changes, and time entries. | Panel Component (TSX) |
+| **CommentInput** | Text input with submit button for adding comments to task. | Form Component (TSX) |
+| **TimelineItem** | Single timeline entry showing icon, user, action, and timestamp. | Item Component (TSX) |
+| **TimeLogSection** | Time tracking UI with hours input and log history. | Panel Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **task.routes.ts** | `POST /api/tasks/:id/comments` for adding comments, `GET` for fetching. | Express Router |
+| **timeEntry.routes.ts** | `POST /api/tasks/:taskId/time-entries` for logging time. | Express Router |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant NS as NotificationService
+    participant DB as Database
+
+    U->>F: Type comment and submit
+    F->>B: POST /api/tasks/:id/comments
+    B->>DB: INSERT INTO task_comments
+    DB->>B: Return comment
+    B->>DB: SELECT task_followers WHERE task_id
+    DB->>B: Return follower list
+    B->>NS: Notify each follower
+    NS->>DB: INSERT notifications for followers
+    B->>F: 201 Created
+    F->>F: Add comment to timeline
+    F->>U: Show new comment
+```
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class TaskTimeline {
+        +UUID taskId
+        +Array comments
+        +Array timeEntries
+        +Array activities
+        +fetchTimeline()
+        +addComment(text)
+        +logTime(hours, notes)
+    }
+
+    class TaskComment {
+        +UUID id
+        +UUID task_id
+        +UUID user_id
+        +String user_name
+        +String comment
+        +Timestamp created_at
+    }
+
+    class TimeEntry {
+        +UUID id
+        +UUID task_id
+        +UUID user_id
+        +Decimal hours
+        +String notes
+        +Date date
+    }
+
+    TaskTimeline --> TaskComment : displays
+    TaskTimeline --> TimeEntry : displays
+```
+
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    TASK_COMMENTS {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        text comment
+        timestamp created_at
+    }
+
+    TIME_ENTRIES {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        string user_name
+        decimal hours
+        text notes
+        date date
+        timestamp created_at
+    }
+
+    TASKS {
+        uuid id PK
+        string title
+    }
+
+    USERS {
+        uuid id PK
+        string name
+    }
+
+    TASKS ||--o{ TASK_COMMENTS : has
+    TASKS ||--o{ TIME_ENTRIES : tracks
+    USERS ||--o{ TASK_COMMENTS : writes
+    USERS ||--o{ TIME_ENTRIES : logs
+```
+
+---
+
+# Module 5: Google Workspace Integration
+
+## 5.1 Access Google Drive
+
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Drive Interface"]
+        Sidebar["View Selector<br/>My Drive, Shared, Recent"]
+        Grid["File Grid<br/>Thumbnails"]
+        Preview["Preview Modal<br/>Embedded Viewer"]
+    end
+    
+    Sidebar --> Grid
+    Grid -->|"Click File"| Preview
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **DrivePage** | Google Drive file browser with grid/list views, folder navigation, upload button. | Page Component (TSX) |
+| **FileGrid** | Grid of file cards with thumbnails, names, and quick actions. | Grid Component (TSX) |
+| **FilePreviewModal** | Modal with embedded Google Drive viewer for file preview. | Modal Component (TSX) |
+| **ViewModeToggle** | Toggle between grid and list view modes. | UI Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **drive.routes.ts** | Proxy to Google Drive API: `GET /api/drive/files`, `POST /folder`, `GET /files/:id`. | Express Router |
+| **google.ts** | Configures Drive API client with user's OAuth tokens. | Config Module |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -588,7 +1496,7 @@ sequenceDiagram
     F->>U: Show embedded preview
 ```
 
-### 5.1 Access Google Drive - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -624,9 +1532,65 @@ classDiagram
     GoogleDriveService --> DriveFile : manages
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    USERS {
+        uuid id PK
+        text access_token "Google OAuth token"
+        text refresh_token "Google refresh token"
+    }
+
+    DRIVE_FILES {
+        string id PK "Google Drive ID"
+        string name
+        string mimeType
+        string size
+        string webViewLink
+        string thumbnailLink
+    }
+
+    Note only: "Drive files are stored in Google, not local DB"
+```
+
 ---
 
-### 5.2 Create Google Sheet - Sequence Diagram
+## 5.2 Create Google Sheet
+
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Sheets Interface"]
+        List["Spreadsheet List<br/>+ New Sheet"]
+        Modal["Create Modal<br/>Title Input"]
+        Editor["Embedded Editor<br/>Full Spreadsheet"]
+    end
+    
+    List -->|"Click New"| Modal
+    Modal -->|"Create"| Editor
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **SheetsPage** | Spreadsheet list with create button, search, and embedded editor view. | Page Component (TSX) |
+| **CreateSheetModal** | Simple modal for entering new spreadsheet title. | Modal Component (TSX) |
+| **EmbeddedEditor** | Iframe wrapper displaying Google Sheets in edit mode. | Embed Component (TSX) |
+| **SpreadsheetCard** | Card showing spreadsheet name, last modified, and owner. | Card Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **sheets.routes.ts** | `POST /api/sheets/create`, `GET /list`, `DELETE /:id` for spreadsheet management. | Express Router |
+| **google.ts** | Configures Sheets API client. | Config Module |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -647,7 +1611,7 @@ sequenceDiagram
     F->>U: Display editable spreadsheet
 ```
 
-### 5.2 Create Google Sheet - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -680,11 +1644,174 @@ classDiagram
     GoogleSheetsService --> Spreadsheet : creates
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    USERS {
+        uuid id PK
+        text access_token
+        text refresh_token
+    }
+
+    SPREADSHEETS {
+        string id PK "Google Sheets ID"
+        string name
+        string webViewLink
+        timestamp modifiedTime
+    }
+
+    Note only: "Spreadsheets stored in Google, accessed via API"
+```
+
 ---
 
-## Module 6: Notifications & Activity
+## 5.3 Google Calendar Integration
 
-### 6.1 View Notifications - Sequence Diagram
+### User Interface Design
+
+```mermaid
+graph LR
+    subgraph UI["Calendar Interface"]
+        Views["View Toggle<br/>Month/Week/Day"]
+        Calendar["Calendar Grid<br/>Event Display"]
+        Modal["Event Modal<br/>Create/Edit"]
+    end
+    
+    Views --> Calendar
+    Calendar -->|"Click Date"| Modal
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **CalendarPage** | Full calendar view with month/week/day modes and event display. | Page Component (TSX) |
+| **CalendarGrid** | Grid layout showing days and events. | Grid Component (TSX) |
+| **EventCard** | Small card showing event title and time within calendar cell. | Card Component (TSX) |
+| **EventModal** | Modal for viewing/editing event details with date/time pickers. | Modal Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **calendar.routes.ts** | `GET /api/calendar/events`, `POST /events` for calendar event management. | Express Router |
+| **google.ts** | Configures Calendar API client. | Config Module |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant G as Google Calendar API
+
+    U->>F: Open Calendar page
+    F->>B: GET /api/calendar/events
+    B->>B: Get user tokens
+    B->>G: calendar.events.list()
+    G->>B: Return events array
+    B->>F: Return events
+    F->>F: Render calendar with events
+    F->>U: Display calendar view
+```
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class CalendarPage {
+        +Array events
+        +String viewMode
+        +Date currentDate
+        +fetchEvents()
+        +createEvent()
+        +handleDateClick()
+    }
+
+    class CalendarEvent {
+        +String id
+        +String title
+        +DateTime start
+        +DateTime end
+        +String description
+        +Boolean allDay
+    }
+
+    class GoogleCalendarService {
+        +listEvents(timeMin, timeMax) Array
+        +createEvent(eventData) CalendarEvent
+        +updateEvent(id, data) CalendarEvent
+    }
+
+    CalendarPage --> CalendarEvent : displays
+    GoogleCalendarService --> CalendarEvent : manages
+```
+
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    CALENDAR_EVENTS {
+        string id PK "Google Calendar event ID"
+        string title
+        datetime start_time
+        datetime end_time
+        string description
+        boolean all_day
+    }
+
+    USERS {
+        uuid id PK
+        text access_token
+        text refresh_token
+    }
+
+    Note only: "Events stored in Google Calendar"
+```
+
+---
+
+# Module 6: Notifications & Activity
+
+## 6.1 View Notifications
+
+### User Interface Design
+
+```mermaid
+graph TB
+    subgraph UI["Notification System"]
+        Bell["Notification Bell<br/>Unread Badge"]
+        Dropdown["Dropdown List<br/>Notification Items"]
+        Item["Notification Item<br/>Click to Navigate"]
+    end
+    
+    Bell -->|"Click"| Dropdown
+    Dropdown --> Item
+    Item -->|"Click"| Task
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **NotificationBell** | Header bell icon with red badge showing unread count. Opens dropdown on click. | UI Component (TSX) |
+| **NotificationDropdown** | Dropdown list of notifications with mark-all-read button. | Dropdown Component (TSX) |
+| **NotificationItem** | Single notification row with icon, message, timestamp, unread indicator. | Item Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **notification.routes.ts** | `GET/PATCH/POST` endpoints for notification CRUD and read status. | Express Router |
+| **notification.service.ts** | Service for creating notifications on task events. | Service Class |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -711,7 +1838,7 @@ sequenceDiagram
     F->>U: Navigate to related item
 ```
 
-### 6.1 View Notifications - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -732,7 +1859,7 @@ classDiagram
         +String title
         +String message
         +Boolean is_read
-        +UUID related_task_id
+        +UUID task_id
         +Timestamp created_at
     }
 
@@ -747,9 +1874,71 @@ classDiagram
     NotificationService --> Notification : creates
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    NOTIFICATIONS {
+        uuid id PK
+        uuid user_id FK
+        string type "task_assigned|comment|mention|status_change"
+        string title
+        text message
+        boolean is_read
+        uuid task_id FK
+        timestamp created_at
+    }
+
+    USERS {
+        uuid id PK
+        string name
+    }
+
+    TASKS {
+        uuid id PK
+        string title
+    }
+
+    USERS ||--o{ NOTIFICATIONS : receives
+    TASKS ||--o| NOTIFICATIONS : related_to
+```
+
 ---
 
-### 6.2 Activity Feed - Sequence Diagram
+## 6.2 Activity Feed
+
+### User Interface Design
+
+```mermaid
+graph TB
+    subgraph UI["Activity Feed"]
+        Header["Activity Header<br/>Recent Activity"]
+        List["Activity List<br/>Scrollable"]
+        Item["Activity Item<br/>Icon, User, Action"]
+    end
+    
+    Header --> List
+    List --> Item
+```
+
+### Front-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **ActivityFeed** | Scrollable list of recent organization activities with filtering. | Panel Component (TSX) |
+| **ActivityItem** | Single activity entry with colored icon, user avatar, action text, timestamp. | Item Component (TSX) |
+| **ActivityFilter** | Filter buttons for activity types (all, tasks, members, projects). | Filter Component (TSX) |
+
+### Back-end Components
+
+| Component Name | Description & Purpose | Component Type |
+|----------------|----------------------|----------------|
+| **organization.routes.ts** | `GET /api/organizations/:id/activity` returns recent activity log. | Express Router |
+| **activity.service.ts** | Logs activities to database with entity details and user info. | Service Class |
+
+### Object-Oriented Components
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
@@ -767,7 +1956,7 @@ sequenceDiagram
     F->>U: Display recent activities
 ```
 
-### 6.2 Activity Feed - Class Diagram
+#### Class Diagram
 
 ```mermaid
 classDiagram
@@ -784,6 +1973,7 @@ classDiagram
         +UUID id
         +UUID organization_id
         +UUID user_id
+        +String user_name
         +String action
         +String entity_type
         +UUID entity_id
@@ -801,9 +1991,41 @@ classDiagram
     ActivityService --> ActivityLog : creates
 ```
 
+### Data Design (ERD)
+
+```mermaid
+erDiagram
+    ACTIVITY_LOG {
+        uuid id PK
+        uuid organization_id FK
+        uuid user_id FK
+        string action "created|updated|deleted|assigned|completed"
+        string entity_type "task|project|member|organization"
+        uuid entity_id
+        string entity_name
+        jsonb details
+        inet ip_address
+        text user_agent
+        timestamp created_at
+    }
+
+    ORGANIZATIONS {
+        uuid id PK
+        string name
+    }
+
+    USERS {
+        uuid id PK
+        string name
+    }
+
+    ORGANIZATIONS ||--o{ ACTIVITY_LOG : logs
+    USERS ||--o{ ACTIVITY_LOG : performed_by
+```
+
 ---
 
-## Complete ERD (Entity Relationship Diagram)
+# Complete System ERD
 
 ```mermaid
 erDiagram
@@ -816,7 +2038,9 @@ erDiagram
         text access_token
         text refresh_token
         jsonb onboarding_data
+        string theme_mode
         timestamp created_at
+        timestamp updated_at
     }
 
     ORGANIZATIONS {
@@ -824,6 +2048,7 @@ erDiagram
         string name
         text description
         string domain
+        boolean is_personal
         timestamp created_at
     }
 
@@ -836,12 +2061,28 @@ erDiagram
         timestamp joined_at
     }
 
+    ORGANIZATION_INVITATIONS {
+        uuid id PK
+        uuid organization_id FK
+        string email
+        string role
+        string token UK
+        uuid invited_by FK
+        timestamp expires_at
+        timestamp accepted_at
+        timestamp created_at
+    }
+
     PROJECTS {
         uuid id PK
         uuid organization_id FK
         string name
         text description
         string status
+        string priority
+        date start_date
+        date end_date
+        decimal budget
         uuid created_by FK
         timestamp created_at
     }
@@ -854,17 +2095,34 @@ erDiagram
         string status
         string priority
         timestamp due_date
+        decimal estimated_hours
+        decimal actual_hours
         uuid assigned_to FK
         uuid created_by FK
         timestamp created_at
         timestamp completed_at
     }
 
+    TASK_ASSIGNEES {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        uuid assigned_by FK
+        timestamp assigned_at
+    }
+
+    TASK_FOLLOWERS {
+        uuid id PK
+        uuid task_id FK
+        uuid user_id FK
+        timestamp followed_at
+    }
+
     TASK_COMMENTS {
         uuid id PK
         uuid task_id FK
         uuid user_id FK
-        text content
+        text comment
         timestamp created_at
     }
 
@@ -872,9 +2130,11 @@ erDiagram
         uuid id PK
         uuid task_id FK
         uuid user_id FK
+        string user_name
         decimal hours
         text notes
-        date entry_date
+        date date
+        timestamp created_at
     }
 
     NOTIFICATIONS {
@@ -884,7 +2144,7 @@ erDiagram
         string title
         text message
         boolean is_read
-        uuid related_task_id FK
+        uuid task_id FK
         timestamp created_at
     }
 
@@ -897,6 +2157,8 @@ erDiagram
         uuid entity_id
         string entity_name
         jsonb details
+        inet ip_address
+        text user_agent
         timestamp created_at
     }
 
@@ -908,19 +2170,28 @@ erDiagram
         jsonb config
         int position
         uuid created_by FK
+        timestamp created_at
     }
 
     USERS ||--o{ ORGANIZATION_MEMBERS : belongs_to
     ORGANIZATIONS ||--o{ ORGANIZATION_MEMBERS : has
+    ORGANIZATIONS ||--o{ ORGANIZATION_INVITATIONS : sends
+    USERS ||--o{ ORGANIZATION_INVITATIONS : invited_by
     ORGANIZATIONS ||--o{ PROJECTS : contains
     ORGANIZATIONS ||--o{ ACTIVITY_LOG : logs
     ORGANIZATIONS ||--o{ BOARD_WIDGETS : displays
     PROJECTS ||--o{ TASKS : contains
     USERS ||--o{ TASKS : assigned_to
     USERS ||--o{ TASKS : created_by
+    TASKS ||--o{ TASK_ASSIGNEES : has
+    TASKS ||--o{ TASK_FOLLOWERS : followed_by
+    USERS ||--o{ TASK_ASSIGNEES : assigned_to
+    USERS ||--o{ TASK_FOLLOWERS : follows
     TASKS ||--o{ TASK_COMMENTS : has
     TASKS ||--o{ TIME_ENTRIES : tracks
     USERS ||--o{ NOTIFICATIONS : receives
+    TASKS ||--o| NOTIFICATIONS : related_to
     USERS ||--o{ TASK_COMMENTS : writes
     USERS ||--o{ TIME_ENTRIES : logs
+    USERS ||--o{ ACTIVITY_LOG : performed_by
 ```
