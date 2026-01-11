@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { CheckSquare, Plus, Search, LayoutGrid, Table, X, Calendar, AlertCircle, User, Users, Edit3 } from "lucide-react"
+import { CheckSquare, Plus, Search, LayoutGrid, Table, X, Calendar, AlertCircle, User, Users, Edit3, Archive, RotateCcw, ChevronDown, ChevronRight } from "lucide-react"
 import BoardingPassCard from "./BoardingPassCard"
 import CloudGroup from "./CloudGroup"
 import ProfessionalTaskCard from "./ProfessionalTaskCard"
@@ -47,6 +47,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [viewMode, setViewMode] = useState<'board' | 'table'>('board')
+  const [isArchiveExpanded, setIsArchiveExpanded] = useState(false)
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -140,6 +141,46 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
   const handleEditTask = (task: Task) => {
     setEditingTask(task)
     setIsEditModalOpen(true)
+  }
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!confirm('Are you sure you want to delete this flight?')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        fetchTasks()
+      } else {
+        console.error('Failed to delete task')
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error)
+    }
+  }
+
+  const handleArchiveTask = async (taskId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      await fetch(`http://localhost:3001/api/tasks/${taskId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'archived' })
+      })
+
+      fetchTasks()
+    } catch (error) {
+      console.error('Error archiving task:', error)
+    }
   }
 
   const handleUpdateTask = async () => {
@@ -291,6 +332,8 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
             tasks={tasks.filter(t => t.status !== 'archived') as any}
             onTaskClick={(task) => router.push(`/tasks/${task.id}`)}
             onAddTask={() => setIsCreateModalOpen(true)}
+            onDeleteTask={handleDeleteTask}
+            onArchiveTask={handleArchiveTask}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -309,6 +352,8 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                     key={task.id}
                     task={task}
                     onDragStart={handleDragStart}
+                    onDelete={handleDeleteTask}
+                    onArchive={handleArchiveTask}
                     onClick={() => handleEditTask(task)}
                   />
                 ))}
@@ -316,6 +361,67 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
             ))}
           </div>
         )
+      )}
+
+      {/* Archived Section */}
+      {getStatusColumn('archived').length > 0 && (
+        <div className="mt-8">
+          <button
+            onClick={() => setIsArchiveExpanded(!isArchiveExpanded)}
+            className="flex items-center gap-3 w-full text-left p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 hover:bg-white/70 transition-colors"
+          >
+            {isArchiveExpanded ? (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronRight className="w-5 h-5 text-gray-500" />
+            )}
+            <Archive className="w-5 h-5 text-amber-500" />
+            <span className="font-semibold text-gray-700">
+              {isProfessionalMode ? '📦 Archived Tasks' : '📦 Archived Flights'}
+            </span>
+            <span className="text-sm text-gray-500 ml-2">
+              ({getStatusColumn('archived').length} {getStatusColumn('archived').length === 1
+                ? (isProfessionalMode ? 'task' : 'flight')
+                : (isProfessionalMode ? 'tasks' : 'flights')})
+            </span>
+          </button>
+
+          {isArchiveExpanded && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {getStatusColumn('archived').map((task) => (
+                <div key={task.id} className="relative">
+                  <div className="absolute top-2 right-2 z-20">
+                    <button
+                      onClick={() => handleStatusChange(task.id, 'todo')}
+                      className="p-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md transition-all"
+                      title={isProfessionalMode ? "Restore to Todo" : "Restore to Boarding"}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-white" />
+                    </button>
+                  </div>
+                  <div className="opacity-70 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-300">
+                    {isProfessionalMode ? (
+                      <ProfessionalTaskCard
+                        task={task as any}
+                        onClick={() => handleEditTask(task)}
+                        onDelete={handleDeleteTask}
+                        onArchive={handleArchiveTask}
+                      />
+                    ) : (
+                      <BoardingPassCard
+                        task={task}
+                        onDragStart={handleDragStart}
+                        onDelete={handleDeleteTask}
+                        onArchive={handleArchiveTask}
+                        onClick={() => handleEditTask(task)}
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Table View */}

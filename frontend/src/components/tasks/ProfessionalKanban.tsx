@@ -20,6 +20,8 @@ interface ProfessionalKanbanProps {
     onTaskClick?: (task: Task) => void
     onStatusChange?: (taskId: string, newStatus: string) => void
     onAddTask?: (status: string) => void
+    onDeleteTask?: (taskId: string) => void
+    onArchiveTask?: (taskId: string) => void
 }
 
 const columns = [
@@ -29,7 +31,7 @@ const columns = [
     { id: 'done', label: 'Done', color: 'bg-emerald-500', bgColor: 'bg-emerald-50/50', borderColor: 'border-emerald-200', headerBg: 'from-emerald-500 to-teal-500' }
 ]
 
-export default function ProfessionalKanban({ tasks, onTaskClick, onStatusChange, onAddTask }: ProfessionalKanbanProps) {
+export default function ProfessionalKanban({ tasks, onTaskClick, onStatusChange, onAddTask, onDeleteTask, onArchiveTask }: ProfessionalKanbanProps) {
     const scrollRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
@@ -130,6 +132,8 @@ export default function ProfessionalKanban({ tasks, onTaskClick, onStatusChange,
                                         task={task}
                                         onClick={() => onTaskClick?.(task)}
                                         onStatusChange={onStatusChange}
+                                        onDelete={onDeleteTask}
+                                        onArchive={onArchiveTask}
                                     />
                                 ))}
 

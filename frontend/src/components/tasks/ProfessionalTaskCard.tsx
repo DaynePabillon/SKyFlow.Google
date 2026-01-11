@@ -1,6 +1,7 @@
 "use client"
+import { useState } from 'react'
 
-import { Clock, CheckCircle2, AlertCircle, User, Calendar, Flag } from 'lucide-react'
+import { Clock, CheckCircle2, AlertCircle, User, Calendar, Flag, Trash2, Archive } from 'lucide-react'
 
 interface Task {
     id: string
@@ -17,9 +18,11 @@ interface ProfessionalTaskCardProps {
     task: Task
     onClick?: () => void
     onStatusChange?: (taskId: string, status: string) => void
+    onDelete?: (taskId: string) => void
+    onArchive?: (taskId: string) => void
 }
 
-export default function ProfessionalTaskCard({ task, onClick, onStatusChange }: ProfessionalTaskCardProps) {
+export default function ProfessionalTaskCard({ task, onClick, onStatusChange, onDelete, onArchive }: ProfessionalTaskCardProps) {
     const getPriorityColor = (priority: string) => {
         switch (priority) {
             case 'critical': return 'bg-red-100 text-red-700 border-red-200'
@@ -71,8 +74,29 @@ export default function ProfessionalTaskCard({ task, onClick, onStatusChange }: 
     return (
         <div
             onClick={onClick}
-            className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group"
+            className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group relative"
         >
+            {/* Quick Actions (Hover) */}
+            <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                {onArchive && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onArchive(task.id); }}
+                        className="p-1.5 bg-amber-500 hover:bg-amber-600 rounded-lg shadow-md transition-all"
+                        title="Archive"
+                    >
+                        <Archive className="w-3.5 h-3.5 text-white" />
+                    </button>
+                )}
+                {onDelete && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
+                        className="p-1.5 bg-red-500 hover:bg-red-600 rounded-lg shadow-md transition-all"
+                        title="Delete"
+                    >
+                        <Trash2 className="w-3.5 h-3.5 text-white" />
+                    </button>
+                )}
+            </div>
             {/* Header */}
             <div className="flex items-start justify-between gap-3 mb-3">
                 <h3 className="font-medium text-gray-900 text-sm leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">

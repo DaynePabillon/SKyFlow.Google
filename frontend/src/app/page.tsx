@@ -20,6 +20,27 @@ interface OnboardingPreferences {
   completedAt?: string
 }
 
+interface Task {
+  id: string
+  title: string
+  status: string
+  priority: string
+  due_date?: string
+}
+
+interface Project {
+  id: string
+  name: string
+  status: string
+}
+
+interface Member {
+  user_id: string
+  name: string
+  email: string
+  role: string
+}
+
 export default function Home() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
@@ -27,6 +48,12 @@ export default function Home() {
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [preferences, setPreferences] = useState<OnboardingPreferences | null>(null)
+
+  // Dashboard data state
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [members, setMembers] = useState<Member[]>([])
+
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -128,6 +155,51 @@ export default function Home() {
     checkAuth()
   }, [router])
 
+  // Fetch dashboard data when organization is selected
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!selectedOrg) return
+
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      try {
+        // Fetch tasks, projects, and members in parallel
+        const [tasksRes, projectsRes, membersRes] = await Promise.all([
+          fetch(`http://localhost:3001/api/organizations/${selectedOrg.id}/tasks`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`http://localhost:3001/api/organizations/${selectedOrg.id}/projects`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`http://localhost:3001/api/organizations/${selectedOrg.id}/members`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        ])
+
+        if (tasksRes.ok) {
+          const tasksData = await tasksRes.json()
+          setTasks(tasksData.tasks || [])
+        }
+
+        if (projectsRes.ok) {
+          const projectsData = await projectsRes.json()
+          setProjects(projectsData.projects || [])
+        }
+
+        if (membersRes.ok) {
+          const membersData = await membersRes.json()
+          setMembers(membersData.members || [])
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+      }
+    }
+
+    fetchDashboardData()
+  }, [selectedOrg])
+
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
@@ -153,12 +225,18 @@ export default function Home() {
     )
   }
 
+  // Handler to update selected org and persist to localStorage
+  const handleOrgChange = (org: Organization) => {
+    setSelectedOrg(org)
+    localStorage.setItem('selectedOrganization', JSON.stringify(org))
+  }
+
   return (
     <AppLayout
       user={user}
       organizations={organizations}
       selectedOrg={selectedOrg}
-      onOrgChange={setSelectedOrg}
+      onOrgChange={handleOrgChange}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Dashboard Header */}
@@ -187,8 +265,8 @@ export default function Home() {
               </div>
               <span className="text-sm font-semibold text-gray-700">Projects</span>
             </div>
-            <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">0</p>
-            <p className="text-xs text-gray-600 mt-1">Active projects</p>
+            <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{projects.filter(p => p.status === 'active').length}</p>
+            <p className="text-xs text-gray-600 mt-1">{projects.length} total projects</p>
           </div>
 
           <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -198,8 +276,8 @@ export default function Home() {
               </div>
               <span className="text-sm font-semibold text-gray-700">Tasks</span>
             </div>
-            <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">0</p>
-            <p className="text-xs text-gray-600 mt-1">Pending tasks</p>
+            <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{tasks.filter(t => t.status !== 'done' && t.status !== 'completed' && t.status !== 'archived').length}</p>
+            <p className="text-xs text-gray-600 mt-1">{tasks.length} total tasks</p>
           </div>
 
           <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -209,7 +287,7 @@ export default function Home() {
               </div>
               <span className="text-sm font-semibold text-gray-700">Team</span>
             </div>
-            <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">1</p>
+            <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{members.length}</p>
             <p className="text-xs text-gray-600 mt-1">Team members</p>
           </div>
 
@@ -220,7 +298,7 @@ export default function Home() {
               </div>
               <span className="text-sm font-semibold text-gray-700">Progress</span>
             </div>
-            <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">0%</p>
+            <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">{tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'done' || t.status === 'completed').length / tasks.length) * 100) : 0}%</p>
             <p className="text-xs text-gray-600 mt-1">Overall completion</p>
           </div>
         </div>

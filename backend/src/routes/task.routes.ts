@@ -21,7 +21,6 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       due_date,
       estimated_hours,
       assigned_to,
-      parent_task_id,
     } = req.body;
     const userId = req.user!.id;
 
@@ -47,11 +46,11 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const result = await query(
       `INSERT INTO tasks (
         project_id, title, description, status, priority,
-        due_date, estimated_hours, assigned_to, created_by, parent_task_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        due_date, estimated_hours, assigned_to, created_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *`,
       [project_id, title, description, status || 'todo', priority || 'medium',
-        due_date, estimated_hours, assigned_to, userId, parent_task_id]
+        due_date, estimated_hours, assigned_to, userId]
     );
 
     logger.info(`Task created: ${result.rows[0].id} by user ${userId}`);

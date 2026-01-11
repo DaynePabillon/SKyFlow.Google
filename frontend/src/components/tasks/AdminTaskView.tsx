@@ -405,6 +405,8 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
             tasks={tasks.filter(t => t.status !== 'archived') as any}
             onTaskClick={(task) => handleEditTask(task as Task)}
             onAddTask={() => setIsCreateModalOpen(true)}
+            onDeleteTask={handleDeleteTask}
+            onArchiveTask={handleArchiveTask}
           />
         )
       )}
@@ -416,6 +418,8 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
             tasks={tasks.filter(t => t.status !== 'archived') as any}
             onTaskClick={(task) => handleEditTask(task as Task)}
             onAddTask={() => setIsCreateModalOpen(true)}
+            onDeleteTask={handleDeleteTask}
+            onArchiveTask={handleArchiveTask}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -458,9 +462,13 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
               <ChevronRight className="w-5 h-5 text-gray-500" />
             )}
             <Archive className="w-5 h-5 text-amber-500" />
-            <span className="font-semibold text-gray-700">📦 Archived Flights</span>
+            <span className="font-semibold text-gray-700">
+              {isProfessionalMode ? '📦 Archived Tasks' : '📦 Archived Flights'}
+            </span>
             <span className="text-sm text-gray-500 ml-2">
-              ({getStatusColumn('archived').length} {getStatusColumn('archived').length === 1 ? 'flight' : 'flights'})
+              ({getStatusColumn('archived').length} {getStatusColumn('archived').length === 1
+                ? (isProfessionalMode ? 'task' : 'flight')
+                : (isProfessionalMode ? 'tasks' : 'flights')})
             </span>
           </button>
 
@@ -472,18 +480,27 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
                     <button
                       onClick={() => handleRestoreTask(task.id)}
                       className="p-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md transition-all"
-                      title="Restore to Boarding"
+                      title={isProfessionalMode ? "Restore to Todo" : "Restore to Boarding"}
                     >
                       <RotateCcw className="w-3.5 h-3.5 text-white" />
                     </button>
                   </div>
                   <div className="opacity-70 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-300">
-                    <BoardingPassCard
-                      task={task}
-                      onDragStart={handleDragStart}
-                      onDelete={handleDeleteTask}
-                      onArchive={handleArchiveTask}
-                    />
+                    {isProfessionalMode ? (
+                      <ProfessionalTaskCard
+                        task={task as any}
+                        onClick={() => handleEditTask(task as Task)}
+                        onDelete={handleDeleteTask}
+                        onArchive={handleArchiveTask}
+                      />
+                    ) : (
+                      <BoardingPassCard
+                        task={task}
+                        onDragStart={handleDragStart}
+                        onDelete={handleDeleteTask}
+                        onArchive={handleArchiveTask}
+                      />
+                    )}
                   </div>
                 </div>
               ))}
