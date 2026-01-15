@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from 'react'
 import { Clock, Plus, Trash2, Calendar } from 'lucide-react'
 
@@ -32,7 +33,7 @@ export default function TimeTracker({ taskId, compact = false }: TimeTrackerProp
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/tasks/${taskId}/time-entries`,
+                `${API_URL}/api/tasks/${taskId}/time-entries`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             )
 
@@ -55,7 +56,7 @@ export default function TimeTracker({ taskId, compact = false }: TimeTrackerProp
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/tasks/${taskId}/time-entries`,
+                `${API_URL}/api/tasks/${taskId}/time-entries`,
                 {
                     method: 'POST',
                     headers: {
@@ -84,7 +85,7 @@ export default function TimeTracker({ taskId, compact = false }: TimeTrackerProp
         try {
             const token = localStorage.getItem('token')
             await fetch(
-                `http://localhost:3001/api/time-entries/${entryId}`,
+                `${API_URL}/api/time-entries/${entryId}`,
                 {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }

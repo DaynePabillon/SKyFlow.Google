@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect, useRef } from 'react'
 import { Bell, Check, CheckCheck, X, Clock, MessageSquare, User, AlertCircle } from 'lucide-react'
 
@@ -43,7 +44,7 @@ export default function NotificationBell() {
             const token = localStorage.getItem('token')
             if (!token) return
 
-            const response = await fetch('http://localhost:3001/api/notifications', {
+            const response = await fetch(`${API_URL}/api/notifications`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
 
@@ -60,7 +61,7 @@ export default function NotificationBell() {
     const markAsRead = async (id: string) => {
         try {
             const token = localStorage.getItem('token')
-            await fetch(`http://localhost:3001/api/notifications/${id}/read`, {
+            await fetch(`${API_URL}/api/notifications/${id}/read`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             })
@@ -77,7 +78,7 @@ export default function NotificationBell() {
     const markAllAsRead = async () => {
         try {
             const token = localStorage.getItem('token')
-            await fetch('http://localhost:3001/api/notifications/read-all', {
+            await fetch(`${API_URL}/api/notifications/read-all`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             })

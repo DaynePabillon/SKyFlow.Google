@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect, useRef } from "react"
 import { X, ChevronDown, Check, User, Users } from "lucide-react"
 
@@ -64,7 +65,7 @@ export default function MultiAssigneeSelect({
             newSelectedIds.delete(member.user_id)
             try {
                 const token = localStorage.getItem('token')
-                await fetch(`http://localhost:3001/api/tasks/${taskId}/assignees/${member.user_id}`, {
+                await fetch(`${API_URL}/api/tasks/${taskId}/assignees/${member.user_id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
@@ -77,7 +78,7 @@ export default function MultiAssigneeSelect({
             newSelectedIds.add(member.user_id)
             try {
                 const token = localStorage.getItem('token')
-                await fetch(`http://localhost:3001/api/tasks/${taskId}/assignees`, {
+                await fetch(`${API_URL}/api/tasks/${taskId}/assignees`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -112,7 +113,7 @@ export default function MultiAssigneeSelect({
         const token = localStorage.getItem('token')
         for (const id of selectedIds) {
             try {
-                await fetch(`http://localhost:3001/api/tasks/${taskId}/assignees/${id}`, {
+                await fetch(`${API_URL}/api/tasks/${taskId}/assignees/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 })

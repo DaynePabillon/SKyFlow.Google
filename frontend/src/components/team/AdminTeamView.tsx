@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { Users, UserPlus, Search, Mail, Shield, MoreVertical, Crown, Briefcase, User, Settings, X, Copy, Check } from "lucide-react"
 import RoleManagement from "./RoleManagement"
@@ -41,7 +42,7 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
   const fetchMembers = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/organizations/${organization.id}/members`, {
+      const response = await fetch(`${API_URL}/api/organizations/${organization.id}/members`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -67,7 +68,7 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
     try {
       const token = localStorage.getItem('token')
       const response = await fetch(
-        `http://localhost:3001/api/organizations/${organization.id}/members/${memberId}/role`,
+        `${API_URL}/api/organizations/${organization.id}/members/${memberId}/role`,
         {
           method: 'PATCH',
           headers: {
@@ -90,7 +91,7 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
     try {
       const token = localStorage.getItem('token')
       const response = await fetch(
-        `http://localhost:3001/api/organizations/${organization.id}/members/${memberId}`,
+        `${API_URL}/api/organizations/${organization.id}/members/${memberId}`,
         {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
@@ -112,7 +113,7 @@ export default function AdminTeamView({ user, organization }: AdminTeamViewProps
     try {
       const token = localStorage.getItem('token')
       const response = await fetch(
-        `http://localhost:3001/api/organizations/${organization.id}/invite`,
+        `${API_URL}/api/organizations/${organization.id}/invite`,
         {
           method: 'POST',
           headers: {

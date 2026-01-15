@@ -109,7 +109,7 @@ export default function WorkspaceSyncPage() {
     }
 
     if (!user) {
-      fetch('http://localhost:3001/api/auth/me', {
+      fetch(`${API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.ok ? res.json() : Promise.reject('Auth failed'))
@@ -141,7 +141,7 @@ export default function WorkspaceSyncPage() {
     if (!selectedOrg) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/workspaces?organizationId=${selectedOrg.id}`, {
+      const res = await fetch(`${API_URL}/api/workspaces?organizationId=${selectedOrg.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -156,13 +156,13 @@ export default function WorkspaceSyncPage() {
     try {
       const token = localStorage.getItem('token');
       
-      const res = await fetch(`http://localhost:3001/api/workspaces/${selectedWorkspace.id}`, {
+      const res = await fetch(`${API_URL}/api/workspaces/${selectedWorkspace.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
       setSyncedSheets(data.sheets || []);
       
-      const sheetsRes = await fetch(`http://localhost:3001/api/workspaces/${selectedWorkspace.id}/drive-sheets`, {
+      const sheetsRes = await fetch(`${API_URL}/api/workspaces/${selectedWorkspace.id}/drive-sheets`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const sheetsData = await sheetsRes.json();
@@ -175,7 +175,7 @@ export default function WorkspaceSyncPage() {
   const fetchAllSheets = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/sheets/list`, {
+      const res = await fetch(`${API_URL}/api/sheets/list`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -190,7 +190,7 @@ export default function WorkspaceSyncPage() {
     setCreatingSheet(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/sheets/create`, {
+      const res = await fetch(`${API_URL}/api/sheets/create`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -219,7 +219,7 @@ export default function WorkspaceSyncPage() {
   const fetchDriveFolders = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/drive/files?q=mimeType='application/vnd.google-apps.folder'`, {
+      const res = await fetch(`${API_URL}/api/drive/files?q=mimeType='application/vnd.google-apps.folder'`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -234,7 +234,7 @@ export default function WorkspaceSyncPage() {
     setCreatingFolder(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/drive/folder`, {
+      const res = await fetch(`${API_URL}/api/drive/folder`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -264,7 +264,7 @@ export default function WorkspaceSyncPage() {
     if (!newFolderId || !newFolderName || !selectedOrg) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/workspaces`, {
+      const res = await fetch(`${API_URL}/api/workspaces`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -293,7 +293,7 @@ export default function WorkspaceSyncPage() {
     if (!selectedWorkspace || !selectedSheetId) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/workspaces/${selectedWorkspace.id}/connect-sheet`, {
+      const res = await fetch(`${API_URL}/api/workspaces/${selectedWorkspace.id}/connect-sheet`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -323,7 +323,7 @@ export default function WorkspaceSyncPage() {
     setSyncing(true);
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:3001/api/workspaces/${selectedWorkspace.id}/sync`, {
+      await fetch(`${API_URL}/api/workspaces/${selectedWorkspace.id}/sync`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -341,7 +341,7 @@ export default function WorkspaceSyncPage() {
     if (!confirm('Delete this workspace? All synced data will be removed.')) return;
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:3001/api/workspaces/${id}`, {
+      await fetch(`${API_URL}/api/workspaces/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

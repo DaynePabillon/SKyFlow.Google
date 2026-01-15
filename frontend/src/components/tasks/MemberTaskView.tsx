@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { CheckSquare, Search, LayoutGrid, Table, AlertCircle, Clock, CheckCircle2 } from "lucide-react"
 import BoardingPassCard from "./BoardingPassCard"
@@ -44,7 +45,7 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
     try {
       const token = localStorage.getItem('token')
       // Fetch all tasks and filter to user's assigned tasks
-      const response = await fetch(`http://localhost:3001/api/organizations/${organization.id}/tasks`, {
+      const response = await fetch(`${API_URL}/api/organizations/${organization.id}/tasks`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -65,7 +66,7 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
   const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
     try {
       const token = localStorage.getItem('token')
-      await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+      await fetch(`${API_URL}/api/tasks/${taskId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

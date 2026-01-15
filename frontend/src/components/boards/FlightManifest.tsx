@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useMemo, useRef, useEffect } from "react"
 import { Plane, Users, Clock, MapPin, AlertCircle, Plus, Search, Filter, ChevronDown, MoreHorizontal, UserPlus, Edit3, Trash2, ArrowRight, BarChart3 } from "lucide-react"
 import ChartWidgetPicker from '@/components/widgets/ChartWidgetPicker'
@@ -72,7 +73,7 @@ export default function FlightManifest({
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/organizations/${organizationId}/widgets`,
+                `${API_URL}/api/organizations/${organizationId}/widgets`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             )
             if (response.ok) {
@@ -88,7 +89,7 @@ export default function FlightManifest({
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/organizations/${organizationId}/widgets`,
+                `${API_URL}/api/organizations/${organizationId}/widgets`,
                 {
                     method: 'POST',
                     headers: {
@@ -110,7 +111,7 @@ export default function FlightManifest({
         try {
             const token = localStorage.getItem('token')
             await fetch(
-                `http://localhost:3001/api/widgets/${widgetId}`,
+                `${API_URL}/api/widgets/${widgetId}`,
                 {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }

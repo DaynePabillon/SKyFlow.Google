@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from 'react'
 import { Search, Plus, MoreHorizontal, User, Clock, CheckCircle2, AlertCircle, Trash2, BarChart3 } from 'lucide-react'
 import ChartWidgetPicker from '@/components/widgets/ChartWidgetPicker'
@@ -76,7 +77,7 @@ export default function ProfessionalTeamBoard({
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/organizations/${organizationId}/widgets`,
+                `${API_URL}/api/organizations/${organizationId}/widgets`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             )
             if (response.ok) {
@@ -92,7 +93,7 @@ export default function ProfessionalTeamBoard({
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/organizations/${organizationId}/widgets`,
+                `${API_URL}/api/organizations/${organizationId}/widgets`,
                 {
                     method: 'POST',
                     headers: {
@@ -114,7 +115,7 @@ export default function ProfessionalTeamBoard({
         try {
             const token = localStorage.getItem('token')
             await fetch(
-                `http://localhost:3001/api/widgets/${widgetId}`,
+                `${API_URL}/api/widgets/${widgetId}`,
                 {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }

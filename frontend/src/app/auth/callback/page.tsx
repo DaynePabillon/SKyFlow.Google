@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Cloud, CheckCircle2 } from "lucide-react"
@@ -24,7 +25,7 @@ export default function AuthCallback() {
         
         // Fetch user data after showing resolving status
         setTimeout(() => {
-          fetch('http://localhost:3001/api/auth/me', {
+          fetch(`${API_URL}/api/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }

@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Cloud, ArrowRight, ArrowLeft, Check } from "lucide-react"

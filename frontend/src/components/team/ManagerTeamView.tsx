@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { Users, UserPlus, Search, Crown, Briefcase, User } from "lucide-react"
 
@@ -33,7 +34,7 @@ export default function ManagerTeamView({ user, organization }: ManagerTeamViewP
   const fetchMembers = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/organizations/${organization.id}/members`, {
+      const response = await fetch(`${API_URL}/api/organizations/${organization.id}/members`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

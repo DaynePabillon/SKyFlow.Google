@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Settings, Plane, Briefcase, Check, ChevronRight, LogOut, Trash2, Plus, X, Building2, AlertTriangle } from 'lucide-react'
@@ -30,7 +31,7 @@ export default function SettingsPage() {
 
     const fetchOrganizations = async () => {
         const token = localStorage.getItem('token')
-        const orgsRes = await fetch('http://localhost:3001/api/organizations', {
+        const orgsRes = await fetch(`${API_URL}/api/organizations`, {
             headers: { Authorization: `Bearer ${token}` }
         })
         if (orgsRes.ok) {
@@ -52,7 +53,7 @@ export default function SettingsPage() {
         const fetchData = async () => {
             try {
                 // Fetch user
-                const userRes = await fetch('http://localhost:3001/api/auth/me', {
+                const userRes = await fetch(`${API_URL}/api/auth/me`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 if (!userRes.ok) throw new Error('Not authenticated')
@@ -63,7 +64,7 @@ export default function SettingsPage() {
                 await fetchOrganizations()
 
                 // Fetch user preferences
-                const prefsRes = await fetch('http://localhost:3001/api/users/preferences', {
+                const prefsRes = await fetch(`${API_URL}/api/users/preferences`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 if (prefsRes.ok) {
@@ -97,7 +98,7 @@ export default function SettingsPage() {
         setIsCreating(true)
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch('http://localhost:3001/api/organizations', {
+            const response = await fetch(`${API_URL}/api/organizations`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -120,7 +121,7 @@ export default function SettingsPage() {
     const handleLeaveWorkspace = async (org: Organization) => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:3001/api/organizations/${org.id}/leave`, {
+            const response = await fetch(`${API_URL}/api/organizations/${org.id}/leave`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             })
@@ -143,7 +144,7 @@ export default function SettingsPage() {
     const handleDeleteWorkspace = async (org: Organization) => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:3001/api/organizations/${org.id}`, {
+            const response = await fetch(`${API_URL}/api/organizations/${org.id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             })

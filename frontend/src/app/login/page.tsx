@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { Cloud, ArrowLeft } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -18,7 +19,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`http://localhost:3001/api/auth/google`)
+      const response = await fetch(`${API_URL}/api/auth/google`)
       const data = await response.json()
       window.location.href = data.authUrl
     } catch (error) {

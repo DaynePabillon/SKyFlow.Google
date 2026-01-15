@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { FileText, Plus, Search, MoreVertical, Clock, Users, Download, Share2, X, Edit3, Eye, Maximize2, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -49,7 +50,7 @@ export default function SheetsPage() {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:3001/api/sheets/create', {
+      const response = await fetch(`${API_URL}/api/sheets/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +96,7 @@ export default function SheetsPage() {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/drive/files/${sheetId}`, {
+      const response = await fetch(`${API_URL}/api/drive/files/${sheetId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -129,7 +130,7 @@ export default function SheetsPage() {
     }
 
     if (token) {
-      fetch('http://localhost:3001/api/auth/me', {
+      fetch(`${API_URL}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

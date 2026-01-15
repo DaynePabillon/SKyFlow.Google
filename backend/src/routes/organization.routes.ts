@@ -319,7 +319,7 @@ router.get('/:id/projects', authenticateToken, async (req: AuthRequest, res: Res
 
 /**
  * GET /api/organizations/:id/tasks
- * Get all tasks in organization
+ * Get all tasks in organization (including synced sheet tasks)
  */
 router.get('/:id/tasks', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
@@ -336,17 +336,56 @@ router.get('/:id/tasks', authenticateToken, async (req: AuthRequest, res: Respon
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    // Query includes both regular tasks AND synced sheet_tasks
     const result = await query(
-      `SELECT t.*, 
+      `SELECT t.id, t.project_id, t.title, t.description, t.status, t.priority,
+              t.due_date, t.estimated_hours, t.actual_hours, t.assigned_to, t.created_by,
+              t.created_at, t.updated_at,
               p.name as project_name,
               u1.name as assigned_to_name,
-              u2.name as created_by_name
+              u1.email as assigned_to_email,
+              u2.name as created_by_name,
+              'app' as source_type,
+              NULL as sheet_name,
+              NULL as google_sheet_id,
+              (SELECT COUNT(*) FROM task_comments WHERE task_id = t.id)::integer as comment_count
        FROM tasks t
        INNER JOIN projects p ON t.project_id = p.id
        LEFT JOIN users u1 ON t.assigned_to = u1.id
        LEFT JOIN users u2 ON t.created_by = u2.id
        WHERE p.organization_id = $1
-       ORDER BY t.created_at DESC`,
+       
+       UNION ALL
+       
+       SELECT 
+         st.id,
+         st.project_id,
+         st.title,
+         st.description,
+         st.status,
+         st.priority,
+         st.due_date,
+         NULL::integer as estimated_hours,
+         NULL::integer as actual_hours,
+         NULL::uuid as assigned_to,
+         NULL::uuid as created_by,
+         st.created_at,
+         st.updated_at,
+         COALESCE(p.name, NULL) as project_name,
+         st.assignee_email as assigned_to_name,
+         st.assignee_email as assigned_to_email,
+         'Google Sheets' as created_by_name,
+         'sheet' as source_type,
+         ss.sheet_name,
+         ss.sheet_id as google_sheet_id,
+         (SELECT COUNT(*) FROM task_comments WHERE task_id = st.id)::integer as comment_count
+       FROM sheet_tasks st
+       JOIN synced_sheets ss ON st.synced_sheet_id = ss.id
+       JOIN workspaces w ON ss.workspace_id = w.id
+       LEFT JOIN projects p ON st.project_id = p.id
+       WHERE w.organization_id = $1
+       
+       ORDER BY created_at DESC`,
       [id]
     );
 

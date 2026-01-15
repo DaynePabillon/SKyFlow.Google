@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { Cloud, Mail, Users, FolderKanban, CheckSquare, ArrowRight } from "lucide-react"
 
 // Cloud SVG component for the animated background
@@ -12,7 +13,7 @@ const CloudShape = ({ className }: { className?: string }) => (
 export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/auth/google`)
+      const response = await fetch(`${API_URL}/api/auth/google`)
       const data = await response.json()
       // Smooth redirect to Google OAuth
       window.location.href = data.authUrl

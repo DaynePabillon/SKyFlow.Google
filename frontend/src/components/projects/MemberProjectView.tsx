@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { FolderKanban, Search, Users, Calendar, CheckCircle2, AlertCircle } from "lucide-react"
 
@@ -33,7 +34,7 @@ export default function MemberProjectView({ user, organization }: MemberProjectV
   const fetchProjects = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/organizations/${organization.id}/projects`, {
+      const response = await fetch(`${API_URL}/api/organizations/${organization.id}/projects`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

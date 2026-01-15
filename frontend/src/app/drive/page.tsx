@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { FolderOpen, File, FileText, Image, Video, Music, Upload, Search, Grid3x3, List, MoreVertical, Plus, X, Edit3, Maximize2, Eye } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -62,7 +63,7 @@ export default function DrivePage() {
     }
 
     if (token) {
-      fetch('http://localhost:3001/api/auth/me', {
+      fetch(`${API_URL}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -112,7 +113,7 @@ export default function DrivePage() {
       const token = localStorage.getItem("token")
       if (!token) return
 
-      const response = await fetch(`http://localhost:3001/api/drive/files`, {
+      const response = await fetch(`${API_URL}/api/drive/files`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

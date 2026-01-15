@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Cloud, CheckCircle, XCircle, Loader2, ArrowRight } from "lucide-react"
@@ -35,7 +36,7 @@ export default function AcceptInvitationPage() {
 
     const validateInvitation = async () => {
         try {
-            const response = await fetch(`http://localhost:3001/api/invitations/validate?token=${token}`)
+            const response = await fetch(`${API_URL}/api/invitations/validate?token=${token}`)
             const data = await response.json()
 
             if (response.ok && data.valid) {

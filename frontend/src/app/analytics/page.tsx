@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { BarChart3, TrendingUp, Users, FolderKanban, CheckSquare, Calendar, Download } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -71,7 +72,7 @@ export default function AnalyticsPage() {
     }
 
     if (token) {
-      fetch('http://localhost:3001/api/auth/me', {
+      fetch(`${API_URL}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

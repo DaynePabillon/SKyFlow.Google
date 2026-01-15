@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Edit3, Trash2, Clock, User, Users, Calendar, AlertCircle, CheckCircle2, Circle, Loader2, Bell, BellOff } from "lucide-react"
@@ -49,7 +50,7 @@ export default function TaskDetailsPage() {
     const fetchCurrentUser = async () => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch('http://localhost:3001/api/auth/me', {
+            const response = await fetch(`${API_URL}/api/auth/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (response.ok) {
@@ -64,7 +65,7 @@ export default function TaskDetailsPage() {
     const fetchTaskDetails = async () => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+            const response = await fetch(`${API_URL}/api/tasks/${taskId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
 
@@ -86,7 +87,7 @@ export default function TaskDetailsPage() {
 
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+            const response = await fetch(`${API_URL}/api/tasks/${taskId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             })
@@ -102,7 +103,7 @@ export default function TaskDetailsPage() {
     const fetchFollowStatus = async () => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/following`, {
+            const response = await fetch(`${API_URL}/api/tasks/${taskId}/following`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (response.ok) {
@@ -118,7 +119,7 @@ export default function TaskDetailsPage() {
         setIsTogglingFollow(true)
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/follow`, {
+            const response = await fetch(`${API_URL}/api/tasks/${taskId}/follow`, {
                 method: isFollowing ? 'DELETE' : 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             })

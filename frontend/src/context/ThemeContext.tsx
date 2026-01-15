@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
 type ThemeMode = 'professional' | 'aviation'
@@ -39,7 +40,7 @@ export function ThemeProvider({ children, initialMode = 'professional' }: ThemeP
         try {
             const token = localStorage.getItem('token')
             if (token) {
-                await fetch('http://localhost:3001/api/users/preferences', {
+                await fetch(`${API_URL}/api/users/preferences`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
@@ -93,7 +94,7 @@ export default function BoardsPage() {
     const fetchTasks = async (orgId: string) => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:3001/api/organizations/${orgId}/tasks`, {
+            const response = await fetch(`${API_URL}/api/organizations/${orgId}/tasks`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (response.ok) {
@@ -112,7 +113,7 @@ export default function BoardsPage() {
     const fetchProjects = async (orgId: string) => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:3001/api/organizations/${orgId}/projects`, {
+            const response = await fetch(`${API_URL}/api/organizations/${orgId}/projects`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (response.ok) {
@@ -127,7 +128,7 @@ export default function BoardsPage() {
     const fetchMembers = async (orgId: string) => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:3001/api/organizations/${orgId}/members`, {
+            const response = await fetch(`${API_URL}/api/organizations/${orgId}/members`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (response.ok) {
@@ -160,7 +161,7 @@ export default function BoardsPage() {
 
             if (selectedProjectId) {
                 // Create task in specific project using /api/tasks
-                response = await fetch(`http://localhost:3001/api/tasks`, {
+                response = await fetch(`${API_URL}/api/tasks`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
@@ -175,7 +176,7 @@ export default function BoardsPage() {
                 })
             } else {
                 // Create task without project - uses organization endpoint that auto-creates "General Tasks" project
-                response = await fetch(`http://localhost:3001/api/organizations/${selectedOrg.id}/tasks`, {
+                response = await fetch(`${API_URL}/api/organizations/${selectedOrg.id}/tasks`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
@@ -207,7 +208,7 @@ export default function BoardsPage() {
     const handleAssignMember = async (taskId: string, memberId: string | null) => {
         try {
             const token = localStorage.getItem('token')
-            await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+            await fetch(`${API_URL}/api/tasks/${taskId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ assigned_to: memberId })
@@ -221,7 +222,7 @@ export default function BoardsPage() {
     const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
         try {
             const token = localStorage.getItem('token')
-            await fetch(`http://localhost:3001/api/tasks/${taskId}/status`, {
+            await fetch(`${API_URL}/api/tasks/${taskId}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ status: newStatus })
@@ -236,7 +237,7 @@ export default function BoardsPage() {
         if (!confirm('Are you sure you want to delete this task?')) return
         try {
             const token = localStorage.getItem('token')
-            await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+            await fetch(`${API_URL}/api/tasks/${taskId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             })

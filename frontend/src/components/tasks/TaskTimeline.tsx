@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from 'react'
 import { MessageSquare, Send, User, ChevronDown, ChevronUp, Circle, GitCommit, Clock, UserPlus, CheckCircle2, AlertCircle, Trash2 } from 'lucide-react'
 
@@ -58,7 +59,7 @@ export default function TaskTimeline({ taskId, currentUserId, onClose }: TaskTim
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/tasks/${taskId}/activity`,
+                `${API_URL}/api/tasks/${taskId}/activity`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             )
 
@@ -83,7 +84,7 @@ export default function TaskTimeline({ taskId, currentUserId, onClose }: TaskTim
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/tasks/${taskId}/comments`,
+                `${API_URL}/api/tasks/${taskId}/comments`,
                 {
                     method: 'POST',
                     headers: {
@@ -109,7 +110,7 @@ export default function TaskTimeline({ taskId, currentUserId, onClose }: TaskTim
         try {
             const token = localStorage.getItem('token')
             await fetch(
-                `http://localhost:3001/api/comments/${commentId}`,
+                `${API_URL}/api/comments/${commentId}`,
                 {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }

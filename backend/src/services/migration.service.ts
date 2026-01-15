@@ -438,6 +438,22 @@ async function runMigrations(): Promise<void> {
         WHERE assigned_to IS NOT NULL
         ON CONFLICT (task_id, user_id) DO NOTHING;
       `
+    },
+    {
+      name: '012_comments_support_sheet_tasks',
+      sql: `
+        -- Drop the FK constraint on task_comments so it can accept both tasks and sheet_tasks IDs
+        DO $$ 
+        BEGIN
+          IF EXISTS (
+            SELECT 1 FROM information_schema.table_constraints 
+            WHERE constraint_name = 'task_comments_task_id_fkey' 
+            AND table_name = 'task_comments'
+          ) THEN
+            ALTER TABLE task_comments DROP CONSTRAINT task_comments_task_id_fkey;
+          END IF;
+        END $$;
+      `
     }
   ];
 

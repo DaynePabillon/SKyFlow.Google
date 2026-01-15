@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { FolderKanban, Plus, Search, Filter, MoreVertical, Users, Calendar, CheckCircle2, X, Trash2 } from "lucide-react"
 
@@ -45,7 +46,7 @@ export default function AdminProjectView({ user, organization }: AdminProjectVie
   const fetchProjects = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/organizations/${organization.id}/projects`, {
+      const response = await fetch(`${API_URL}/api/organizations/${organization.id}/projects`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -65,7 +66,7 @@ export default function AdminProjectView({ user, organization }: AdminProjectVie
     setIsCreating(true)
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/projects`, {
+      const response = await fetch(`${API_URL}/api/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +108,7 @@ export default function AdminProjectView({ user, organization }: AdminProjectVie
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/projects/${projectId}`, {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

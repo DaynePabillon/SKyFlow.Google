@@ -66,14 +66,14 @@ export default function SyncedTasksPage() {
       const storedUser = localStorage.getItem('user');
       if (!storedUser) return;
       
-      const res = await fetch(`http://localhost:3001/api/organizations`, {
+      const res = await fetch(`${API_URL}/api/organizations`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const orgsData = await res.json();
       
       if (orgsData.organizations?.length > 0) {
         const orgId = orgsData.organizations[0].id;
-        const wsRes = await fetch(`http://localhost:3001/api/workspaces?organizationId=${orgId}`, {
+        const wsRes = await fetch(`${API_URL}/api/workspaces?organizationId=${orgId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const wsData = await wsRes.json();
@@ -92,7 +92,7 @@ export default function SyncedTasksPage() {
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/workspaces/${selectedWorkspaceId}/tasks`, {
+      const res = await fetch(`${API_URL}/api/workspaces/${selectedWorkspaceId}/tasks`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -107,7 +107,7 @@ export default function SyncedTasksPage() {
     setSyncing(true);
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:3001/api/workspaces/${selectedWorkspaceId}/sync`, {
+      await fetch(`${API_URL}/api/workspaces/${selectedWorkspaceId}/sync`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });

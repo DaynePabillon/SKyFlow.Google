@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from 'react'
 import { MessageSquare, Send, Trash2, User } from 'lucide-react'
 
@@ -31,7 +32,7 @@ export default function CommentSection({ taskId, currentUserId }: CommentSection
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/tasks/${taskId}/comments`,
+                `${API_URL}/api/tasks/${taskId}/comments`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             )
 
@@ -54,7 +55,7 @@ export default function CommentSection({ taskId, currentUserId }: CommentSection
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/tasks/${taskId}/comments`,
+                `${API_URL}/api/tasks/${taskId}/comments`,
                 {
                     method: 'POST',
                     headers: {
@@ -80,7 +81,7 @@ export default function CommentSection({ taskId, currentUserId }: CommentSection
         try {
             const token = localStorage.getItem('token')
             await fetch(
-                `http://localhost:3001/api/comments/${commentId}`,
+                `${API_URL}/api/comments/${commentId}`,
                 {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }

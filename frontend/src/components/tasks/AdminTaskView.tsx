@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { CheckSquare, Plus, Search, Filter, Calendar, User, Users, AlertCircle, Clock, X, LayoutGrid, Table, Archive, ChevronDown, ChevronRight, RotateCcw, Radar, Edit3 } from "lucide-react"
@@ -68,7 +69,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/organizations/${organization.id}/tasks`, {
+      const response = await fetch(`${API_URL}/api/organizations/${organization.id}/tasks`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -100,7 +101,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
   const fetchMembers = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/organizations/${organization.id}/members`, {
+      const response = await fetch(`${API_URL}/api/organizations/${organization.id}/members`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (response.ok) {
@@ -131,7 +132,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/organizations/${organization.id}/tasks`, {
+      const response = await fetch(`${API_URL}/api/organizations/${organization.id}/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +168,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
 
     try {
       const token = localStorage.getItem('token')
-      await fetch(`http://localhost:3001/api/tasks/${taskId}/status`, {
+      await fetch(`${API_URL}/api/tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -187,7 +188,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+      const response = await fetch(`${API_URL}/api/tasks/${taskId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -207,7 +208,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
   const handleArchiveTask = async (taskId: string) => {
     try {
       const token = localStorage.getItem('token')
-      await fetch(`http://localhost:3001/api/tasks/${taskId}/status`, {
+      await fetch(`${API_URL}/api/tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -225,7 +226,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
   const handleRestoreTask = async (taskId: string) => {
     try {
       const token = localStorage.getItem('token')
-      await fetch(`http://localhost:3001/api/tasks/${taskId}/status`, {
+      await fetch(`${API_URL}/api/tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -250,7 +251,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/tasks/${editingTask.id}`, {
+      const response = await fetch(`${API_URL}/api/tasks/${editingTask.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

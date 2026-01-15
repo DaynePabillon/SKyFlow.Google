@@ -21,6 +21,7 @@ import notificationRoutes from './routes/notification.routes';
 import commentRoutes from './routes/comment.routes';
 import timeEntryRoutes from './routes/timeEntry.routes';
 import widgetRoutes from './routes/widget.routes';
+import workspaceRoutes from './routes/workspace.routes';
 import { runAutoMigrations } from './services/migration.service';
 
 dotenv.config();
@@ -56,6 +57,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/organizations', organizationRoutes);
 app.use('/api/projects', projectRoutes);
+// Comment routes must come BEFORE task routes to handle /api/tasks/:id/comments correctly
+app.use('/api', commentRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/drive', driveRoutes);
@@ -63,9 +66,9 @@ app.use('/api/sheets', sheetsRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api', activityRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api', commentRoutes);
 app.use('/api', timeEntryRoutes);
 app.use('/api', widgetRoutes);
+app.use('/api/workspaces', workspaceRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

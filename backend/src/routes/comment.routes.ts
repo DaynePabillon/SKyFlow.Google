@@ -12,7 +12,8 @@ router.get('/tasks/:taskId/comments', authenticateToken, async (req: Request, re
         const { taskId } = req.params;
 
         const result = await pool.query(
-            `SELECT c.*, u.name as user_name, u.email as user_email
+            `SELECT c.id, c.task_id, c.user_id, c.comment as content, c.created_at, c.updated_at,
+                    u.name as user_name, u.email as user_email
        FROM task_comments c
        LEFT JOIN users u ON c.user_id = u.id
        WHERE c.task_id = $1
@@ -27,28 +28,42 @@ router.get('/tasks/:taskId/comments', authenticateToken, async (req: Request, re
     }
 });
 
-// Add comment to a task
+// Add comment to a task (supports both regular tasks and synced sheet_tasks)
 router.post('/tasks/:taskId/comments', authenticateToken, async (req: Request, res: Response) => {
     try {
         const { taskId } = req.params;
         const { content } = req.body;
         const user = (req as any).user;
 
-        console.log('Comment request body:', req.body);
-        console.log('Content value:', content);
+        console.log('>>>COMMENT DEBUG<<< body:', JSON.stringify(req.body));
+        console.log('>>>COMMENT DEBUG<<< content:', content);
+        console.log('>>>COMMENT DEBUG<<< taskId:', taskId);
 
         if (!content || !content.trim()) {
+            console.log('>>>COMMENT DEBUG<<< FAILING: content is empty or missing');
             return res.status(400).json({ error: 'Comment content is required' });
         }
 
-        // Get task info for notifications (tasks -> projects -> organizations)
-        const taskResult = await pool.query(
-            `SELECT t.*, p.organization_id as org_id 
+        // Try to get task from regular tasks table first
+        let taskResult = await pool.query(
+            `SELECT t.*, p.organization_id as org_id, 'app' as source_type
              FROM tasks t 
              LEFT JOIN projects p ON t.project_id = p.id 
              WHERE t.id = $1`,
             [taskId]
         );
+
+        // If not found in tasks, check sheet_tasks
+        if (taskResult.rows.length === 0) {
+            taskResult = await pool.query(
+                `SELECT st.*, w.organization_id as org_id, 'sheet' as source_type
+                 FROM sheet_tasks st
+                 JOIN synced_sheets ss ON st.synced_sheet_id = ss.id
+                 JOIN workspaces w ON ss.workspace_id = w.id
+                 WHERE st.id = $1`,
+                [taskId]
+            );
+        }
 
         if (taskResult.rows.length === 0) {
             return res.status(404).json({ error: 'Task not found' });
@@ -75,8 +90,8 @@ router.post('/tasks/:taskId/comments', authenticateToken, async (req: Request, r
             entity_name: task.title
         });
 
-        // Notify task assignee if different from commenter
-        if (task.assigned_to && task.assigned_to !== user.id) {
+        // Notify task assignee if different from commenter (only for regular tasks with UUID assignee)
+        if (task.source_type === 'app' && task.assigned_to && task.assigned_to !== user.id) {
             await notificationService.notifyNewComment(taskId, task.title, task.assigned_to, user.name);
         }
 

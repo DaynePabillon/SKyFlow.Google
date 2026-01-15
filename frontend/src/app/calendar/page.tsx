@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { Calendar as CalendarIcon, Plus, Clock, Users, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -75,7 +76,7 @@ export default function CalendarPage() {
     }
 
     if (token) {
-      fetch('http://localhost:3001/api/auth/me', {
+      fetch(`${API_URL}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

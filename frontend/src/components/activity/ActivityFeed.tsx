@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from 'react'
 import { Clock, User, MessageSquare, CheckCircle2, ArrowRight, Plus, Trash2 } from 'lucide-react'
 
@@ -30,7 +31,7 @@ export default function ActivityFeed({ organizationId, limit = 20 }: ActivityFee
         try {
             const token = localStorage.getItem('token')
             const response = await fetch(
-                `http://localhost:3001/api/organizations/${organizationId}/activity?limit=${limit}`,
+                `${API_URL}/api/organizations/${organizationId}/activity?limit=${limit}`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             )
 

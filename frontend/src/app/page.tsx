@@ -1,5 +1,6 @@
 "use client"
 
+import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { TrendingUp, Users, FolderKanban, CheckSquare, Calendar, X, FileText, BarChart3, Target, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -102,7 +103,7 @@ export default function Home() {
 
       if (storedToken) {
         try {
-          const res = await fetch('http://localhost:3001/api/auth/me', {
+          const res = await fetch(`${API_URL}/api/auth/me`, {
             headers: {
               'Authorization': `Bearer ${storedToken}`
             }
@@ -166,13 +167,13 @@ export default function Home() {
       try {
         // Fetch tasks, projects, and members in parallel
         const [tasksRes, projectsRes, membersRes] = await Promise.all([
-          fetch(`http://localhost:3001/api/organizations/${selectedOrg.id}/tasks`, {
+          fetch(`${API_URL}/api/organizations/${selectedOrg.id}/tasks`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
-          fetch(`http://localhost:3001/api/organizations/${selectedOrg.id}/projects`, {
+          fetch(`${API_URL}/api/organizations/${selectedOrg.id}/projects`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
-          fetch(`http://localhost:3001/api/organizations/${selectedOrg.id}/members`, {
+          fetch(`${API_URL}/api/organizations/${selectedOrg.id}/members`, {
             headers: { 'Authorization': `Bearer ${token}` }
           })
         ])
