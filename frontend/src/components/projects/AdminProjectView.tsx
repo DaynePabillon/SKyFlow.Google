@@ -15,6 +15,16 @@ interface Project {
   task_count?: number
 }
 
+interface Task {
+  id: string
+  title: string
+  description: string
+  status: 'todo' | 'in_progress' | 'review' | 'done'
+  priority: 'low' | 'medium' | 'high'
+  due_date: string | null
+  assigned_to_name?: string
+}
+
 interface AdminProjectViewProps {
   user: any
   organization: {
@@ -38,6 +48,9 @@ export default function AdminProjectView({ user, organization }: AdminProjectVie
     end_date: ''
   })
   const [isCreating, setIsCreating] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [projectTasks, setProjectTasks] = useState<Task[]>([])
+  const [loadingTasks, setLoadingTasks] = useState(false)
 
   useEffect(() => {
     fetchProjects()
@@ -136,6 +149,57 @@ export default function AdminProjectView({ user, organization }: AdminProjectVie
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700'
   }
 
+  const handleProjectClick = async (project: Project) => {
+    setSelectedProject(project)
+    setLoadingTasks(true)
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/projects/${project.id}/tasks`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setProjectTasks(data.tasks || [])
+      }
+    } catch (error) {
+      console.error('Error fetching project tasks:', error)
+    } finally {
+      setLoadingTasks(false)
+    }
+  }
+
+  const handleToggleTaskStatus = async (task: Task) => {
+    const newStatus = task.status === 'done' ? 'todo' : 'done'
+    try {
+      const token = localStorage.getItem('token')
+      await fetch(`${API_URL}/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      })
+      // Update local state
+      setProjectTasks(projectTasks.map(t =>
+        t.id === task.id ? { ...t, status: newStatus } : t
+      ))
+      // Refresh project list to update task counts
+      fetchProjects()
+    } catch (error) {
+      console.error('Error updating task:', error)
+    }
+  }
+
+  const getTaskPriorityColor = (priority: string) => {
+    const colors = {
+      high: 'text-red-500',
+      medium: 'text-yellow-500',
+      low: 'text-green-500'
+    }
+    return colors[priority as keyof typeof colors] || 'text-gray-500'
+  }
+
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesFilter = filterStatus === 'all' || project.status === filterStatus
@@ -209,6 +273,7 @@ export default function AdminProjectView({ user, organization }: AdminProjectVie
           {filteredProjects.map((project) => (
             <div
               key={project.id}
+              onClick={() => handleProjectClick(project)}
               className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group"
             >
               <div className="flex items-start justify-between mb-4">
@@ -349,6 +414,120 @@ export default function AdminProjectView({ user, organization }: AdminProjectVie
                   {isCreating ? 'Creating...' : 'Create Project ✓'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Task Roadmap Modal */}
+      {selectedProject && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedProject.name}</h2>
+                  <p className="text-white/80 text-sm mt-1">{selectedProject.description || 'No description'}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedProject(null)}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="flex items-center gap-4 mt-4 text-sm">
+                <span className="bg-white/20 px-3 py-1 rounded-full">{selectedProject.status}</span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {projectTasks.filter(t => t.status === 'done').length}/{projectTasks.length} completed
+                </span>
+              </div>
+            </div>
+
+            {/* Tasks List - Roadmap Style */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FolderKanban className="w-5 h-5" />
+                Task Roadmap
+              </h3>
+
+              {loadingTasks ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto" />
+                </div>
+              ) : projectTasks.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No tasks in this project yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {projectTasks.map((task, index) => (
+                    <div
+                      key={task.id}
+                      className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${task.status === 'done'
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-gray-50 border-gray-200 hover:border-blue-300'
+                        }`}
+                    >
+                      {/* Checkbox */}
+                      <button
+                        onClick={() => handleToggleTaskStatus(task)}
+                        className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${task.status === 'done'
+                            ? 'bg-green-500 border-green-500 text-white'
+                            : 'border-gray-300 hover:border-blue-500'
+                          }`}
+                      >
+                        {task.status === 'done' && <CheckCircle2 className="w-4 h-4" />}
+                      </button>
+
+                      {/* Task Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-gray-400">#{index + 1}</span>
+                          <h4 className={`font-medium ${task.status === 'done' ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                            {task.title}
+                          </h4>
+                        </div>
+                        {task.description && (
+                          <p className={`text-sm ${task.status === 'done' ? 'text-gray-400' : 'text-gray-600'} line-clamp-1`}>
+                            {task.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                          <span className={`px-2 py-0.5 rounded ${getTaskPriorityColor(task.priority)} bg-opacity-10`}>
+                            {task.priority}
+                          </span>
+                          {task.due_date && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(task.due_date).toLocaleDateString()}
+                            </span>
+                          )}
+                          {task.assigned_to_name && (
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              {task.assigned_to_name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+              <button
+                onClick={() => setSelectedProject(null)}
+                className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

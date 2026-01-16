@@ -620,6 +620,21 @@ async function runMigrations(): Promise<void> {
           END IF;
         END $$;
       `
+    },
+    {
+      name: '016_create_sync_logs',
+      sql: `
+        CREATE TABLE IF NOT EXISTS sync_logs (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
+          event_type VARCHAR(100) NOT NULL,
+          event_data JSONB DEFAULT '{}',
+          created_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_sync_logs_workspace ON sync_logs(workspace_id);
+        CREATE INDEX IF NOT EXISTS idx_sync_logs_created ON sync_logs(created_at);
+      `
     }
   ];
 

@@ -13,7 +13,7 @@ interface Task {
     id: string
     title: string
     description: string
-    status: 'todo' | 'in-progress' | 'review' | 'done' | 'archived'
+    status: 'todo' | 'in-progress' | 'in_progress' | 'review' | 'done' | 'archived'
     priority: 'low' | 'medium' | 'high'
     assigned_to: string | null
     assigned_to_name?: string
@@ -602,8 +602,8 @@ export default function BoardsPage() {
                         <div className="flex items-center justify-between p-6 border-b border-gray-100">
                             <div className="flex items-center gap-3">
                                 <div className={`w-3 h-3 rounded-full ${selectedTask.status === 'done' ? 'bg-green-500' :
-                                        selectedTask.status === 'in_progress' || selectedTask.status === 'in-progress' ? 'bg-blue-500' :
-                                            selectedTask.status === 'review' ? 'bg-purple-500' : 'bg-gray-400'
+                                    selectedTask.status === 'in_progress' || selectedTask.status === 'in-progress' ? 'bg-blue-500' :
+                                        selectedTask.status === 'review' ? 'bg-purple-500' : 'bg-gray-400'
                                     }`} />
                                 <h2 className="text-xl font-bold text-gray-800">Task Details</h2>
                             </div>
@@ -668,8 +668,8 @@ export default function BoardsPage() {
                                 </div>
                                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                                     <span className={`px-2 py-1 rounded text-xs font-medium ${selectedTask.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                            selectedTask.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                                'bg-green-100 text-green-700'
+                                        selectedTask.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                            'bg-green-100 text-green-700'
                                         }`}>
                                         {selectedTask.priority} priority
                                     </span>
