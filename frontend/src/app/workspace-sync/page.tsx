@@ -1,14 +1,15 @@
 'use client';
 
+import { API_URL } from '@/lib/api/client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
-import { 
-  FolderSync, 
-  FileSpreadsheet, 
-  RefreshCw, 
-  Check, 
-  Link2, 
+import {
+  FolderSync,
+  FileSpreadsheet,
+  RefreshCw,
+  Check,
+  Link2,
   AlertCircle,
   Plus,
   Trash2,
@@ -61,14 +62,14 @@ export default function WorkspaceSyncPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [mounted, setMounted] = useState(false);
-  
+
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [driveSheets, setDriveSheets] = useState<DriveSheet[]>([]);
   const [syncedSheets, setSyncedSheets] = useState<SyncedSheet[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
-  
+
   // Create workspace modal
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [driveFolders, setDriveFolders] = useState<DriveFolder[]>([]);
@@ -77,7 +78,7 @@ export default function WorkspaceSyncPage() {
   const [createNewFolder, setCreateNewFolder] = useState(false);
   const [newFolderInput, setNewFolderInput] = useState('');
   const [creatingFolder, setCreatingFolder] = useState(false);
-  
+
   // Connect sheet modal
   const [showConnectSheet, setShowConnectSheet] = useState(false);
   const [selectedSheetId, setSelectedSheetId] = useState('');
@@ -155,13 +156,13 @@ export default function WorkspaceSyncPage() {
     if (!selectedWorkspace) return;
     try {
       const token = localStorage.getItem('token');
-      
+
       const res = await fetch(`${API_URL}/api/workspaces/${selectedWorkspace.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
       setSyncedSheets(data.sheets || []);
-      
+
       const sheetsRes = await fetch(`${API_URL}/api/workspaces/${selectedWorkspace.id}/drive-sheets`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -198,7 +199,7 @@ export default function WorkspaceSyncPage() {
         },
         body: JSON.stringify({ title: newSheetName.trim() })
       });
-      
+
       if (res.ok) {
         const data = await res.json();
         setSelectedSheetId(data.spreadsheet.id);
@@ -242,7 +243,7 @@ export default function WorkspaceSyncPage() {
         },
         body: JSON.stringify({ name: newFolderInput.trim() })
       });
-      
+
       if (res.ok) {
         const data = await res.json();
         setNewFolderId(data.folder.id);
@@ -276,7 +277,7 @@ export default function WorkspaceSyncPage() {
           folderName: newFolderName
         })
       });
-      
+
       if (res.ok) {
         setShowCreateModal(false);
         setNewFolderId('');
@@ -304,7 +305,7 @@ export default function WorkspaceSyncPage() {
           sheetName: selectedSheetName
         })
       });
-      
+
       if (res.ok) {
         setShowConnectSheet(false);
         setSelectedSheetId('');
@@ -380,7 +381,7 @@ export default function WorkspaceSyncPage() {
             <h1 className="text-2xl font-bold text-gray-800">Workspace Sync</h1>
             <p className="text-gray-500 text-sm">Connect Google Sheets as live task databases</p>
           </div>
-          
+
           <button
             onClick={() => {
               fetchDriveFolders();
@@ -408,7 +409,7 @@ export default function WorkspaceSyncPage() {
               <Cloud className="w-5 h-5 text-blue-500" />
               Connected Workspaces
             </h2>
-            
+
             {workspaces.length === 0 ? (
               <div className="text-center py-12 text-gray-400">
                 <FolderSync className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -421,19 +422,17 @@ export default function WorkspaceSyncPage() {
                   <div
                     key={ws.id}
                     onClick={() => setSelectedWorkspace(ws)}
-                    className={`p-4 rounded-lg cursor-pointer transition border ${
-                      selectedWorkspace?.id === ws.id 
-                        ? 'bg-blue-50 border-blue-300' 
+                    className={`p-4 rounded-lg cursor-pointer transition border ${selectedWorkspace?.id === ws.id
+                        ? 'bg-blue-50 border-blue-300'
                         : 'bg-gray-50 hover:bg-gray-100 border-transparent'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium text-gray-800">{ws.name}</h3>
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        ws.sync_status === 'active' ? 'bg-green-100 text-green-700' :
-                        ws.sync_status === 'syncing' ? 'bg-blue-100 text-blue-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${ws.sync_status === 'active' ? 'bg-green-100 text-green-700' :
+                          ws.sync_status === 'syncing' ? 'bg-blue-100 text-blue-700' :
+                            'bg-red-100 text-red-700'
+                        }`}>
                         {ws.sync_status}
                       </span>
                     </div>
@@ -503,7 +502,7 @@ export default function WorkspaceSyncPage() {
                   <FileSpreadsheet className="w-5 h-5 text-green-500" />
                   Connected Sheets
                 </h3>
-                
+
                 {syncedSheets.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg text-gray-400">
                     <FileSpreadsheet className="w-10 h-10 mx-auto mb-3 opacity-50" />
@@ -530,7 +529,7 @@ export default function WorkspaceSyncPage() {
                             <Check className="w-3 h-3 inline mr-1" />
                             Synced
                           </span>
-                          <a 
+                          <a
                             href={`https://docs.google.com/spreadsheets/d/${sheet.sheet_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -557,7 +556,7 @@ export default function WorkspaceSyncPage() {
             <p className="text-gray-500 text-sm mb-4">
               Select a Google Drive folder or create a new one as your workspace root.
             </p>
-            
+
             <div className="space-y-4">
               {!createNewFolder ? (
                 <div>
@@ -576,7 +575,7 @@ export default function WorkspaceSyncPage() {
                       <option key={folder.id} value={folder.id}>{folder.name}</option>
                     ))}
                   </select>
-                  
+
                   <button
                     onClick={() => setCreateNewFolder(true)}
                     className="mt-3 flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
@@ -604,7 +603,7 @@ export default function WorkspaceSyncPage() {
                       {creatingFolder ? 'Creating...' : 'Create'}
                     </button>
                   </div>
-                  
+
                   <button
                     onClick={() => {
                       setCreateNewFolder(false);
@@ -616,7 +615,7 @@ export default function WorkspaceSyncPage() {
                   </button>
                 </div>
               )}
-              
+
               {newFolderName && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
                   <Check className="w-4 h-4 inline mr-2" />
@@ -624,7 +623,7 @@ export default function WorkspaceSyncPage() {
                 </div>
               )}
             </div>
-            
+
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => {
@@ -656,7 +655,7 @@ export default function WorkspaceSyncPage() {
             <p className="text-gray-500 text-sm mb-4">
               Select an existing sheet or create a new one to sync as a task database.
             </p>
-            
+
             <div className="space-y-4">
               {!createNewSheet ? (
                 <div>
@@ -675,7 +674,7 @@ export default function WorkspaceSyncPage() {
                       <option key={sheet.id} value={sheet.id}>{sheet.name}</option>
                     ))}
                   </select>
-                  
+
                   <button
                     onClick={() => setCreateNewSheet(true)}
                     className="mt-3 flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
@@ -703,7 +702,7 @@ export default function WorkspaceSyncPage() {
                       {creatingSheet ? 'Creating...' : 'Create'}
                     </button>
                   </div>
-                  
+
                   <button
                     onClick={() => {
                       setCreateNewSheet(false);
@@ -715,7 +714,7 @@ export default function WorkspaceSyncPage() {
                   </button>
                 </div>
               )}
-              
+
               {selectedSheetName && (
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">
                   <FileSpreadsheet className="w-4 h-4 inline mr-2" />
@@ -725,7 +724,7 @@ export default function WorkspaceSyncPage() {
                 </div>
               )}
             </div>
-            
+
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => {
