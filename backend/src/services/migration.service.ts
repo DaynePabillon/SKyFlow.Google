@@ -466,6 +466,7 @@ async function runMigrations(): Promise<void> {
           root_folder_id VARCHAR(255) NOT NULL,
           root_folder_name VARCHAR(255),
           sync_status VARCHAR(50) DEFAULT 'active',
+          sync_error TEXT,
           last_synced_at TIMESTAMP,
           drive_channel_id VARCHAR(255),
           drive_channel_expiry TIMESTAMP,
