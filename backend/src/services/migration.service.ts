@@ -478,11 +478,13 @@ async function runMigrations(): Promise<void> {
         CREATE TABLE IF NOT EXISTS synced_sheets (
           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
           workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
+          project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
           sheet_id VARCHAR(255) NOT NULL,
           sheet_name VARCHAR(255) NOT NULL,
           sync_status VARCHAR(50) DEFAULT 'active',
           last_synced_at TIMESTAMP,
-          task_column_mapping JSONB DEFAULT '{}',
+          column_mapping JSONB DEFAULT '{}',
+          row_count INTEGER DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           UNIQUE(workspace_id, sheet_id)
@@ -492,14 +494,15 @@ async function runMigrations(): Promise<void> {
         CREATE TABLE IF NOT EXISTS sheet_tasks (
           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
           synced_sheet_id UUID REFERENCES synced_sheets(id) ON DELETE CASCADE,
+          project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
           sheet_row_index INTEGER NOT NULL,
           title VARCHAR(500) NOT NULL,
           description TEXT,
           status VARCHAR(50) DEFAULT 'todo',
           priority VARCHAR(20) DEFAULT 'medium',
           due_date TIMESTAMP,
-          assigned_to VARCHAR(255),
-          raw_data JSONB,
+          assignee_email VARCHAR(255),
+          synced_at TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           UNIQUE(synced_sheet_id, sheet_row_index)
