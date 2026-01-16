@@ -47,9 +47,9 @@ interface Organization {
 
 interface TaskComment {
     id: string
-    content: string
+    comment: string
     user_name: string
-    user_email: string
+    user_id: string
     created_at: string
 }
 
@@ -286,7 +286,7 @@ export default function BoardsPage() {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ content: newComment })
+                body: JSON.stringify({ comment: newComment })
             })
             if (res.ok) {
                 const data = await res.json()
@@ -708,7 +708,7 @@ export default function BoardsPage() {
                                                             {new Date(comment.created_at).toLocaleDateString()}
                                                         </span>
                                                     </div>
-                                                    <p className="text-sm text-gray-600">{comment.content}</p>
+                                                    <p className="text-sm text-gray-600">{comment.comment}</p>
                                                 </div>
                                             </div>
                                         ))

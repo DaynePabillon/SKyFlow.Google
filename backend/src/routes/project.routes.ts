@@ -45,7 +45,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *`,
       [organization_id, name, description, status || 'planning', priority || 'medium',
-       start_date, end_date, budget, userId]
+        start_date, end_date, budget, userId]
     );
 
     // Add creator as project lead
@@ -373,6 +373,45 @@ router.delete('/:id/members/:memberId', authenticateToken, async (req: AuthReque
   } catch (error) {
     logger.error('Error removing project member:', error);
     res.status(500).json({ error: 'Failed to remove project member' });
+  }
+});
+
+/**
+ * GET /api/projects/:id/tasks
+ * Get all tasks for a project
+ */
+router.get('/:id/tasks', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Check access
+    const accessCheck = await query(
+      `SELECT 1 FROM projects p
+       INNER JOIN organization_members om ON p.organization_id = om.organization_id
+       WHERE p.id = $1 AND om.user_id = $2 AND om.status = $3`,
+      [id, userId, 'active']
+    );
+
+    if (accessCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const result = await query(
+      `SELECT t.*, u.name as assigned_to_name
+       FROM tasks t
+       LEFT JOIN users u ON t.assigned_to = u.id
+       WHERE t.project_id = $1
+       ORDER BY 
+         CASE t.status WHEN 'todo' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'review' THEN 3 WHEN 'done' THEN 4 ELSE 5 END,
+         t.created_at DESC`,
+      [id]
+    );
+
+    res.json({ tasks: result.rows });
+  } catch (error) {
+    logger.error('Error fetching project tasks:', error);
+    res.status(500).json({ error: 'Failed to fetch project tasks' });
   }
 });
 

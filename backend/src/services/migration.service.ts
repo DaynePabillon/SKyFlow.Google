@@ -635,6 +635,16 @@ async function runMigrations(): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_sync_logs_workspace ON sync_logs(workspace_id);
         CREATE INDEX IF NOT EXISTS idx_sync_logs_created ON sync_logs(created_at);
       `
+    },
+    {
+      name: '017_add_sync_logs_details',
+      sql: `
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sync_logs' AND column_name = 'details') THEN
+            ALTER TABLE sync_logs ADD COLUMN details JSONB DEFAULT '{}';
+          END IF;
+        END $$;
+      `
     }
   ];
 
