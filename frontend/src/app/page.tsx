@@ -96,9 +96,13 @@ export default function Home() {
             router.push('/select-workspace')
             return
           } else if (!orgsData || orgsData.length === 0) {
-            // No organizations (new user) - redirect to onboarding
-            router.push('/onboarding')
-            return
+            // No organizations - check if onboarding was just completed
+            const onboardingCompleted = localStorage.getItem('onboardingCompleted')
+            if (!onboardingCompleted) {
+              router.push('/onboarding')
+              return
+            }
+            // Onboarding was completed, will refresh from API to get org
           }
         } catch (e) {
           console.error('Error parsing stored user data:', e)
@@ -139,7 +143,15 @@ export default function Home() {
             router.push('/select-workspace')
             return
           } else if (!organizations || organizations.length === 0) {
-            // No organizations (new user) - redirect to onboarding
+            // No organizations - check if onboarding was just completed
+            const onboardingCompleted = localStorage.getItem('onboardingCompleted')
+            if (!onboardingCompleted) {
+              router.push('/onboarding')
+              return
+            }
+            // Onboarding completed but no org yet - clear flag and redirect to onboarding
+            // This handles the case where onboarding API failed
+            localStorage.removeItem('onboardingCompleted')
             router.push('/onboarding')
             return
           }

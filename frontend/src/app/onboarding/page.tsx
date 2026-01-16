@@ -99,7 +99,7 @@ export default function OnboardingPage() {
 
     try {
       const token = localStorage.getItem("token")
-      await fetch(`${API_URL}/api/users/onboarding`, {
+      const response = await fetch(`${API_URL}/api/users/onboarding`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -108,10 +108,31 @@ export default function OnboardingPage() {
         body: JSON.stringify(onboardingData)
       })
 
-      localStorage.setItem("onboardingCompleted", "true")
-      router.push("/")
+      if (response.ok) {
+        const result = await response.json()
+
+        // Save the created organization to localStorage
+        if (result.organizationId && workspaceName) {
+          const newOrg = {
+            id: result.organizationId,
+            name: workspaceName.trim(),
+            role: 'admin'
+          }
+          localStorage.setItem('organizations', JSON.stringify([newOrg]))
+          localStorage.setItem('selectedOrganization', JSON.stringify(newOrg))
+        }
+
+        localStorage.setItem("onboardingCompleted", "true")
+        router.push("/")
+      } else {
+        console.error("Onboarding API failed:", response.status)
+        // Still redirect but with flag so user doesn't get stuck
+        localStorage.setItem("onboardingCompleted", "true")
+        router.push("/")
+      }
     } catch (error) {
       console.error("Failed to save onboarding data:", error)
+      localStorage.setItem("onboardingCompleted", "true")
       router.push("/")
     }
   }
