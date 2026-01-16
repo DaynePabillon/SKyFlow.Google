@@ -2,7 +2,7 @@
 
 import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
-import { TrendingUp, Users, FolderKanban, CheckSquare, Calendar, X, FileText, BarChart3, Target, Sparkles } from "lucide-react"
+import { TrendingUp, Users, FolderKanban, CheckSquare, Calendar, X, FileText, BarChart3, Target, Sparkles, Building2, ArrowRight, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
 
@@ -49,6 +49,8 @@ export default function Home() {
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [preferences, setPreferences] = useState<OnboardingPreferences | null>(null)
+  const [showOrgSelector, setShowOrgSelector] = useState(false)
+  const [selectingOrgId, setSelectingOrgId] = useState<string | null>(null)
 
   // Dashboard data state
   const [tasks, setTasks] = useState<Task[]>([])
@@ -92,9 +94,8 @@ export default function Home() {
           } else if (orgsData.length === 1) {
             setSelectedOrg(orgsData[0])
           } else if (orgsData.length > 1) {
-            // Multiple orgs but none selected - redirect to workspace selection
-            router.push('/select-workspace')
-            return
+            // Multiple orgs but none selected - show selector popup
+            setShowOrgSelector(true)
           } else if (!orgsData || orgsData.length === 0) {
             // No organizations - check if onboarding was just completed
             const onboardingCompleted = localStorage.getItem('onboardingCompleted')
@@ -139,9 +140,8 @@ export default function Home() {
             setSelectedOrg(organizations[0])
             localStorage.setItem('selectedOrganization', JSON.stringify(organizations[0]))
           } else if (organizations && organizations.length > 1) {
-            // Multiple workspaces - redirect to selection
-            router.push('/select-workspace')
-            return
+            // Multiple workspaces - show selector popup
+            setShowOrgSelector(true)
           } else if (!organizations || organizations.length === 0) {
             // No organizations - check if onboarding was just completed
             const onboardingCompleted = localStorage.getItem('onboardingCompleted')
@@ -438,6 +438,63 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Organization Selector Modal */}
+      {showOrgSelector && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 animate-in fade-in zoom-in duration-200">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl mb-4 shadow-lg">
+                <Building2 className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Welcome back, {user?.name?.split(' ')[0]}!
+              </h2>
+              <p className="text-gray-600">Select a workspace to continue</p>
+            </div>
+
+            <div className="space-y-3 max-h-80 overflow-y-auto">
+              {organizations.map((org) => (
+                <button
+                  key={org.id}
+                  onClick={() => {
+                    setSelectingOrgId(org.id)
+                    setSelectedOrg(org)
+                    localStorage.setItem('selectedOrganization', JSON.stringify(org))
+                    setTimeout(() => {
+                      setShowOrgSelector(false)
+                      setSelectingOrgId(null)
+                    }, 300)
+                  }}
+                  disabled={selectingOrgId === org.id}
+                  className="w-full group flex items-center justify-between p-4 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-xl transition-all duration-200 disabled:opacity-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold">{org.name.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-gray-800 group-hover:text-blue-600">{org.name}</p>
+                      <span className="text-xs text-gray-500 capitalize">{org.role}</span>
+                    </div>
+                  </div>
+                  {selectingOrgId === org.id ? (
+                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                  ) : (
+                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 text-center">
+              <button className="text-sm text-blue-500 hover:text-blue-700 font-medium">
+                + Create new workspace
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   )
 }
