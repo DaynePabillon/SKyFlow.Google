@@ -7,7 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import ProfessionalKanban from "@/components/tasks/ProfessionalKanban"
 import ChartWidget from "@/components/widgets/ChartWidget"
 import ChartWidgetPicker from "@/components/widgets/ChartWidgetPicker"
-import { FolderKanban, X, Plus, BarChart3, ChevronUp, ChevronDown, FileSpreadsheet, CheckSquare } from "lucide-react"
+import { FolderKanban, X, Plus, BarChart3, ChevronUp, ChevronDown, FileSpreadsheet, CheckSquare, Calendar, User, MessageSquare, Send, Trash2, Edit3, Clock } from "lucide-react"
 
 interface Task {
     id: string
@@ -45,6 +45,14 @@ interface Organization {
     role: 'admin' | 'manager' | 'member'
 }
 
+interface TaskComment {
+    id: string
+    content: string
+    user_name: string
+    user_email: string
+    created_at: string
+}
+
 interface Widget {
     id: string
     type: string
@@ -65,6 +73,11 @@ export default function BoardsPage() {
     const [widgets, setWidgets] = useState<Widget[]>([])
     const [showWidgetPicker, setShowWidgetPicker] = useState(false)
     const [widgetsExpanded, setWidgetsExpanded] = useState(true)
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+    const [taskComments, setTaskComments] = useState<TaskComment[]>([])
+    const [newComment, setNewComment] = useState('')
+    const [isEditingTask, setIsEditingTask] = useState(false)
+    const [editedTask, setEditedTask] = useState<Partial<Task>>({})
     const [newTask, setNewTask] = useState({
         title: '',
         description: '',
@@ -243,6 +256,81 @@ export default function BoardsPage() {
         fetchData(org.id)
     }
 
+    const handleTaskClick = async (task: Task) => {
+        setSelectedTask(task)
+        setEditedTask(task)
+        setIsEditingTask(false)
+        // Fetch comments for this task
+        try {
+            const token = localStorage.getItem('token')
+            const res = await fetch(`${API_URL}/api/tasks/${task.id}/comments`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setTaskComments(data.comments || [])
+            }
+        } catch (error) {
+            console.error('Error fetching comments:', error)
+            setTaskComments([])
+        }
+    }
+
+    const handleAddComment = async () => {
+        if (!newComment.trim() || !selectedTask) return
+        try {
+            const token = localStorage.getItem('token')
+            const res = await fetch(`${API_URL}/api/tasks/${selectedTask.id}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: newComment })
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setTaskComments([...taskComments, data.comment])
+                setNewComment('')
+            }
+        } catch (error) {
+            console.error('Error adding comment:', error)
+        }
+    }
+
+    const handleUpdateTask = async () => {
+        if (!selectedTask) return
+        try {
+            const token = localStorage.getItem('token')
+            await fetch(`${API_URL}/api/tasks/${selectedTask.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(editedTask)
+            })
+            setSelectedTask({ ...selectedTask, ...editedTask } as Task)
+            setIsEditingTask(false)
+            if (selectedOrg) fetchTasks(selectedOrg.id)
+        } catch (error) {
+            console.error('Error updating task:', error)
+        }
+    }
+
+    const handleDeleteSelectedTask = async () => {
+        if (!selectedTask) return
+        await handleDeleteTask(selectedTask.id)
+        setSelectedTask(null)
+    }
+
+    const getUserRole = (): 'admin' | 'manager' | 'member' => {
+        return selectedOrg?.role || 'member'
+    }
+
+    const canEdit = () => ['admin', 'manager'].includes(getUserRole())
+    const canDelete = () => getUserRole() === 'admin'
+
     // Filter tasks based on active tab
     const filteredTasks = tasks.filter(task => {
         if (task.status === 'archived') return false
@@ -352,6 +440,7 @@ export default function BoardsPage() {
                     onStatusChange={handleStatusChange}
                     onAddTask={() => setIsCreateModalOpen(true)}
                     onDeleteTask={handleDeleteTask}
+                    onTaskClick={(task) => handleTaskClick(task as Task)}
                 />
 
                 {/* Bottom Tab Bar */}
@@ -384,8 +473,8 @@ export default function BoardsPage() {
                                 key={sheet.id}
                                 onClick={() => setActiveTab(sheet.sheet_name)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === sheet.sheet_name
-                                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
-                                        : 'text-gray-600 hover:bg-gray-100'
+                                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
+                                    : 'text-gray-600 hover:bg-gray-100'
                                     }`}
                             >
                                 <FileSpreadsheet className="w-4 h-4" />
@@ -500,6 +589,200 @@ export default function BoardsPage() {
                             >
                                 Create Task
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Task Detail Modal */}
+            {selectedTask && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-3 h-3 rounded-full ${selectedTask.status === 'done' ? 'bg-green-500' :
+                                        selectedTask.status === 'in_progress' || selectedTask.status === 'in-progress' ? 'bg-blue-500' :
+                                            selectedTask.status === 'review' ? 'bg-purple-500' : 'bg-gray-400'
+                                    }`} />
+                                <h2 className="text-xl font-bold text-gray-800">Task Details</h2>
+                            </div>
+                            <button onClick={() => setSelectedTask(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {/* Task Title & Description */}
+                            <div className="mb-6">
+                                {isEditingTask && canEdit() ? (
+                                    <div className="space-y-4">
+                                        <input
+                                            type="text"
+                                            value={editedTask.title || ''}
+                                            onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
+                                            className="w-full text-xl font-bold text-gray-800 border border-gray-200 rounded-lg px-3 py-2"
+                                        />
+                                        <textarea
+                                            value={editedTask.description || ''}
+                                            onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
+                                            className="w-full h-24 border border-gray-200 rounded-lg px-3 py-2 resize-none"
+                                            placeholder="Task description..."
+                                        />
+                                    </div>
+                                ) : (
+                                    <>
+                                        <h3 className="text-2xl font-bold text-gray-800 mb-2">{selectedTask.title}</h3>
+                                        <p className="text-gray-600">{selectedTask.description || 'No description'}</p>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Task Meta Info */}
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                                    <Calendar className="w-4 h-4 text-gray-500" />
+                                    <div>
+                                        <p className="text-xs text-gray-500">Due Date</p>
+                                        {isEditingTask && canEdit() ? (
+                                            <input
+                                                type="date"
+                                                value={editedTask.due_date?.split('T')[0] || ''}
+                                                onChange={(e) => setEditedTask({ ...editedTask, due_date: e.target.value })}
+                                                className="text-sm font-medium text-gray-800 border rounded px-2 py-1"
+                                            />
+                                        ) : (
+                                            <p className="text-sm font-medium text-gray-800">
+                                                {selectedTask.due_date ? new Date(selectedTask.due_date).toLocaleDateString() : 'Not set'}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                                    <User className="w-4 h-4 text-gray-500" />
+                                    <div>
+                                        <p className="text-xs text-gray-500">Assigned to</p>
+                                        <p className="text-sm font-medium text-gray-800">{selectedTask.assigned_to_name || 'Unassigned'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${selectedTask.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                            selectedTask.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-green-100 text-green-700'
+                                        }`}>
+                                        {selectedTask.priority} priority
+                                    </span>
+                                </div>
+                                {selectedTask.sheet_name && (
+                                    <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                                        <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                                        <span className="text-xs text-green-700">From: {selectedTask.sheet_name}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Comments Section */}
+                            <div className="border-t border-gray-100 pt-6">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <MessageSquare className="w-5 h-5 text-gray-500" />
+                                    <h4 className="font-semibold text-gray-800">Comments ({taskComments.length})</h4>
+                                </div>
+
+                                {/* Comments List */}
+                                <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
+                                    {taskComments.length === 0 ? (
+                                        <p className="text-gray-400 text-sm text-center py-4">No comments yet</p>
+                                    ) : (
+                                        taskComments.map((comment) => (
+                                            <div key={comment.id} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
+                                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <span className="text-white text-xs font-bold">
+                                                        {comment.user_name?.charAt(0).toUpperCase() || '?'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-medium text-sm text-gray-800">{comment.user_name}</span>
+                                                        <span className="text-xs text-gray-400">
+                                                            {new Date(comment.created_at).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-600">{comment.content}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Add Comment Input */}
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+                                        placeholder="Add a comment..."
+                                        className="flex-1 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                    />
+                                    <button
+                                        onClick={handleAddComment}
+                                        disabled={!newComment.trim()}
+                                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                                    >
+                                        <Send className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer - Actions */}
+                        <div className="flex items-center justify-between p-6 border-t border-gray-100 bg-gray-50">
+                            <div className="flex gap-2">
+                                {canDelete() && (
+                                    <button
+                                        onClick={handleDeleteSelectedTask}
+                                        className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete
+                                    </button>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                {canEdit() && (
+                                    isEditingTask ? (
+                                        <>
+                                            <button
+                                                onClick={() => setIsEditingTask(false)}
+                                                className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-white transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleUpdateTask}
+                                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                                            >
+                                                Save Changes
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button
+                                            onClick={() => setIsEditingTask(true)}
+                                            className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-white transition-colors"
+                                        >
+                                            <Edit3 className="w-4 h-4" />
+                                            Edit Task
+                                        </button>
+                                    )
+                                )}
+                                <button
+                                    onClick={() => setSelectedTask(null)}
+                                    className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors"
+                                >
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
