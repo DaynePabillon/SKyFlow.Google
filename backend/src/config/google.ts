@@ -13,11 +13,21 @@ const getRedirectUri = () => {
   return `${backendUrl}/api/auth/google/callback`;
 };
 
+const clientId = process.env.GOOGLE_CLIENT_ID;
+const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const redirectUri = getRedirectUri();
+
+// Debug: Log OAuth config at startup (hide sensitive parts)
+console.log('=== Google OAuth Config ===');
+console.log('Client ID loaded:', clientId ? `${clientId.substring(0, 20)}...` : 'MISSING!');
+console.log('Client Secret loaded:', clientSecret ? `${clientSecret.substring(0, 10)}...` : 'MISSING!');
+console.log('Redirect URI:', redirectUri);
+
 // Google OAuth2 Configuration
 export const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  getRedirectUri()
+  clientId,
+  clientSecret,
+  redirectUri
 );
 
 // Google API Scopes
