@@ -95,6 +95,10 @@ export default function Home() {
             // Multiple orgs but none selected - redirect to workspace selection
             router.push('/select-workspace')
             return
+          } else if (!orgsData || orgsData.length === 0) {
+            // No organizations (new user) - redirect to onboarding
+            router.push('/onboarding')
+            return
           }
         } catch (e) {
           console.error('Error parsing stored user data:', e)
@@ -133,6 +137,10 @@ export default function Home() {
           } else if (organizations && organizations.length > 1) {
             // Multiple workspaces - redirect to selection
             router.push('/select-workspace')
+            return
+          } else if (!organizations || organizations.length === 0) {
+            // No organizations (new user) - redirect to onboarding
+            router.push('/onboarding')
             return
           }
 
