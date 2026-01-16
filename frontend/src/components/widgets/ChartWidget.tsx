@@ -8,9 +8,9 @@ interface Task {
     title: string
     status: string
     priority: string
-    assigned_to?: string
-    assigned_to_name?: string
-    due_date?: string
+    assigned_to?: string | null
+    assigned_to_name?: string | null
+    due_date?: string | null
 }
 
 interface ChartWidgetProps {
