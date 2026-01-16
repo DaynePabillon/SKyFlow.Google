@@ -99,7 +99,7 @@ export default function OnboardingPage() {
 
     try {
       const token = localStorage.getItem("token")
-      await fetch("http://localhost:3001/api/users/onboarding", {
+      await fetch(`${API_URL}/api/users/onboarding`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

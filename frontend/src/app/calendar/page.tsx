@@ -116,7 +116,7 @@ export default function CalendarPage() {
       const token = localStorage.getItem("token")
       if (!token) return
 
-      const response = await fetch("http://localhost:3001/api/calendar/events", {
+      const response = await fetch(`${API_URL}/api/calendar/events`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -202,7 +202,7 @@ export default function CalendarPage() {
       const token = localStorage.getItem("token")
       if (!token) return
 
-      const response = await fetch("http://localhost:3001/api/calendar/events", {
+      const response = await fetch(`${API_URL}/api/calendar/events`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

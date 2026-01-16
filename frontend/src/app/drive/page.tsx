@@ -226,7 +226,7 @@ export default function DrivePage() {
       const formData = new FormData()
       formData.append("file", file)
 
-      const response = await fetch("http://localhost:3001/api/drive/upload", {
+      const response = await fetch(`${API_URL}/api/drive/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -249,7 +249,7 @@ export default function DrivePage() {
       const token = localStorage.getItem("token")
       if (!token) return
 
-      const response = await fetch("http://localhost:3001/api/drive/folder", {
+      const response = await fetch(`${API_URL}/api/drive/folder`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -173,7 +173,7 @@ export default function SheetsPage() {
         return
       }
 
-      const response = await fetch("http://localhost:3001/api/sheets/list", {
+      const response = await fetch(`${API_URL}/api/sheets/list`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
