@@ -514,6 +514,57 @@ async function runMigrations(): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_synced_sheets_workspace ON synced_sheets(workspace_id);
         CREATE INDEX IF NOT EXISTS idx_sheet_tasks_synced_sheet ON sheet_tasks(synced_sheet_id);
       `
+    },
+    {
+      name: '014_fix_workspace_sync_columns',
+      sql: `
+        -- Add missing columns to workspaces table
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'workspaces' AND column_name = 'sync_error') THEN
+            ALTER TABLE workspaces ADD COLUMN sync_error TEXT;
+          END IF;
+        END $$;
+
+        -- Add missing columns to synced_sheets table
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'synced_sheets' AND column_name = 'project_id') THEN
+            ALTER TABLE synced_sheets ADD COLUMN project_id UUID REFERENCES projects(id) ON DELETE SET NULL;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'synced_sheets' AND column_name = 'column_mapping') THEN
+            ALTER TABLE synced_sheets ADD COLUMN column_mapping JSONB DEFAULT '{}';
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'synced_sheets' AND column_name = 'row_count') THEN
+            ALTER TABLE synced_sheets ADD COLUMN row_count INTEGER DEFAULT 0;
+          END IF;
+        END $$;
+
+        -- Rename task_column_mapping to column_mapping if it exists
+        DO $$ BEGIN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'synced_sheets' AND column_name = 'task_column_mapping') THEN
+            ALTER TABLE synced_sheets RENAME COLUMN task_column_mapping TO column_mapping;
+          END IF;
+        END $$;
+
+        -- Add missing columns to sheet_tasks table
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sheet_tasks' AND column_name = 'project_id') THEN
+            ALTER TABLE sheet_tasks ADD COLUMN project_id UUID REFERENCES projects(id) ON DELETE SET NULL;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sheet_tasks' AND column_name = 'assignee_email') THEN
+            ALTER TABLE sheet_tasks ADD COLUMN assignee_email VARCHAR(255);
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sheet_tasks' AND column_name = 'synced_at') THEN
+            ALTER TABLE sheet_tasks ADD COLUMN synced_at TIMESTAMP;
+          END IF;
+        END $$;
+
+        -- Rename assigned_to to assignee_email if it exists
+        DO $$ BEGIN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sheet_tasks' AND column_name = 'assigned_to') THEN
+            ALTER TABLE sheet_tasks RENAME COLUMN assigned_to TO assignee_email;
+          END IF;
+        END $$;
+      `
     }
   ];
 
