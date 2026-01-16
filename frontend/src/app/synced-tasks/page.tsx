@@ -1,9 +1,10 @@
 'use client';
 
+import { API_URL } from '@/lib/api/client';
 import { useState, useEffect } from 'react';
-import { 
-  FileSpreadsheet, 
-  RefreshCw, 
+import {
+  FileSpreadsheet,
+  RefreshCw,
   Clock,
   User,
   Calendar,
@@ -65,12 +66,12 @@ export default function SyncedTasksPage() {
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
       if (!storedUser) return;
-      
+
       const res = await fetch(`${API_URL}/api/organizations`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const orgsData = await res.json();
-      
+
       if (orgsData.organizations?.length > 0) {
         const orgId = orgsData.organizations[0].id;
         const wsRes = await fetch(`${API_URL}/api/workspaces?organizationId=${orgId}`, {
@@ -122,7 +123,7 @@ export default function SyncedTasksPage() {
   const filteredTasks = tasks.filter(task => {
     const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          task.assignee_email?.toLowerCase().includes(searchQuery.toLowerCase());
+      task.assignee_email?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -191,11 +192,10 @@ export default function SyncedTasksPage() {
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
-                className={`px-3 py-1.5 rounded-lg text-sm transition ${
-                  filterStatus === status
+                className={`px-3 py-1.5 rounded-lg text-sm transition ${filterStatus === status
                     ? 'bg-blue-600 text-white'
                     : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
-                }`}
+                  }`}
               >
                 {status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
               </button>
@@ -263,12 +263,11 @@ export default function SyncedTasksPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-sm capitalize ${
-                          task.priority === 'critical' ? 'text-red-400' :
-                          task.priority === 'high' ? 'text-orange-400' :
-                          task.priority === 'medium' ? 'text-blue-400' :
-                          'text-slate-400'
-                        }`}>
+                        <span className={`text-sm capitalize ${task.priority === 'critical' ? 'text-red-400' :
+                            task.priority === 'high' ? 'text-orange-400' :
+                              task.priority === 'medium' ? 'text-blue-400' :
+                                'text-slate-400'
+                          }`}>
                           {task.priority}
                         </span>
                       </td>
