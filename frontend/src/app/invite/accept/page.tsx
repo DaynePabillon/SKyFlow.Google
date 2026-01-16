@@ -1,7 +1,7 @@
 "use client"
 
 import { API_URL } from '@/lib/api/client'
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Cloud, CheckCircle, XCircle, Loader2, ArrowRight } from "lucide-react"
 
@@ -13,7 +13,7 @@ interface InvitationDetails {
     email: string
 }
 
-export default function AcceptInvitationPage() {
+function AcceptInvitationContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const token = searchParams.get("token")
@@ -65,7 +65,7 @@ export default function AcceptInvitationPage() {
         setIsAccepting(true)
 
         try {
-            const response = await fetch("http://localhost:3001/api/invitations/accept", {
+            const response = await fetch(`${API_URL}/api/invitations/accept`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -202,5 +202,20 @@ export default function AcceptInvitationPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function AcceptInvitationPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
+                <div className="text-center">
+                    <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600">Loading...</p>
+                </div>
+            </div>
+        }>
+            <AcceptInvitationContent />
+        </Suspense>
     )
 }

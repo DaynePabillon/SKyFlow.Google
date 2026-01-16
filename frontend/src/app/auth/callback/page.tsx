@@ -1,11 +1,11 @@
 "use client"
 
 import { API_URL } from '@/lib/api/client'
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Cloud, CheckCircle2 } from "lucide-react"
 
-export default function AuthCallback() {
+function AuthCallbackContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [status, setStatus] = useState<'authenticating' | 'resolving' | 'success' | 'error'>('authenticating')
@@ -17,12 +17,12 @@ export default function AuthCallback() {
     if (token) {
       // Store token in localStorage
       localStorage.setItem("token", token)
-      
+
       // Show authenticating status for 1 second
       setTimeout(() => {
         setStatus('resolving')
         setMessage('Finding your workspace...')
-        
+
         // Fetch user data after showing resolving status
         setTimeout(() => {
           fetch(`${API_URL}/api/auth/me`, {
@@ -38,22 +38,22 @@ export default function AuthCallback() {
             })
             .then(data => {
               const { organizations, onboarding_data, ...userData } = data
-              
+
               // Store user data
               localStorage.setItem('user', JSON.stringify({ ...userData, onboarding_data }))
               localStorage.setItem('organizations', JSON.stringify(organizations || []))
-              
+
               // Store onboarding preferences for easy access
               if (onboarding_data) {
                 localStorage.setItem('onboardingPreferences', JSON.stringify(onboarding_data))
               }
-              
+
               // Check if user needs onboarding
               const isFirstTimeUser = !userData.onboarding_completed
-              
+
               setStatus('success')
               setMessage(isFirstTimeUser ? 'Welcome to SkyFlow!' : 'Welcome back!')
-              
+
               // Show success for 1.5 seconds before redirect
               setTimeout(() => {
                 if (isFirstTimeUser) {
@@ -67,12 +67,12 @@ export default function AuthCallback() {
               console.error('Error fetching user data:', err)
               setStatus('error')
               setMessage('Authentication failed')
-              
+
               // Clear invalid token
               localStorage.removeItem('token')
               localStorage.removeItem('user')
               localStorage.removeItem('organizations')
-              
+
               // Redirect to login after showing error
               setTimeout(() => {
                 router.push("/login")
@@ -96,7 +96,7 @@ export default function AuthCallback() {
               <Cloud className="w-16 h-16 text-white animate-pulse" />
             )}
           </div>
-          
+
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
             {status === 'success' ? 'All Set!' : 'Signing You In'}
           </h2>
@@ -116,5 +116,20 @@ export default function AuthCallback() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
+        <div className="text-center">
+          <Cloud className="w-16 h-16 text-gray-400 animate-pulse mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   )
 }
