@@ -341,7 +341,13 @@ export default function BoardsPage() {
 
                 {/* Kanban Board */}
                 <ProfessionalKanban
-                    tasks={filteredTasks}
+                    tasks={filteredTasks.map(t => ({
+                        ...t,
+                        description: t.description || undefined,
+                        due_date: t.due_date || undefined,
+                        project_name: t.project_name || undefined,
+                        assigned_to_name: t.assigned_to_name || undefined
+                    }))}
                     onStatusChange={handleStatusChange}
                     onAddTask={() => setIsCreateModalOpen(true)}
                     onDeleteTask={handleDeleteTask}
@@ -353,8 +359,8 @@ export default function BoardsPage() {
                         <button
                             onClick={() => setActiveTab('all')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'all'
-                                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
-                                    : 'text-gray-600 hover:bg-gray-100'
+                                ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
+                                : 'text-gray-600 hover:bg-gray-100'
                                 }`}
                         >
                             <CheckSquare className="w-4 h-4" />
@@ -363,8 +369,8 @@ export default function BoardsPage() {
                         <button
                             onClick={() => setActiveTab('general')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'general'
-                                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
-                                    : 'text-gray-600 hover:bg-gray-100'
+                                ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
+                                : 'text-gray-600 hover:bg-gray-100'
                                 }`}
                         >
                             <FolderKanban className="w-4 h-4" />
@@ -374,8 +380,8 @@ export default function BoardsPage() {
                         <button
                             onClick={() => setActiveTab('synced')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'synced'
-                                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
-                                    : 'text-gray-600 hover:bg-gray-100'
+                                ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
+                                : 'text-gray-600 hover:bg-gray-100'
                                 }`}
                         >
                             <FileSpreadsheet className="w-4 h-4" />
@@ -395,7 +401,8 @@ export default function BoardsPage() {
             {/* Widget Picker Modal */}
             {showWidgetPicker && (
                 <ChartWidgetPicker
-                    onSelect={handleAddWidget}
+                    isOpen={showWidgetPicker}
+                    onSelectWidget={handleAddWidget}
                     onClose={() => setShowWidgetPicker(false)}
                 />
             )}
