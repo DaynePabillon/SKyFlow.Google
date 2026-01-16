@@ -3,16 +3,31 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const poolConfig: PoolConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'skyflow_db',
-  user: process.env.DB_USER || 'skyflow_user',
-  password: process.env.DB_PASSWORD || 'skyflow_password',
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-};
+// Support both DATABASE_URL (Render) and individual env vars (local)
+let poolConfig: PoolConfig;
+
+if (process.env.DATABASE_URL) {
+  // Use connection string from Render
+  poolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  };
+} else {
+  // Use individual environment variables (local development)
+  poolConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME || 'skyflow_db',
+    user: process.env.DB_USER || 'skyflow_user',
+    password: process.env.DB_PASSWORD || 'skyflow_password',
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  };
+}
 
 export const pool = new Pool(poolConfig);
 
