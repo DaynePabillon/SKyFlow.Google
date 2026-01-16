@@ -538,9 +538,10 @@ async function runMigrations(): Promise<void> {
           END IF;
         END $$;
 
-        -- Rename task_column_mapping to column_mapping if it exists
+        -- Rename task_column_mapping to column_mapping if it exists (and column_mapping doesn't)
         DO $$ BEGIN
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'synced_sheets' AND column_name = 'task_column_mapping') THEN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'synced_sheets' AND column_name = 'task_column_mapping')
+             AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'synced_sheets' AND column_name = 'column_mapping') THEN
             ALTER TABLE synced_sheets RENAME COLUMN task_column_mapping TO column_mapping;
           END IF;
         END $$;
@@ -558,10 +559,64 @@ async function runMigrations(): Promise<void> {
           END IF;
         END $$;
 
-        -- Rename assigned_to to assignee_email if it exists
+        -- Rename assigned_to to assignee_email if it exists (and assignee_email doesn't)
         DO $$ BEGIN
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sheet_tasks' AND column_name = 'assigned_to') THEN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sheet_tasks' AND column_name = 'assigned_to')
+             AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sheet_tasks' AND column_name = 'assignee_email') THEN
             ALTER TABLE sheet_tasks RENAME COLUMN assigned_to TO assignee_email;
+          END IF;
+        END $$;
+      `
+    },
+    {
+      name: '015_ensure_workspace_columns',
+      sql: `
+        -- Ensure sync_error column exists on workspaces
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'workspaces' AND column_name = 'sync_error') THEN
+            ALTER TABLE workspaces ADD COLUMN sync_error TEXT;
+          END IF;
+        END $$;
+
+        -- Ensure column_mapping exists on synced_sheets
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'synced_sheets' AND column_name = 'column_mapping') THEN
+            ALTER TABLE synced_sheets ADD COLUMN column_mapping JSONB DEFAULT '{}';
+          END IF;
+        END $$;
+
+        -- Ensure project_id exists on synced_sheets
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'synced_sheets' AND column_name = 'project_id') THEN
+            ALTER TABLE synced_sheets ADD COLUMN project_id UUID;
+          END IF;
+        END $$;
+
+        -- Ensure row_count exists on synced_sheets
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'synced_sheets' AND column_name = 'row_count') THEN
+            ALTER TABLE synced_sheets ADD COLUMN row_count INTEGER DEFAULT 0;
+          END IF;
+        END $$;
+
+        -- Ensure project_id exists on sheet_tasks
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sheet_tasks' AND column_name = 'project_id') THEN
+            ALTER TABLE sheet_tasks ADD COLUMN project_id UUID;
+          END IF;
+        END $$;
+
+        -- Ensure assignee_email exists on sheet_tasks
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sheet_tasks' AND column_name = 'assignee_email') THEN
+            ALTER TABLE sheet_tasks ADD COLUMN assignee_email VARCHAR(255);
+          END IF;
+        END $$;
+
+        -- Ensure synced_at exists on sheet_tasks
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'sheet_tasks' AND column_name = 'synced_at') THEN
+            ALTER TABLE sheet_tasks ADD COLUMN synced_at TIMESTAMP;
           END IF;
         END $$;
       `
