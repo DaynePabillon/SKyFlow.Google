@@ -15,7 +15,7 @@ export class GoogleAuthService {
    * Generate Google OAuth URL for user authentication
    */
   static getAuthUrl(inviteToken?: string): string {
-    const state = inviteToken 
+    const state = inviteToken
       ? Buffer.from(JSON.stringify({ inviteToken })).toString('base64')
       : '';
     return getGoogleAuthUrl(state);
@@ -26,10 +26,16 @@ export class GoogleAuthService {
    */
   static async exchangeCodeForTokens(code: string) {
     try {
+      console.log('exchangeCodeForTokens: Starting token exchange...');
+      console.log('OAuth2Client redirect_uri:', oauth2Client._clientId ? 'CLIENT_ID_SET' : 'MISSING');
       const { tokens } = await oauth2Client.getToken(code);
+      console.log('exchangeCodeForTokens: Success! Got tokens');
       oauth2Client.setCredentials(tokens);
       return tokens;
-    } catch (error) {
+    } catch (error: any) {
+      console.log('exchangeCodeForTokens: FAILED');
+      console.log('Error response:', error?.response?.data);
+      console.log('Error message:', error?.message);
       logger.error('Error exchanging code for tokens:', error);
       throw new Error('Failed to exchange authorization code');
     }
@@ -43,7 +49,7 @@ export class GoogleAuthService {
       oauth2Client.setCredentials({ access_token: accessToken });
       const oauth2 = await import('googleapis').then(g => g.google.oauth2({ version: 'v2', auth: oauth2Client }));
       const { data } = await oauth2.userinfo.get();
-      
+
       return {
         id: data.id!,
         email: data.email!,
@@ -157,7 +163,7 @@ export class GoogleAuthService {
   static async refreshAccessToken(userId: string) {
     try {
       const result = await query('SELECT refresh_token FROM users WHERE id = $1', [userId]);
-      
+
       if (!result.rows[0]?.refresh_token) {
         throw new Error('No refresh token available');
       }
@@ -167,7 +173,7 @@ export class GoogleAuthService {
       });
 
       const { credentials } = await oauth2Client.refreshAccessToken();
-      
+
       // Update tokens in database
       await query(
         'UPDATE users SET access_token = $1, token_expiry = $2, updated_at = NOW() WHERE id = $3',
