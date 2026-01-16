@@ -205,7 +205,7 @@ export class WorkspaceSyncService {
     try {
       // Get synced sheet info
       const sheetResult = await query(
-        `SELECT ss.*, w.user_id, w.organization_id 
+        `SELECT ss.*, w.created_by, w.organization_id 
          FROM synced_sheets ss 
          JOIN workspaces w ON ss.workspace_id = w.id 
          WHERE ss.id = $1`,
@@ -332,10 +332,10 @@ export class WorkspaceSyncService {
     projectId?: string
   ): Promise<string> {
     // Get workspace to find user
-    const wsResult = await query('SELECT user_id FROM workspaces WHERE id = $1', [workspaceId]);
+    const wsResult = await query('SELECT created_by FROM workspaces WHERE id = $1', [workspaceId]);
     if (wsResult.rows.length === 0) throw new Error('Workspace not found');
 
-    const userId = wsResult.rows[0].user_id;
+    const userId = wsResult.rows[0].created_by;
 
     // Auto-detect column mapping
     const columnMapping = await this.detectColumnMapping(userId, sheetId);
@@ -488,7 +488,7 @@ export class WorkspaceSyncService {
     try {
       // Get task and sheet info
       const taskResult = await query(
-        `SELECT st.*, ss.sheet_id, ss.column_mapping, w.user_id
+        `SELECT st.*, ss.sheet_id, ss.column_mapping, w.created_by
          FROM sheet_tasks st
          JOIN synced_sheets ss ON st.synced_sheet_id = ss.id
          JOIN workspaces w ON ss.workspace_id = w.id
