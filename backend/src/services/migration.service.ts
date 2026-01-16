@@ -454,6 +454,62 @@ async function runMigrations(): Promise<void> {
           END IF;
         END $$;
       `
+    },
+    {
+      name: '013_workspace_sync_tables',
+      sql: `
+        -- Create workspaces table for Google Drive folder sync
+        CREATE TABLE IF NOT EXISTS workspaces (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+          name VARCHAR(255) NOT NULL,
+          root_folder_id VARCHAR(255) NOT NULL,
+          root_folder_name VARCHAR(255),
+          sync_status VARCHAR(50) DEFAULT 'active',
+          last_synced_at TIMESTAMP,
+          drive_channel_id VARCHAR(255),
+          drive_channel_expiry TIMESTAMP,
+          created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- Create synced_sheets table for Google Sheets connections
+        CREATE TABLE IF NOT EXISTS synced_sheets (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
+          sheet_id VARCHAR(255) NOT NULL,
+          sheet_name VARCHAR(255) NOT NULL,
+          sync_status VARCHAR(50) DEFAULT 'active',
+          last_synced_at TIMESTAMP,
+          task_column_mapping JSONB DEFAULT '{}',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(workspace_id, sheet_id)
+        );
+
+        -- Create sheet_tasks table for tasks synced from Google Sheets
+        CREATE TABLE IF NOT EXISTS sheet_tasks (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          synced_sheet_id UUID REFERENCES synced_sheets(id) ON DELETE CASCADE,
+          sheet_row_index INTEGER NOT NULL,
+          title VARCHAR(500) NOT NULL,
+          description TEXT,
+          status VARCHAR(50) DEFAULT 'todo',
+          priority VARCHAR(20) DEFAULT 'medium',
+          due_date TIMESTAMP,
+          assigned_to VARCHAR(255),
+          raw_data JSONB,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(synced_sheet_id, sheet_row_index)
+        );
+
+        -- Indexes for performance
+        CREATE INDEX IF NOT EXISTS idx_workspaces_org ON workspaces(organization_id);
+        CREATE INDEX IF NOT EXISTS idx_synced_sheets_workspace ON synced_sheets(workspace_id);
+        CREATE INDEX IF NOT EXISTS idx_sheet_tasks_synced_sheet ON sheet_tasks(synced_sheet_id);
+      `
     }
   ];
 

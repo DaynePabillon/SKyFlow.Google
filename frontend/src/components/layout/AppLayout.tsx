@@ -160,10 +160,6 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
                   <FolderKanban className="w-5 h-5 group-hover:text-white transition-colors" />
                   <span>Projects</span>
                 </a>
-                <a href="/tasks" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
-                  <CheckSquare className="w-5 h-5 group-hover:text-white transition-colors" />
-                  <span>{labels.tasks}</span>
-                </a>
                 <a href="/boards" className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r ${isAviationMode ? 'hover:from-amber-500 hover:to-orange-500' : 'hover:from-blue-500 hover:to-cyan-500'} hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md`}>
                   {isAviationMode ? <Plane className="w-5 h-5 group-hover:text-white transition-colors" /> : <FolderKanban className="w-5 h-5 group-hover:text-white transition-colors" />}
                   <span>{labels.boards}</span>
