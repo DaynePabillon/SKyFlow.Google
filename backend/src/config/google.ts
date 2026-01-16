@@ -3,11 +3,21 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Build redirect URI - use env var or construct from backend URL
+const getRedirectUri = () => {
+  if (process.env.GOOGLE_REDIRECT_URI) {
+    return process.env.GOOGLE_REDIRECT_URI;
+  }
+  // Fallback: construct from backend URL or use Render URL pattern
+  const backendUrl = process.env.BACKEND_URL || 'https://skyflow-backend-v40g.onrender.com';
+  return `${backendUrl}/api/auth/google/callback`;
+};
+
 // Google OAuth2 Configuration
 export const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
+  getRedirectUri()
 );
 
 // Google API Scopes
