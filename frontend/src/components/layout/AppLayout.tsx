@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Cloud, LogOut, Menu, X, Calendar, FileText, FolderOpen, BarChart3, Users, FolderKanban, CheckSquare, Building2, ChevronDown, Plus, UserPlus, Plane, Settings, LayoutDashboard } from "lucide-react"
+import { Cloud, LogOut, Menu, X, Calendar, FileText, FolderOpen, BarChart3, Users, FolderKanban, CheckSquare, Building2, ChevronDown, Plus, UserPlus, Plane, Settings, LayoutDashboard, RefreshCw } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useThemeMode, useThemeLabels } from "@/context/ThemeContext"
 import NotificationBell from "@/components/notifications/NotificationBell"
@@ -190,6 +190,10 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
                 <a href="/sheets" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
                   <FileText className="w-5 h-5 group-hover:text-white transition-colors" />
                   <span>Sheets</span>
+                </a>
+                <a href="/workspace-sync" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
+                  <RefreshCw className="w-5 h-5 group-hover:text-white transition-colors" />
+                  <span>Sync Workspace</span>
                 </a>
                 <a href="/analytics" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
                   <BarChart3 className="w-5 h-5 group-hover:text-white transition-colors" />
