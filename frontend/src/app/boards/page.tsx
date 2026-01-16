@@ -61,7 +61,7 @@ export default function BoardsPage() {
     const [members, setMembers] = useState<TeamMember[]>([])
     const [mounted, setMounted] = useState(false)
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-    const [activeTab, setActiveTab] = useState<'all' | 'general' | 'synced'>('all')
+    const [activeTab, setActiveTab] = useState<string>('all')
     const [widgets, setWidgets] = useState<Widget[]>([])
     const [showWidgetPicker, setShowWidgetPicker] = useState(false)
     const [widgetsExpanded, setWidgetsExpanded] = useState(true)
@@ -246,13 +246,14 @@ export default function BoardsPage() {
     // Filter tasks based on active tab
     const filteredTasks = tasks.filter(task => {
         if (task.status === 'archived') return false
-        if (activeTab === 'general') return !task.synced
-        if (activeTab === 'synced') return task.synced
-        return true
+        if (activeTab === 'all') return true
+        if (activeTab === 'general') return !task.synced && !task.sheet_name
+        // For sheet tabs, filter by sheet name
+        if (task.sheet_name && activeTab === task.sheet_name) return true
+        return false
     })
 
-    const generalTaskCount = tasks.filter(t => !t.synced && t.status !== 'archived').length
-    const syncedTaskCount = syncedSheets.reduce((acc, s) => acc + (s.task_count || 0), 0)
+    const generalTaskCount = tasks.filter(t => !t.synced && !t.sheet_name && t.status !== 'archived').length
 
     if (!mounted || !user) {
         return (
@@ -377,17 +378,21 @@ export default function BoardsPage() {
                             General Tasks
                             <span className="text-xs opacity-80">{generalTaskCount}</span>
                         </button>
-                        <button
-                            onClick={() => setActiveTab('synced')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'synced'
-                                ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
-                                : 'text-gray-600 hover:bg-gray-100'
-                                }`}
-                        >
-                            <FileSpreadsheet className="w-4 h-4" />
-                            Synced Sheets
-                            <span className="text-xs opacity-80">{syncedTaskCount}</span>
-                        </button>
+                        {/* Dynamic Sheet Tabs */}
+                        {syncedSheets.map(sheet => (
+                            <button
+                                key={sheet.id}
+                                onClick={() => setActiveTab(sheet.sheet_name)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === sheet.sheet_name
+                                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
+                                        : 'text-gray-600 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <FileSpreadsheet className="w-4 h-4" />
+                                {sheet.sheet_name}
+                                <span className="text-xs opacity-80">{sheet.task_count || 0}</span>
+                            </button>
+                        ))}
                         <button
                             onClick={() => router.push('/workspace-sync')}
                             className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-all"
