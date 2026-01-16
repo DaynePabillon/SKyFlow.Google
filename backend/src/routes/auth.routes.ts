@@ -25,12 +25,18 @@ router.get('/google', (req: Request, res: Response) => {
  * Handle Google OAuth callback
  */
 router.get('/google/callback', async (req: Request, res: Response) => {
+  console.log('=== OAuth Callback Started ===');
+  console.log('Query params:', req.query);
+
   try {
     const { code, state } = req.query;
 
     if (!code) {
+      console.log('ERROR: No authorization code received');
       return res.status(400).json({ error: 'Authorization code is required' });
     }
+
+    console.log('Step 1: Got authorization code');
 
     // Decode state to get invite token if present
     let inviteToken: string | undefined;
@@ -43,18 +49,24 @@ router.get('/google/callback', async (req: Request, res: Response) => {
       }
     }
 
+    console.log('Step 2: Exchanging code for tokens...');
     // Exchange code for tokens
     const tokens = await GoogleAuthService.exchangeCodeForTokens(code as string);
+    console.log('Step 3: Got tokens successfully');
 
     // Get user info from Google
+    console.log('Step 4: Getting user info...');
     const googleUser = await GoogleAuthService.getUserInfo(tokens.access_token!);
+    console.log('Step 5: Got user info:', googleUser.email);
 
     // Save/update user in database
+    console.log('Step 6: Upserting user...');
     const user = await GoogleAuthService.upsertUser(
       googleUser,
       tokens.access_token!,
       tokens.refresh_token || undefined
     );
+    console.log('Step 7: User saved, ID:', user.id);
 
     // Check for pending invitations by email
     const { query: dbQuery } = await import('../config/database');
@@ -70,7 +82,7 @@ router.get('/google/callback', async (req: Request, res: Response) => {
     if (invitationResult.rows.length > 0) {
       const invitation = invitationResult.rows[0];
       logger.info(`Processing pending invitation for ${user.email}`);
-      
+
       // Add user to organization
       await dbQuery(
         `INSERT INTO organization_members (organization_id, user_id, role, status, invited_by, joined_at)
@@ -95,15 +107,23 @@ router.get('/google/callback', async (req: Request, res: Response) => {
     }
 
     // Generate JWT
+    console.log('Step 8: Generating JWT...');
     const jwt = GoogleAuthService.generateJWT(user);
+    console.log('Step 9: JWT generated');
 
     // Redirect to frontend with token
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const redirectUrl = inviteToken 
+    console.log('Step 10: Redirecting to frontend:', frontendUrl);
+    const redirectUrl = inviteToken
       ? `${frontendUrl}/auth/callback?token=${jwt}&invited=true`
       : `${frontendUrl}/auth/callback?token=${jwt}`;
+    console.log('Full redirect URL:', redirectUrl);
     return res.redirect(redirectUrl);
-  } catch (error) {
+  } catch (error: any) {
+    console.log('=== OAuth Callback ERROR ===');
+    console.log('Error name:', error?.name);
+    console.log('Error message:', error?.message);
+    console.log('Error stack:', error?.stack);
     logger.error('Error in OAuth callback:', error);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     return res.redirect(`${frontendUrl}/?error=authentication_failed`);
@@ -117,7 +137,7 @@ router.get('/google/callback', async (req: Request, res: Response) => {
 router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const user = await GoogleAuthService.getUserWithTokens(req.user!.id);
-    
+
     // Get user's organizations
     const { query: dbQuery } = await import('../config/database');
     const orgsResult = await dbQuery(
@@ -128,10 +148,10 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
        ORDER BY om.joined_at DESC`,
       [user.id, 'active']
     );
-    
+
     // Don't send sensitive tokens to frontend
     const { access_token, refresh_token, ...safeUser } = user;
-    
+
     res.json({
       ...safeUser,
       organizations: orgsResult.rows,
@@ -164,7 +184,7 @@ router.get('/invite/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
     const { query: dbQuery } = await import('../config/database');
-    
+
     const result = await dbQuery(
       `SELECT oi.*, o.name as organization_name
        FROM organization_invitations oi
