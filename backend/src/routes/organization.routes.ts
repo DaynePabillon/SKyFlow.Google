@@ -397,6 +397,43 @@ router.get('/:id/tasks', authenticateToken, async (req: AuthRequest, res: Respon
 });
 
 /**
+ * GET /api/organizations/:id/synced-sheets
+ * Get all synced sheets in organization
+ */
+router.get('/:id/synced-sheets', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Check if user is member
+    const memberCheck = await query(
+      'SELECT 1 FROM organization_members WHERE organization_id = $1 AND user_id = $2 AND status = $3',
+      [id, userId, 'active']
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Get synced sheets from workspaces in this organization
+    const result = await query(
+      `SELECT ss.*, w.name as workspace_name,
+              (SELECT COUNT(*) FROM sheet_tasks WHERE synced_sheet_id = ss.id) as task_count
+       FROM synced_sheets ss
+       JOIN workspaces w ON ss.workspace_id = w.id
+       WHERE w.organization_id = $1
+       ORDER BY ss.created_at DESC`,
+      [id]
+    );
+
+    res.json({ syncedSheets: result.rows });
+  } catch (error) {
+    logger.error('Error fetching synced sheets:', error);
+    res.status(500).json({ error: 'Failed to fetch synced sheets' });
+  }
+});
+
+/**
  * POST /api/organizations/:id/tasks
  * Create a task in organization (creates a default project if needed)
  */

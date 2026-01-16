@@ -13,6 +13,7 @@ interface Task {
     due_date?: string
     project_name?: string
     assigned_to_name?: string
+    comment_count?: number
 }
 
 interface ProfessionalKanbanProps {

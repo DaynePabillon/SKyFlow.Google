@@ -1,7 +1,7 @@
 "use client"
 import { useState } from 'react'
 
-import { Clock, CheckCircle2, AlertCircle, User, Calendar, Flag, Trash2, Archive } from 'lucide-react'
+import { Clock, CheckCircle2, AlertCircle, User, Calendar, Flag, Trash2, Archive, MessageSquare } from 'lucide-react'
 
 interface Task {
     id: string
@@ -12,6 +12,7 @@ interface Task {
     due_date?: string
     project_name?: string
     assigned_to_name?: string
+    comment_count?: number
 }
 
 interface ProfessionalTaskCardProps {
@@ -138,20 +139,30 @@ export default function ProfessionalTaskCard({ task, onClick, onStatusChange, on
                     <span className="text-xs text-gray-400 truncate max-w-[120px]">{task.project_name}</span>
                 )}
 
-                {/* Assignee */}
-                {task.assigned_to_name ? (
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
-                            {task.assigned_to_name.charAt(0).toUpperCase()}
+                <div className="flex items-center gap-3">
+                    {/* Comment count */}
+                    {(task.comment_count ?? 0) > 0 && (
+                        <div className="flex items-center gap-1 text-gray-400">
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span className="text-xs">{task.comment_count}</span>
                         </div>
-                        <span className="text-xs text-gray-500 hidden sm:inline">{task.assigned_to_name.split(' ')[0]}</span>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-1 text-gray-400">
-                        <User className="w-4 h-4" />
-                        <span className="text-xs">Unassigned</span>
-                    </div>
-                )}
+                    )}
+
+                    {/* Assignee */}
+                    {task.assigned_to_name ? (
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
+                                {task.assigned_to_name.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-xs text-gray-500 hidden sm:inline">{task.assigned_to_name.split(' ')[0]}</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1 text-gray-400">
+                            <User className="w-4 h-4" />
+                            <span className="text-xs">Unassigned</span>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     )

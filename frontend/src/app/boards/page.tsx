@@ -23,6 +23,7 @@ interface Task {
     project_name?: string
     synced?: boolean
     sheet_name?: string
+    comment_count?: number
 }
 
 interface SyncedSheet {
@@ -146,7 +147,7 @@ export default function BoardsPage() {
             })
             if (response.ok) {
                 const data = await response.json()
-                setSyncedSheets(data.sheets || [])
+                setSyncedSheets(data.syncedSheets || [])
             }
         } catch (error) {
             console.error('Error fetching synced sheets:', error)
@@ -260,6 +261,7 @@ export default function BoardsPage() {
         setSelectedTask(task)
         setEditedTask(task)
         setIsEditingTask(false)
+        setTaskComments([]) // Clear old comments immediately
         // Fetch comments for this task
         try {
             const token = localStorage.getItem('token')
@@ -435,7 +437,8 @@ export default function BoardsPage() {
                         description: t.description || undefined,
                         due_date: t.due_date || undefined,
                         project_name: t.project_name || undefined,
-                        assigned_to_name: t.assigned_to_name || undefined
+                        assigned_to_name: t.assigned_to_name || undefined,
+                        comment_count: t.comment_count
                     }))}
                     onStatusChange={handleStatusChange}
                     onAddTask={() => setIsCreateModalOpen(true)}
