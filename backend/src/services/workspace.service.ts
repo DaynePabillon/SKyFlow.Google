@@ -219,7 +219,7 @@ export class WorkspaceSyncService {
       const sheet = sheetResult.rows[0];
 
       // Re-detect column mapping on every sync to ensure accuracy
-      const columnMapping = await this.detectColumnMapping(sheet.user_id, sheet.sheet_id);
+      const columnMapping = await this.detectColumnMapping(sheet.created_by, sheet.sheet_id);
       logger.info(`Re-detected column mapping: ${JSON.stringify(columnMapping)}`);
 
       // Update stored column mapping
@@ -229,7 +229,7 @@ export class WorkspaceSyncService {
       );
 
       // Parse tasks from Google Sheet
-      const sheetTasks = await this.parseSheetTasks(sheet.user_id, sheet.sheet_id, columnMapping);
+      const sheetTasks = await this.parseSheetTasks(sheet.created_by, sheet.sheet_id, columnMapping);
 
       let tasksCreated = 0;
       let tasksUpdated = 0;
