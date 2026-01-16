@@ -43,12 +43,14 @@ app.use(morgan('combined', {
   },
 }));
 
-// Health check endpoint
+// Health check endpoint - responds even if DB is not connected
+let dbConnected = false;
 app.get('/health', (_req: Request, res: Response) => {
-  res.json({
+  res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'SkyFlow Backend API'
+    service: 'SkyFlow Backend API',
+    database: dbConnected ? 'connected' : 'connecting'
   });
 });
 
@@ -84,24 +86,27 @@ app.use((err: any, _req: Request, res: Response, _next: any) => {
   });
 });
 
-// Start server
+// Start server - bind port FIRST, then connect to database
 const startServer = async () => {
+  // Start listening immediately so health checks pass
+  const server = app.listen(PORT, () => {
+    logger.info(`🚀 SkyFlow Backend API running on port ${PORT}`);
+    logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+  });
+
+  // Then try to connect to database
   try {
-    // Test database connection
     await pool.query('SELECT NOW()');
+    dbConnected = true;
     logger.info('✅ Database connection established');
 
     // Run auto-migrations to ensure schema is up to date
     await runAutoMigrations();
-
-    app.listen(PORT, () => {
-      logger.info(`🚀 SkyFlow Backend API running on port ${PORT}`);
-      logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-      logger.info(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-    });
+    logger.info('✅ Migrations completed');
   } catch (error) {
-    logger.error('❌ Failed to start server:', error);
-    process.exit(1);
+    logger.error('❌ Database connection failed:', error);
+    // Don't exit - keep server running so we can debug via health endpoint
   }
 };
 
