@@ -3,6 +3,7 @@ import { AuthRequest, authenticateToken } from '../middleware/auth.middleware';
 import { query } from '../config/database';
 import logger from '../config/logger';
 import crypto from 'crypto';
+import { sendInvitationEmail } from '../services/email.service';
 
 const router = Router();
 
@@ -199,12 +200,34 @@ router.post('/:id/invite', authenticateToken, async (req: AuthRequest, res: Resp
       [id, email, role, token, userId, expiresAt]
     );
 
-    // TODO: Send invitation email
-    logger.info(`Invitation created for ${email} to organization ${id}`);
+    // Get inviter and organization name for email
+    const orgResult = await query('SELECT name FROM organizations WHERE id = $1', [id]);
+    const userResult = await query('SELECT name, email FROM users WHERE id = $1', [userId]);
+    const orgName = orgResult.rows[0]?.name || 'Organization';
+    const inviterName = userResult.rows[0]?.name || 'A team member';
+    const inviterEmail = userResult.rows[0]?.email || '';
+
+    // Send invitation email
+    const emailResult = await sendInvitationEmail({
+      to: email,
+      inviterName,
+      inviterEmail,
+      organizationName: orgName,
+      role,
+      token
+    });
+
+    if (emailResult.success) {
+      logger.info(`✅ Invitation email sent to ${email} for organization ${id}`);
+    } else {
+      logger.warn(`⚠️ Invitation email failed for ${email}: ${emailResult.error}`);
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || 'https://skyflow.fun';
 
     res.status(201).json({
       message: 'Invitation sent successfully',
-      inviteUrl: `${process.env.FRONTEND_URL}/invite/${token}`,
+      inviteUrl: `${frontendUrl}/invite/accept?token=${token}`,
     });
   } catch (error) {
     logger.error('Error creating invitation:', error);

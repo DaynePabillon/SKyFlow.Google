@@ -3,22 +3,22 @@ import logger from '../config/logger';
 
 // Initialize Resend with API key from environment
 const resend = process.env.RESEND_API_KEY
-    ? new Resend(process.env.RESEND_API_KEY)
-    : null;
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
 // Check if email is configured
 export const isEmailConfigured = (): boolean => {
-    return !!process.env.RESEND_API_KEY;
+  return !!process.env.RESEND_API_KEY;
 };
 
 // Email template for organization invitation
 const createInvitationEmailHtml = (params: {
-    inviterName: string;
-    organizationName: string;
-    role: string;
-    inviteLink: string;
+  inviterName: string;
+  organizationName: string;
+  role: string;
+  inviteLink: string;
 }) => {
-    return `
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -79,50 +79,50 @@ const createInvitationEmailHtml = (params: {
 
 // Send organization invitation email
 export const sendInvitationEmail = async (params: {
-    to: string;
-    inviterName: string;
-    inviterEmail: string;
-    organizationName: string;
-    role: string;
-    token: string;
+  to: string;
+  inviterName: string;
+  inviterEmail: string;
+  organizationName: string;
+  role: string;
+  token: string;
 }): Promise<{ success: boolean; error?: string }> => {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const inviteLink = `${frontendUrl}/invite/accept?token=${params.token}`;
+  const frontendUrl = process.env.FRONTEND_URL || 'https://skyflow.fun';
+  const inviteLink = `${frontendUrl}/invite/accept?token=${params.token}`;
 
-    // If email is not configured, just log and return success for development
-    if (!isEmailConfigured()) {
-        logger.info('📧 Email not configured. Invitation details (for development):');
-        logger.info(`   To: ${params.to}`);
-        logger.info(`   Organization: ${params.organizationName}`);
-        logger.info(`   Role: ${params.role}`);
-        logger.info(`   Accept Link: ${inviteLink}`);
-        return { success: true };
+  // If email is not configured, just log and return success for development
+  if (!isEmailConfigured()) {
+    logger.info('📧 Email not configured. Invitation details (for development):');
+    logger.info(`   To: ${params.to}`);
+    logger.info(`   Organization: ${params.organizationName}`);
+    logger.info(`   Role: ${params.role}`);
+    logger.info(`   Accept Link: ${inviteLink}`);
+    return { success: true };
+  }
+
+  try {
+    const { data, error } = await resend!.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'SkyFlow <noreply@skyflow.fun>',
+      to: [params.to],
+      subject: `${params.inviterName} invited you to join ${params.organizationName} on SkyFlow`,
+      html: createInvitationEmailHtml({
+        inviterName: params.inviterName,
+        organizationName: params.organizationName,
+        role: params.role,
+        inviteLink: inviteLink
+      }),
+      replyTo: params.inviterEmail
+    });
+
+    if (error) {
+      logger.error('Error sending invitation email:', error);
+      return { success: false, error: error.message };
     }
 
-    try {
-        const { data, error } = await resend!.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || 'SkyFlow <onboarding@resend.dev>',
-            to: [params.to],
-            subject: `${params.inviterName} invited you to join ${params.organizationName} on SkyFlow`,
-            html: createInvitationEmailHtml({
-                inviterName: params.inviterName,
-                organizationName: params.organizationName,
-                role: params.role,
-                inviteLink: inviteLink
-            }),
-            replyTo: params.inviterEmail
-        });
+    logger.info(`✉️ Invitation email sent successfully to ${params.to} (ID: ${data?.id})`);
+    return { success: true };
 
-        if (error) {
-            logger.error('Error sending invitation email:', error);
-            return { success: false, error: error.message };
-        }
-
-        logger.info(`✉️ Invitation email sent successfully to ${params.to} (ID: ${data?.id})`);
-        return { success: true };
-
-    } catch (error: any) {
-        logger.error('Failed to send invitation email:', error);
-        return { success: false, error: error.message };
-    }
+  } catch (error: any) {
+    logger.error('Failed to send invitation email:', error);
+    return { success: false, error: error.message };
+  }
 };
