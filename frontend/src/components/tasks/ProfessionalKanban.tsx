@@ -23,6 +23,7 @@ interface ProfessionalKanbanProps {
     onAddTask?: (status: string) => void
     onDeleteTask?: (taskId: string) => void
     onArchiveTask?: (taskId: string) => void
+    canDrag?: boolean
 }
 
 const columns = [
@@ -32,10 +33,12 @@ const columns = [
     { id: 'done', label: 'Done', color: 'bg-emerald-500', bgColor: 'bg-emerald-50/50', borderColor: 'border-emerald-200', headerBg: 'from-emerald-500 to-teal-500' }
 ]
 
-export default function ProfessionalKanban({ tasks, onTaskClick, onStatusChange, onAddTask, onDeleteTask, onArchiveTask }: ProfessionalKanbanProps) {
+export default function ProfessionalKanban({ tasks, onTaskClick, onStatusChange, onAddTask, onDeleteTask, onArchiveTask, canDrag = true }: ProfessionalKanbanProps) {
     const scrollRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
+    const [draggedTask, setDraggedTask] = useState<Task | null>(null)
+    const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
 
     const checkScroll = () => {
         if (scrollRef.current) {
@@ -59,6 +62,38 @@ export default function ProfessionalKanban({ tasks, onTaskClick, onStatusChange,
                 behavior: 'smooth'
             })
         }
+    }
+
+    const handleDragStart = (task: Task) => {
+        if (!canDrag) return
+        setDraggedTask(task)
+    }
+
+    const handleDragOver = (e: React.DragEvent, columnId: string) => {
+        e.preventDefault()
+        setDragOverColumn(columnId)
+    }
+
+    const handleDragLeave = () => {
+        setDragOverColumn(null)
+    }
+
+    const handleDrop = (e: React.DragEvent, newStatus: string) => {
+        e.preventDefault()
+        setDragOverColumn(null)
+
+        if (draggedTask && onStatusChange) {
+            const currentStatus = draggedTask.status.replace('-', '_')
+            if (currentStatus !== newStatus) {
+                onStatusChange(draggedTask.id, newStatus)
+            }
+        }
+        setDraggedTask(null)
+    }
+
+    const handleDragEnd = () => {
+        setDraggedTask(null)
+        setDragOverColumn(null)
     }
 
     const getTasksByStatus = (status: string) => {
@@ -105,11 +140,16 @@ export default function ProfessionalKanban({ tasks, onTaskClick, onStatusChange,
             >
                 {columns.map(column => {
                     const columnTasks = getTasksByStatus(column.id)
+                    const isDragOver = dragOverColumn === column.id
 
                     return (
                         <div
                             key={column.id}
-                            className={`flex-shrink-0 w-80 ${column.bgColor} rounded-2xl p-4 border ${column.borderColor} shadow-sm`}
+                            onDragOver={(e) => handleDragOver(e, column.id)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, column.id)}
+                            className={`flex-shrink-0 w-80 ${column.bgColor} rounded-2xl p-4 border ${column.borderColor} shadow-sm transition-all ${isDragOver ? 'ring-2 ring-blue-400 ring-offset-2 scale-[1.02]' : ''
+                                }`}
                         >
                             {/* Column Header */}
                             <div className="flex items-center justify-between mb-4">
@@ -128,19 +168,28 @@ export default function ProfessionalKanban({ tasks, onTaskClick, onStatusChange,
                             {/* Cards */}
                             <div className="space-y-3 min-h-[120px]">
                                 {columnTasks.map(task => (
-                                    <ProfessionalTaskCard
+                                    <div
                                         key={task.id}
-                                        task={task}
-                                        onClick={() => onTaskClick?.(task)}
-                                        onStatusChange={onStatusChange}
-                                        onDelete={onDeleteTask}
-                                        onArchive={onArchiveTask}
-                                    />
+                                        draggable={canDrag}
+                                        onDragStart={() => handleDragStart(task)}
+                                        onDragEnd={handleDragEnd}
+                                        className={`${canDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${draggedTask?.id === task.id ? 'opacity-50' : ''
+                                            }`}
+                                    >
+                                        <ProfessionalTaskCard
+                                            task={task}
+                                            onClick={() => onTaskClick?.(task)}
+                                            onStatusChange={onStatusChange}
+                                            onDelete={onDeleteTask}
+                                            onArchive={onArchiveTask}
+                                        />
+                                    </div>
                                 ))}
 
                                 {columnTasks.length === 0 && (
-                                    <div className="text-center py-10 text-gray-400 text-sm bg-white/50 rounded-xl border border-dashed border-gray-200">
-                                        No tasks yet
+                                    <div className={`text-center py-10 text-gray-400 text-sm bg-white/50 rounded-xl border border-dashed ${isDragOver ? 'border-blue-400 bg-blue-50/50' : 'border-gray-200'
+                                        }`}>
+                                        {isDragOver ? 'Drop here' : 'No tasks yet'}
                                     </div>
                                 )}
                             </div>
@@ -160,3 +209,4 @@ export default function ProfessionalKanban({ tasks, onTaskClick, onStatusChange,
         </div>
     )
 }
+
