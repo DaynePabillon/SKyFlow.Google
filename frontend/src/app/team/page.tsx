@@ -74,6 +74,12 @@ export default function TeamPage() {
     return null
   }
 
+  // Handler to persist org change to localStorage
+  const handleOrgChange = (org: Organization) => {
+    setSelectedOrg(org)
+    localStorage.setItem('selectedOrganization', JSON.stringify(org))
+  }
+
   if (!selectedOrg) {
     return (
       <div className="min-h-screen bg-palladian flex items-center justify-center">
@@ -98,7 +104,7 @@ export default function TeamPage() {
       user={user}
       organizations={organizations}
       selectedOrg={selectedOrg}
-      onOrgChange={setSelectedOrg}
+      onOrgChange={handleOrgChange}
     >
       {content}
     </AppLayout>

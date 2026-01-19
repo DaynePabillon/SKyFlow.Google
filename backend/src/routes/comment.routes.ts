@@ -12,7 +12,7 @@ router.get('/tasks/:taskId/comments', authenticateToken, async (req: Request, re
         const { taskId } = req.params;
 
         const result = await pool.query(
-            `SELECT c.id, c.task_id, c.user_id, c.comment as content, c.created_at, c.updated_at,
+            `SELECT c.id, c.task_id, c.user_id, c.comment, c.created_at, c.updated_at,
                     u.name as user_name, u.email as user_email
        FROM task_comments c
        LEFT JOIN users u ON c.user_id = u.id
@@ -32,15 +32,15 @@ router.get('/tasks/:taskId/comments', authenticateToken, async (req: Request, re
 router.post('/tasks/:taskId/comments', authenticateToken, async (req: Request, res: Response) => {
     try {
         const { taskId } = req.params;
-        const { content } = req.body;
+        const commentText = req.body.comment || req.body.content; // Accept both for compatibility
         const user = (req as any).user;
 
         console.log('>>>COMMENT DEBUG<<< body:', JSON.stringify(req.body));
-        console.log('>>>COMMENT DEBUG<<< content:', content);
+        console.log('>>>COMMENT DEBUG<<< commentText:', commentText);
         console.log('>>>COMMENT DEBUG<<< taskId:', taskId);
 
-        if (!content || !content.trim()) {
-            console.log('>>>COMMENT DEBUG<<< FAILING: content is empty or missing');
+        if (!commentText || !commentText.trim()) {
+            console.log('>>>COMMENT DEBUG<<< FAILING: comment is empty or missing');
             return res.status(400).json({ error: 'Comment content is required' });
         }
 
@@ -76,7 +76,7 @@ router.post('/tasks/:taskId/comments', authenticateToken, async (req: Request, r
             `INSERT INTO task_comments (task_id, user_id, comment)
        VALUES ($1, $2, $3)
        RETURNING *`,
-            [taskId, user.id, content.trim()]
+            [taskId, user.id, commentText.trim()]
         );
 
         // Log activity
