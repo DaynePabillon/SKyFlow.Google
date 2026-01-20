@@ -4,6 +4,7 @@ import { API_URL } from '@/lib/api/client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   FolderSync,
   FileSpreadsheet,
@@ -87,6 +88,9 @@ export default function WorkspaceSyncPage() {
   const [createNewSheet, setCreateNewSheet] = useState(false);
   const [newSheetName, setNewSheetName] = useState('');
   const [creatingSheet, setCreatingSheet] = useState(false);
+
+  // Role-based permissions
+  const permissions = usePermissions(selectedOrg?.role);
 
   // Load user and orgs from localStorage
   useEffect(() => {
@@ -382,16 +386,18 @@ export default function WorkspaceSyncPage() {
             <p className="text-gray-500 text-sm">Connect Google Sheets as live task databases</p>
           </div>
 
-          <button
-            onClick={() => {
-              fetchDriveFolders();
-              setShowCreateModal(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:opacity-90 transition shadow-md"
-          >
-            <Plus className="w-4 h-4" />
-            Connect Workspace
-          </button>
+          {permissions.canConnectWorkspace && (
+            <button
+              onClick={() => {
+                fetchDriveFolders();
+                setShowCreateModal(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:opacity-90 transition shadow-md"
+            >
+              <Plus className="w-4 h-4" />
+              Connect Workspace
+            </button>
+          )}
         </div>
 
         {error && (
@@ -423,15 +429,15 @@ export default function WorkspaceSyncPage() {
                     key={ws.id}
                     onClick={() => setSelectedWorkspace(ws)}
                     className={`p-4 rounded-lg cursor-pointer transition border ${selectedWorkspace?.id === ws.id
-                        ? 'bg-blue-50 border-blue-300'
-                        : 'bg-gray-50 hover:bg-gray-100 border-transparent'
+                      ? 'bg-blue-50 border-blue-300'
+                      : 'bg-gray-50 hover:bg-gray-100 border-transparent'
                       }`}
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium text-gray-800">{ws.name}</h3>
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${ws.sync_status === 'active' ? 'bg-green-100 text-green-700' :
-                          ws.sync_status === 'syncing' ? 'bg-blue-100 text-blue-700' :
-                            'bg-red-100 text-red-700'
+                        ws.sync_status === 'syncing' ? 'bg-blue-100 text-blue-700' :
+                          'bg-red-100 text-red-700'
                         }`}>
                         {ws.sync_status}
                       </span>
@@ -470,30 +476,36 @@ export default function WorkspaceSyncPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={syncWorkspace}
-                      disabled={syncing}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                      {syncing ? 'Syncing...' : 'Sync Now'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        fetchAllSheets();
-                        setShowConnectSheet(true);
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                    >
-                      <Link2 className="w-4 h-4" />
-                      Connect Sheet
-                    </button>
-                    <button
-                      onClick={() => deleteWorkspace(selectedWorkspace.id)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    {permissions.canSyncWorkspace && (
+                      <button
+                        onClick={syncWorkspace}
+                        disabled={syncing}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+                      >
+                        <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                        {syncing ? 'Syncing...' : 'Sync Now'}
+                      </button>
+                    )}
+                    {permissions.canConnectSheet && (
+                      <button
+                        onClick={() => {
+                          fetchAllSheets();
+                          setShowConnectSheet(true);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                      >
+                        <Link2 className="w-4 h-4" />
+                        Connect Sheet
+                      </button>
+                    )}
+                    {permissions.canDeleteWorkspace && (
+                      <button
+                        onClick={() => deleteWorkspace(selectedWorkspace.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 

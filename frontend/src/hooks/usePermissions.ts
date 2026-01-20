@@ -33,7 +33,13 @@ export const PERMISSIONS = {
 
     // View permissions
     VIEW_ANALYTICS: 'manager',
-    VIEW_TEAM_SETTINGS: 'admin'
+    VIEW_TEAM_SETTINGS: 'admin',
+
+    // Workspace Sync permissions
+    CONNECT_WORKSPACE: 'manager',
+    SYNC_WORKSPACE: 'manager',
+    CONNECT_SHEET: 'manager',
+    DELETE_WORKSPACE: 'admin'
 } as const
 
 type Permission = keyof typeof PERMISSIONS
@@ -71,6 +77,12 @@ export function usePermissions(role: Role | string | undefined) {
         canDeleteTasks: hasPermission(userRole, 'manager'),
         canAssignTasks: hasPermission(userRole, 'manager'),
         canViewTeamSettings: hasPermission(userRole, 'admin'),
+
+        // Workspace sync permissions
+        canConnectWorkspace: hasPermission(userRole, 'manager'),
+        canSyncWorkspace: hasPermission(userRole, 'manager'),
+        canConnectSheet: hasPermission(userRole, 'manager'),
+        canDeleteWorkspace: hasPermission(userRole, 'admin'),
 
         // Current role
         role: userRole
