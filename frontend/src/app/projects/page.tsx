@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import AdminProjectView from "@/components/projects/AdminProjectView"
 import ManagerProjectView from "@/components/projects/ManagerProjectView"
 import MemberProjectView from "@/components/projects/MemberProjectView"
+import OrganizationGateway from "@/components/organization/OrganizationGateway"
 
 interface Organization {
   id: string
@@ -61,8 +62,12 @@ export default function ProjectsPage() {
           const { organizations: orgs, ...userData } = data
           setUser(userData)
           setOrganizations(orgs || [])
-          if (orgs && orgs.length > 0 && !selectedOrg) {
+          localStorage.setItem('user', JSON.stringify(userData))
+          localStorage.setItem('organizations', JSON.stringify(orgs || []))
+          // Auto-select first org if only one and none selected
+          if (orgs && orgs.length === 1 && !selectedOrg) {
             setSelectedOrg(orgs[0])
+            localStorage.setItem('selectedOrganization', JSON.stringify(orgs[0]))
           }
         })
         .catch(err => console.error('Auth error:', err))
@@ -74,13 +79,21 @@ export default function ProjectsPage() {
     return null
   }
 
+  // Handler to persist org change to localStorage
+  const handleOrgChange = (org: Organization) => {
+    setSelectedOrg(org)
+    localStorage.setItem('selectedOrganization', JSON.stringify(org))
+  }
+
+  // Show Organization Gateway instead of blank screen
   if (!selectedOrg) {
     return (
-      <div className="min-h-screen bg-palladian flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-truffle-trouble">No organization selected</p>
-        </div>
-      </div>
+      <OrganizationGateway
+        user={user}
+        organizations={organizations}
+        onSelectOrg={handleOrgChange}
+        onCreateOrg={() => router.push('/onboarding')}
+      />
     )
   }
 
@@ -92,12 +105,6 @@ export default function ProjectsPage() {
     content = <ManagerProjectView user={user} organization={selectedOrg} />
   } else {
     content = <MemberProjectView user={user} organization={selectedOrg} />
-  }
-
-  // Handler to persist org change to localStorage
-  const handleOrgChange = (org: Organization) => {
-    setSelectedOrg(org)
-    localStorage.setItem('selectedOrganization', JSON.stringify(org))
   }
 
   return (

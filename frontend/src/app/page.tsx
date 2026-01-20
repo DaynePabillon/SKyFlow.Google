@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { TrendingUp, Users, FolderKanban, CheckSquare, Calendar, X, FileText, BarChart3, Target, Sparkles, Building2, ArrowRight, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
+import OrganizationGateway from "@/components/organization/OrganizationGateway"
 
 interface Organization {
   id: string
@@ -238,18 +239,21 @@ export default function Home() {
     )
   }
 
-  if (!selectedOrg) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
-        <p className="text-gray-600">No organization selected</p>
-      </div>
-    )
-  }
-
   // Handler to update selected org and persist to localStorage
   const handleOrgChange = (org: Organization) => {
     setSelectedOrg(org)
     localStorage.setItem('selectedOrganization', JSON.stringify(org))
+  }
+
+  if (!selectedOrg) {
+    return (
+      <OrganizationGateway
+        user={user}
+        organizations={organizations}
+        onSelectOrg={handleOrgChange}
+        onCreateOrg={() => router.push('/onboarding')}
+      />
+    )
   }
 
   return (

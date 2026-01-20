@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import AdminTeamView from "@/components/team/AdminTeamView"
 import ManagerTeamView from "@/components/team/ManagerTeamView"
 import MemberTeamView from "@/components/team/MemberTeamView"
+import OrganizationGateway from "@/components/organization/OrganizationGateway"
 
 interface Organization {
   id: string
@@ -61,8 +62,12 @@ export default function TeamPage() {
           const { organizations: orgs, ...userData } = data
           setUser(userData)
           setOrganizations(orgs || [])
-          if (orgs && orgs.length > 0 && !selectedOrg) {
+          localStorage.setItem('user', JSON.stringify(userData))
+          localStorage.setItem('organizations', JSON.stringify(orgs || []))
+          // Auto-select first org if only one and none selected
+          if (orgs && orgs.length === 1 && !selectedOrg) {
             setSelectedOrg(orgs[0])
+            localStorage.setItem('selectedOrganization', JSON.stringify(orgs[0]))
           }
         })
         .catch(err => console.error('Auth error:', err))
@@ -80,13 +85,15 @@ export default function TeamPage() {
     localStorage.setItem('selectedOrganization', JSON.stringify(org))
   }
 
+  // Show Organization Gateway instead of blank screen
   if (!selectedOrg) {
     return (
-      <div className="min-h-screen bg-palladian flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-truffle-trouble">No organization selected</p>
-        </div>
-      </div>
+      <OrganizationGateway
+        user={user}
+        organizations={organizations}
+        onSelectOrg={handleOrgChange}
+        onCreateOrg={() => router.push('/onboarding')}
+      />
     )
   }
 
