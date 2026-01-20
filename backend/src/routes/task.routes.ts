@@ -9,6 +9,7 @@ const router = Router();
 /**
  * POST /api/tasks
  * Create a new task
+ * Only admin and manager can create tasks
  */
 router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
@@ -28,7 +29,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Project ID and title are required' });
     }
 
-    // Check if user has access to project
+    // Check if user has access to project AND get their role
     const accessCheck = await query(
       `SELECT pm.role as project_role, om.role as org_role
        FROM projects p
@@ -40,6 +41,12 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
 
     if (accessCheck.rows.length === 0) {
       return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Check role - only admin and manager can create tasks
+    const userRole = accessCheck.rows[0].org_role;
+    if (userRole === 'member') {
+      return res.status(403).json({ error: 'Members cannot create tasks. Contact an admin or manager.' });
     }
 
     // Create task
@@ -221,6 +228,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 /**
  * PUT /api/tasks/:id
  * Update task
+ * Only admin and manager can update tasks (members can only change status via drag)
  */
 router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
@@ -237,9 +245,9 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       assigned_to,
     } = req.body;
 
-    // Check access
+    // Check access AND get role
     const accessCheck = await query(
-      `SELECT 1 FROM tasks t
+      `SELECT om.role as org_role FROM tasks t
        INNER JOIN projects p ON t.project_id = p.id
        INNER JOIN organization_members om ON p.organization_id = om.organization_id
        WHERE t.id = $1 AND om.user_id = $2 AND om.status = $3`,
@@ -248,6 +256,12 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 
     if (accessCheck.rows.length === 0) {
       return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Check role - only admin and manager can update tasks
+    const userRole = accessCheck.rows[0].org_role;
+    if (userRole === 'member') {
+      return res.status(403).json({ error: 'Members cannot edit tasks. Contact an admin or manager.' });
     }
 
     // Update completed_at if status changed to completed
@@ -279,6 +293,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 /**
  * PATCH /api/tasks/:id/status
  * Update task status (for kanban drag-and-drop)
+ * Supports both regular tasks and sheet_tasks
  */
 router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
@@ -303,30 +318,58 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res: Res
 
     const dbStatus = statusMap[status] || status;
 
-    // Check access
-    const accessCheck = await query(
-      `SELECT 1 FROM tasks t
+    // First, try to find in regular tasks table
+    const regularTaskCheck = await query(
+      `SELECT t.id, p.organization_id FROM tasks t
        INNER JOIN projects p ON t.project_id = p.id
        INNER JOIN organization_members om ON p.organization_id = om.organization_id
        WHERE t.id = $1 AND om.user_id = $2 AND om.status = $3`,
       [id, userId, 'active']
     );
 
-    if (accessCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Access denied' });
+    if (regularTaskCheck.rows.length > 0) {
+      // Update regular task
+      const result = await query(
+        `UPDATE tasks
+         SET status = $1::text,
+             completed_at = CASE WHEN $1::text IN ('done', 'completed') THEN NOW() ELSE completed_at END
+         WHERE id = $2::uuid
+         RETURNING *`,
+        [dbStatus, id]
+      );
+
+      logger.info(`Task ${id} status updated to ${dbStatus} by user ${userId}`);
+      return res.json(result.rows[0]);
     }
 
-    const result = await query(
-      `UPDATE tasks
-       SET status = $1::text,
-           completed_at = CASE WHEN $1::text IN ('done', 'completed') THEN NOW() ELSE completed_at END
-       WHERE id = $2::uuid
-       RETURNING *`,
-      [dbStatus, id]
+    // If not found in tasks, try sheet_tasks
+    const sheetTaskCheck = await query(
+      `SELECT st.id, w.organization_id FROM sheet_tasks st
+       INNER JOIN synced_sheets ss ON st.synced_sheet_id = ss.id
+       INNER JOIN workspaces w ON ss.workspace_id = w.id
+       INNER JOIN organization_members om ON w.organization_id = om.organization_id
+       WHERE st.id = $1 AND om.user_id = $2 AND om.status = $3`,
+      [id, userId, 'active']
     );
 
-    logger.info(`Task ${id} status updated to ${dbStatus} by user ${userId}`);
-    res.json(result.rows[0]);
+    if (sheetTaskCheck.rows.length > 0) {
+      // Update sheet_task
+      const result = await query(
+        `UPDATE sheet_tasks
+         SET status = $1::text,
+             synced_at = NOW()
+         WHERE id = $2::uuid
+         RETURNING *`,
+        [dbStatus, id]
+      );
+
+      logger.info(`Sheet task ${id} status updated to ${dbStatus} by user ${userId}`);
+      return res.json(result.rows[0]);
+    }
+
+    // Task not found in either table or no access
+    return res.status(403).json({ error: 'Access denied or task not found' });
+
   } catch (error: any) {
     logger.error('Error updating task status:', error);
     // Include more detail for constraint violations
@@ -344,6 +387,7 @@ router.patch('/:id/status', authenticateToken, async (req: AuthRequest, res: Res
 /**
  * PATCH /api/tasks/:id
  * Update task fields (assignment, title, description, etc.)
+ * Only admin and manager can edit tasks (members can only change status via /status endpoint)
  */
 router.patch('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
@@ -356,9 +400,9 @@ router.patch('/:id', authenticateToken, async (req: AuthRequest, res: Response) 
     const assignedToProvided = 'assigned_to' in req.body;
     const assigned_to = req.body.assigned_to;
 
-    // Check access and get current task data
+    // Check access and get current task data AND role
     const accessCheck = await query(
-      `SELECT t.*, u.name as assigner_name FROM tasks t
+      `SELECT t.*, u.name as assigner_name, om.role as org_role FROM tasks t
        INNER JOIN projects p ON t.project_id = p.id
        INNER JOIN organization_members om ON p.organization_id = om.organization_id
        LEFT JOIN users u ON u.id = $2
@@ -368,6 +412,12 @@ router.patch('/:id', authenticateToken, async (req: AuthRequest, res: Response) 
 
     if (accessCheck.rows.length === 0) {
       return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Check role - only admin and manager can edit tasks
+    const userRole = accessCheck.rows[0].org_role;
+    if (userRole === 'member') {
+      return res.status(403).json({ error: 'Members cannot edit tasks. Use drag-and-drop to change status.' });
     }
 
     const oldTask = accessCheck.rows[0];
