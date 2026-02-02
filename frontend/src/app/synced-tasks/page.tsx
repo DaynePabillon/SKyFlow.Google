@@ -12,7 +12,9 @@ import {
   CheckCircle2,
   Circle,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  X,
+  Maximize2
 } from 'lucide-react';
 
 interface SheetTask {
@@ -50,6 +52,11 @@ export default function SyncedTasksPage() {
   const [syncing, setSyncing] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Embedded sheet viewer modal
+  const [showEmbeddedSheet, setShowEmbeddedSheet] = useState(false);
+  const [embeddedSheetId, setEmbeddedSheetId] = useState('');
+  const [embeddedSheetName, setEmbeddedSheetName] = useState('');
 
   useEffect(() => {
     fetchWorkspaces();
@@ -193,8 +200,8 @@ export default function SyncedTasksPage() {
                 key={status}
                 onClick={() => setFilterStatus(status)}
                 className={`px-3 py-1.5 rounded-lg text-sm transition ${filterStatus === status
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
                   }`}
               >
                 {status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
@@ -264,9 +271,9 @@ export default function SyncedTasksPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-sm capitalize ${task.priority === 'critical' ? 'text-red-400' :
-                            task.priority === 'high' ? 'text-orange-400' :
-                              task.priority === 'medium' ? 'text-blue-400' :
-                                'text-slate-400'
+                          task.priority === 'high' ? 'text-orange-400' :
+                            task.priority === 'medium' ? 'text-blue-400' :
+                              'text-slate-400'
                           }`}>
                           {task.priority}
                         </span>
@@ -284,16 +291,17 @@ export default function SyncedTasksPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <a
-                          href={`https://docs.google.com/spreadsheets/d/${task.google_sheet_id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-sm text-green-400 hover:text-green-300 transition"
+                        <button
+                          onClick={() => {
+                            setEmbeddedSheetId(task.google_sheet_id);
+                            setEmbeddedSheetName(task.sheet_name);
+                            setShowEmbeddedSheet(true);
+                          }}
+                          className="flex items-center gap-1 text-sm text-green-400 hover:text-green-300 transition bg-green-500/10 hover:bg-green-500/20 px-2.5 py-1.5 rounded-lg"
                         >
                           <FileSpreadsheet className="w-4 h-4" />
                           {task.sheet_name}
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                        </button>
                       </td>
                     </tr>
                   );
@@ -311,6 +319,74 @@ export default function SyncedTasksPage() {
           </div>
         )}
       </div>
+
+      {/* Embedded Sheet Viewer Modal */}
+      {showEmbeddedSheet && embeddedSheetId && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-xl w-full h-full max-w-7xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-700">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-gradient-to-r from-green-900/30 to-emerald-900/30">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                  <FileSpreadsheet className="w-5 h-5 text-green-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">{embeddedSheetName}</h2>
+                  <p className="text-xs text-slate-400">Embedded Google Sheet</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`https://docs.google.com/spreadsheets/d/${embeddedSheetId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                  Open Full Screen
+                </a>
+                <button
+                  onClick={() => {
+                    setShowEmbeddedSheet(false);
+                    setEmbeddedSheetId('');
+                    setEmbeddedSheetName('');
+                  }}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Embedded Sheet Iframe */}
+            <div className="flex-1 bg-white relative">
+              <iframe
+                src={`https://docs.google.com/spreadsheets/d/${embeddedSheetId}/edit?rm=minimal`}
+                className="w-full h-full border-0"
+                title={embeddedSheetName}
+                allow="clipboard-write"
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 border-t border-slate-700 bg-slate-800/50 flex items-center justify-between">
+              <p className="text-xs text-slate-400">
+                💡 Tip: Click "Sync Now" after making changes to update your tasks
+              </p>
+              <button
+                onClick={() => {
+                  setShowEmbeddedSheet(false);
+                  setEmbeddedSheetId('');
+                  setEmbeddedSheetName('');
+                }}
+                className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

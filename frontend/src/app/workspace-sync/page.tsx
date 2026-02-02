@@ -17,7 +17,10 @@ import {
   Clock,
   Users,
   FolderPlus,
-  Cloud
+  Cloud,
+  X,
+  Maximize2,
+  ExternalLink
 } from 'lucide-react';
 
 interface Organization {
@@ -88,6 +91,11 @@ export default function WorkspaceSyncPage() {
   const [createNewSheet, setCreateNewSheet] = useState(false);
   const [newSheetName, setNewSheetName] = useState('');
   const [creatingSheet, setCreatingSheet] = useState(false);
+
+  // Embedded sheet viewer modal
+  const [showEmbeddedSheet, setShowEmbeddedSheet] = useState(false);
+  const [embeddedSheetId, setEmbeddedSheetId] = useState('');
+  const [embeddedSheetName, setEmbeddedSheetName] = useState('');
 
   // Role-based permissions
   const permissions = usePermissions(selectedOrg?.role);
@@ -357,6 +365,28 @@ export default function WorkspaceSyncPage() {
     }
   };
 
+  const deleteSyncedSheet = async (sheetId: string) => {
+    if (!confirm('Remove this synced sheet? Tasks synced from this sheet will be deleted.')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/workspaces/sheets/${sheetId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        fetchWorkspaceDetails();
+        fetchWorkspaces();
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to delete synced sheet');
+      }
+    } catch (err) {
+      console.error('Error deleting synced sheet:', err);
+      setError('Failed to delete synced sheet');
+    }
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Never';
     return new Date(dateString).toLocaleString();
@@ -541,14 +571,38 @@ export default function WorkspaceSyncPage() {
                             <Check className="w-3 h-3 inline mr-1" />
                             Synced
                           </span>
+                          <button
+                            onClick={() => {
+                              setEmbeddedSheetId(sheet.sheet_id);
+                              setEmbeddedSheetName(sheet.sheet_name);
+                              setShowEmbeddedSheet(true);
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-sm font-medium transition"
+                          >
+                            <FileSpreadsheet className="w-4 h-4" />
+                            View Sheet
+                          </button>
                           <a
                             href={`https://docs.google.com/spreadsheets/d/${sheet.sheet_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-700 text-sm"
+                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition"
+                            title="Open in new tab"
                           >
-                            Open in Sheets ↗
+                            <ExternalLink className="w-4 h-4" />
                           </a>
+                          {permissions.canDeleteWorkspace && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteSyncedSheet(sheet.id);
+                              }}
+                              className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition"
+                              title="Remove synced sheet"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -756,6 +810,74 @@ export default function WorkspaceSyncPage() {
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
               >
                 Connect & Sync
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Embedded Sheet Viewer Modal */}
+      {showEmbeddedSheet && embeddedSheetId && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full h-full max-w-7xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <FileSpreadsheet className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-800">{embeddedSheetName}</h2>
+                  <p className="text-xs text-gray-500">Embedded Google Sheet</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`https://docs.google.com/spreadsheets/d/${embeddedSheetId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                  Open Full Screen
+                </a>
+                <button
+                  onClick={() => {
+                    setShowEmbeddedSheet(false);
+                    setEmbeddedSheetId('');
+                    setEmbeddedSheetName('');
+                  }}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Embedded Sheet Iframe */}
+            <div className="flex-1 bg-gray-100 relative">
+              <iframe
+                src={`https://docs.google.com/spreadsheets/d/${embeddedSheetId}/edit?rm=minimal`}
+                className="w-full h-full border-0"
+                title={embeddedSheetName}
+                allow="clipboard-write"
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                💡 Tip: Changes made here will sync automatically to your workspace
+              </p>
+              <button
+                onClick={() => {
+                  setShowEmbeddedSheet(false);
+                  setEmbeddedSheetId('');
+                  setEmbeddedSheetName('');
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition text-sm"
+              >
+                Close
               </button>
             </div>
           </div>
