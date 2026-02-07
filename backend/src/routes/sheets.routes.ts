@@ -235,22 +235,27 @@ router.post('/create-template', async (req, res) => {
         // If workspace/project provided, create synced_sheets entry
         if (workspaceId) {
             await query(
-                `INSERT INTO synced_sheets (workspace_id, project_id, spreadsheet_id, sheet_name, column_mapping, sync_direction, created_by, last_synced_at)
-                 VALUES ($1, $2, $3, $4, $5, 'bidirectional', $6, NOW())`,
+                `INSERT INTO synced_sheets (workspace_id, project_id, sheet_id, sheet_name, column_mapping, sync_status, last_synced_at)
+                 VALUES ($1, $2, $3, $4, $5, 'active', NOW())
+                 ON CONFLICT (workspace_id, sheet_id) DO UPDATE SET
+                   sheet_name = EXCLUDED.sheet_name,
+                   column_mapping = EXCLUDED.column_mapping,
+                   project_id = EXCLUDED.project_id,
+                   updated_at = NOW()`,
                 [
                     workspaceId,
                     projectId || null,
                     spreadsheetId,
                     sheetTitle,
                     JSON.stringify({
-                        title: 'A',
-                        description: 'B',
-                        status: 'C',
-                        priority: 'D',
-                        due_date: 'E',
-                        assigned_to: 'F'
-                    }),
-                    userId
+                        title: 0,
+                        description: 1,
+                        status: 2,
+                        priority: 3,
+                        dueDate: 4,
+                        assignee: 5,
+                        sheetTab: 'Tasks'
+                    })
                 ]
             );
             logger.info(`Created synced_sheets entry for workspace ${workspaceId}`);

@@ -203,13 +203,18 @@ export default function WorkspaceSyncPage() {
     setCreatingSheet(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_URL}/api/sheets/create`, {
+      // Use the template endpoint which creates proper task headers and moves to folder
+      const res = await fetch(`${API_URL}/api/sheets/create-template`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ title: newSheetName.trim() })
+        body: JSON.stringify({
+          title: newSheetName.trim(),
+          folderId: selectedWorkspace.root_folder_id, // Move to workspace folder
+          workspaceId: selectedWorkspace.id
+        })
       });
 
       if (res.ok) {
@@ -220,6 +225,11 @@ export default function WorkspaceSyncPage() {
         setNewSheetName('');
         // Refresh sheet lists
         await fetchAllSheets();
+        // Also refresh workspace details to pick up the new sheet
+        await fetchWorkspaceDetails();
+      } else {
+        const errData = await res.json();
+        setError(errData.error || 'Failed to create sheet');
       }
     } catch (err) {
       console.error('Error creating sheet:', err);

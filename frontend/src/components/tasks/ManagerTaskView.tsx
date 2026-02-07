@@ -4,12 +4,9 @@ import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { CheckSquare, Plus, Search, LayoutGrid, Table, X, Calendar, AlertCircle, User, Users, Edit3, Archive, RotateCcw, ChevronDown, ChevronRight } from "lucide-react"
-import BoardingPassCard from "./BoardingPassCard"
-import CloudGroup from "./CloudGroup"
 import ProfessionalTaskCard from "./ProfessionalTaskCard"
 import ProfessionalKanban from "./ProfessionalKanban"
 import TaskTimeline from "./TaskTimeline"
-import { useThemeMode } from "@/context/ThemeContext"
 
 interface Task {
   id: string
@@ -41,7 +38,6 @@ interface ManagerTaskViewProps {
 }
 
 export default function ManagerTaskView({ user, organization }: ManagerTaskViewProps) {
-  const { isProfessionalMode, isAviationMode } = useThemeMode()
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -145,7 +141,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
   }
 
   const handleDeleteTask = async (taskId: string) => {
-    if (!confirm('Are you sure you want to delete this flight?')) return
+    if (!confirm('Are you sure you want to delete this task?')) return
 
     try {
       const token = localStorage.getItem('token')
@@ -237,21 +233,11 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
     })
   }
 
-  const getCloudStatus = (status: Task['status']): 'healthy' | 'at-risk' | 'overdue' | 'neutral' => {
-    const columnTasks = getStatusColumn(status)
-    const hasHighPriority = columnTasks.some(t => t.priority === 'high')
-    const hasOverdue = columnTasks.some(t => t.due_date && new Date(t.due_date) < new Date())
-    if (status === 'done') return 'healthy'
-    if (hasOverdue) return 'overdue'
-    if (hasHighPriority) return 'at-risk'
-    return 'neutral'
-  }
-
   const columns = [
-    { id: 'todo', title: isProfessionalMode ? '📋 To Do' : '✈️ Boarding' },
-    { id: 'in-progress', title: isProfessionalMode ? '🔄 In Progress' : '🌤️ In Flight' },
-    { id: 'review', title: isProfessionalMode ? '👀 Review' : '🌅 Landing' },
-    { id: 'done', title: isProfessionalMode ? '✅ Done' : '🎯 Arrived' }
+    { id: 'todo', title: '📋 To Do' },
+    { id: 'in-progress', title: '🔄 In Progress' },
+    { id: 'review', title: '👀 Review' },
+    { id: 'done', title: '✅ Done' }
   ]
 
   if (isLoading) {
@@ -270,16 +256,14 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                {isProfessionalMode ? 'Team Tasks' : 'Flight Control ✈️'}
+                Team Tasks
               </h1>
               <span className="px-3 py-1 bg-purple-100 text-purple-700 text-sm font-medium rounded-full">
                 Manager
               </span>
             </div>
             <p className="text-gray-600 mt-1">
-              {isProfessionalMode
-                ? `Manage team tasks in ${organization.name}`
-                : `Manage team flights in ${organization.name}`}
+              Manage team tasks in {organization.name}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -308,7 +292,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md"
             >
               <Plus className="w-5 h-5" />
-              <span className="font-medium">{isProfessionalMode ? 'New Task' : 'New Flight'}</span>
+              <span className="font-medium">New Task</span>
             </button>
           </div>
         </div>
@@ -318,7 +302,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder={isProfessionalMode ? "Search tasks..." : "Search flights..."}
+            placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -328,40 +312,13 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
 
       {/* Board View */}
       {viewMode === 'board' && (
-        isProfessionalMode ? (
-          <ProfessionalKanban
-            tasks={tasks.filter(t => t.status !== 'archived') as any}
-            onTaskClick={(task) => router.push(`/tasks/${task.id}`)}
-            onAddTask={() => setIsCreateModalOpen(true)}
-            onDeleteTask={handleDeleteTask}
-            onArchiveTask={handleArchiveTask}
-          />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {columns.map((column) => (
-              <CloudGroup
-                key={column.id}
-                title={column.title}
-                count={getStatusColumn(column.id as Task['status']).length}
-                status={getCloudStatus(column.id as Task['status'])}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, column.id as Task['status'])}
-                onAddTask={column.id === 'todo' ? () => setIsCreateModalOpen(true) : undefined}
-              >
-                {getStatusColumn(column.id as Task['status']).map((task) => (
-                  <BoardingPassCard
-                    key={task.id}
-                    task={task}
-                    onDragStart={handleDragStart}
-                    onDelete={handleDeleteTask}
-                    onArchive={handleArchiveTask}
-                    onClick={() => handleEditTask(task)}
-                  />
-                ))}
-              </CloudGroup>
-            ))}
-          </div>
-        )
+        <ProfessionalKanban
+          tasks={tasks.filter(t => t.status !== 'archived') as any}
+          onTaskClick={(task) => router.push(`/tasks/${task.id}`)}
+          onAddTask={() => setIsCreateModalOpen(true)}
+          onDeleteTask={handleDeleteTask}
+          onArchiveTask={handleArchiveTask}
+        />
       )}
 
       {/* Archived Section */}
@@ -378,12 +335,10 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
             )}
             <Archive className="w-5 h-5 text-amber-500" />
             <span className="font-semibold text-gray-700">
-              {isProfessionalMode ? '📦 Archived Tasks' : '📦 Archived Flights'}
+              📦 Archived Tasks
             </span>
             <span className="text-sm text-gray-500 ml-2">
-              ({getStatusColumn('archived').length} {getStatusColumn('archived').length === 1
-                ? (isProfessionalMode ? 'task' : 'flight')
-                : (isProfessionalMode ? 'tasks' : 'flights')})
+              ({getStatusColumn('archived').length} {getStatusColumn('archived').length === 1 ? 'task' : 'tasks'})
             </span>
           </button>
 
@@ -395,28 +350,18 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                     <button
                       onClick={() => handleStatusChange(task.id, 'todo')}
                       className="p-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md transition-all"
-                      title={isProfessionalMode ? "Restore to Todo" : "Restore to Boarding"}
+                      title="Restore to Todo"
                     >
                       <RotateCcw className="w-3.5 h-3.5 text-white" />
                     </button>
                   </div>
                   <div className="opacity-70 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-300">
-                    {isProfessionalMode ? (
-                      <ProfessionalTaskCard
-                        task={task as any}
-                        onClick={() => handleEditTask(task)}
-                        onDelete={handleDeleteTask}
-                        onArchive={handleArchiveTask}
-                      />
-                    ) : (
-                      <BoardingPassCard
-                        task={task}
-                        onDragStart={handleDragStart}
-                        onDelete={handleDeleteTask}
-                        onArchive={handleArchiveTask}
-                        onClick={() => handleEditTask(task)}
-                      />
-                    )}
+                    <ProfessionalTaskCard
+                      task={task as any}
+                      onClick={() => handleEditTask(task)}
+                      onDelete={handleDeleteTask}
+                      onArchive={handleArchiveTask}
+                    />
                   </div>
                 </div>
               ))}
@@ -431,11 +376,11 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
           <table className="w-full">
             <thead className="bg-gradient-to-r from-blue-500 to-cyan-500">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">{isProfessionalMode ? 'Task' : 'Flight'}</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Task</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">{isProfessionalMode ? 'Priority' : 'Class'}</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Priority</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Due Date</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">{isProfessionalMode ? 'Assignee' : 'Crew'}</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Assignee</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Actions</th>
               </tr>
             </thead>
@@ -457,9 +402,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                       task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-green-100 text-green-700'
                       }`}>
-                      {isProfessionalMode
-                        ? (task.priority === 'high' ? 'High' : task.priority === 'medium' ? 'Medium' : 'Low')
-                        : (task.priority === 'high' ? 'First Class' : task.priority === 'medium' ? 'Business' : 'Economy')}
+                      {task.priority === 'high' ? 'High' : task.priority === 'medium' ? 'Medium' : 'Low'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
@@ -483,7 +426,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
           {tasks.length === 0 && (
             <div className="text-center py-12">
               <CheckSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">{isProfessionalMode ? 'No tasks yet' : 'No flights scheduled'}</p>
+              <p className="text-gray-600">No tasks yet</p>
             </div>
           )}
         </div>
@@ -495,7 +438,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
           <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-lg w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                {isProfessionalMode ? '📋 Create New Task' : '✈️ Schedule New Flight'}
+                📋 Create New Task
               </h2>
               <button onClick={() => setIsCreateModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5" />
@@ -504,14 +447,14 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {isProfessionalMode ? 'Task Title' : 'Flight Name'}
+                  Task Title
                 </label>
                 <input
                   type="text"
                   value={newTask.title}
                   onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
-                  placeholder={isProfessionalMode ? "Enter task title" : "Enter flight name"}
+                  placeholder="Enter task title"
                 />
               </div>
               <div>
@@ -526,16 +469,16 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {isProfessionalMode ? 'Priority' : 'Class'}
+                    Priority
                   </label>
                   <select
                     value={newTask.priority}
                     onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as any })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-xl"
                   >
-                    <option value="high">{isProfessionalMode ? 'High' : 'First Class'}</option>
-                    <option value="medium">{isProfessionalMode ? 'Medium' : 'Business'}</option>
-                    <option value="low">{isProfessionalMode ? 'Low' : 'Economy'}</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
                   </select>
                 </div>
                 <div>
@@ -554,7 +497,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                 disabled={!newTask.title.trim()}
                 className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-medium disabled:opacity-50"
               >
-                {isProfessionalMode ? 'Create Task' : 'Schedule Flight'}
+                Create Task
               </button>
             </div>
           </div>
@@ -567,7 +510,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
           <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                {isProfessionalMode ? '✏️ Edit Task' : '✏️ Edit Flight'}
+                ✏️ Edit Task
               </h2>
               <button onClick={() => { setIsEditModalOpen(false); setEditingTask(null); }} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5" />
@@ -580,7 +523,7 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {isProfessionalMode ? 'Task Title' : 'Flight Name'}
+                    Task Title
                   </label>
                   <input
                     type="text"
@@ -601,16 +544,16 @@ export default function ManagerTaskView({ user, organization }: ManagerTaskViewP
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {isProfessionalMode ? 'Priority' : 'Class'}
+                      Priority
                     </label>
                     <select
                       value={editingTask.priority}
                       onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value as any })}
                       className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
                     >
-                      <option value="high">{isProfessionalMode ? 'High Priority' : 'First Class'}</option>
-                      <option value="medium">{isProfessionalMode ? 'Medium Priority' : 'Business'}</option>
-                      <option value="low">{isProfessionalMode ? 'Low Priority' : 'Economy'}</option>
+                      <option value="high">High Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="low">Low Priority</option>
                     </select>
                   </div>
                   <div>

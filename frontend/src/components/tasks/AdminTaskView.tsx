@@ -3,14 +3,10 @@
 import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { CheckSquare, Plus, Search, Filter, Calendar, User, Users, AlertCircle, Clock, X, LayoutGrid, Table, Archive, ChevronDown, ChevronRight, RotateCcw, Radar, Edit3 } from "lucide-react"
-import BoardingPassCard from "./BoardingPassCard"
-import CloudGroup from "./CloudGroup"
-import ControlTower from "./ControlTower"
+import { CheckSquare, Plus, Search, Filter, Calendar, User, Users, AlertCircle, Clock, X, LayoutGrid, Table, Archive, ChevronDown, ChevronRight, RotateCcw, Edit3 } from "lucide-react"
 import ProfessionalTaskCard from "./ProfessionalTaskCard"
 import ProfessionalKanban from "./ProfessionalKanban"
 import TaskTimeline from "./TaskTimeline"
-import { useThemeMode } from "@/context/ThemeContext"
 
 interface Task {
   id: string
@@ -42,14 +38,13 @@ interface AdminTaskViewProps {
 }
 
 export default function AdminTaskView({ user, organization }: AdminTaskViewProps) {
-  const { isProfessionalMode, isAviationMode } = useThemeMode()
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterPriority, setFilterPriority] = useState<string>("all")
-  const [viewMode, setViewMode] = useState<'board' | 'table' | 'radar'>('board')
+  const [viewMode, setViewMode] = useState<'board' | 'table'>('board')
   const [isArchiveExpanded, setIsArchiveExpanded] = useState(false)
   const [newTask, setNewTask] = useState({
     title: '',
@@ -184,7 +179,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
   }
 
   const handleDeleteTask = async (taskId: string) => {
-    if (!confirm('Are you sure you want to delete this flight?')) return
+    if (!confirm('Are you sure you want to delete this task?')) return
 
     try {
       const token = localStorage.getItem('token')
@@ -286,24 +281,6 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
     })
   }
 
-  const getCloudStatus = (status: Task['status']): 'healthy' | 'at-risk' | 'overdue' | 'neutral' => {
-    const columnTasks = getStatusColumn(status)
-    const hasHighPriority = columnTasks.some(t => t.priority === 'high')
-    const hasOverdue = columnTasks.some(t => t.due_date && new Date(t.due_date) < new Date())
-
-    if (status === 'done') return 'healthy'
-    if (hasOverdue) return 'overdue'
-    if (hasHighPriority) return 'at-risk'
-    return 'neutral'
-  }
-
-  const columns = [
-    { id: 'todo', title: '✈️ Boarding', icon: '🛫' },
-    { id: 'in-progress', title: '🌤️ In Flight', icon: '✈️' },
-    { id: 'review', title: '🌅 Landing', icon: '🛬' },
-    { id: 'done', title: '🎯 Arrived', icon: '🏁' }
-  ]
-
   if (isLoading) {
     return null
   }
@@ -315,12 +292,10 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-              {isProfessionalMode ? 'Task Management' : 'Flight Control ✈️'}
+              Task Management
             </h1>
             <p className="text-gray-600 mt-1">
-              {isProfessionalMode
-                ? `Manage tasks in ${organization.name}`
-                : `Manage all flights in ${organization.name}`}
+              Manage tasks in {organization.name}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -346,19 +321,6 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
               >
                 <Table className="w-4 h-4" />
               </button>
-              {/* Only show radar in Aviation mode */}
-              {isAviationMode && (
-                <button
-                  onClick={() => setViewMode('radar')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'radar'
-                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  title="Control Tower"
-                >
-                  <Radar className="w-4 h-4" />
-                </button>
-              )}
             </div>
 
             <button
@@ -366,7 +328,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md hover:shadow-lg"
             >
               <Plus className="w-5 h-5" />
-              <span className="font-medium">{isProfessionalMode ? 'New Task' : 'New Flight'}</span>
+              <span className="font-medium">New Task</span>
             </button>
           </div>
         </div>
@@ -377,7 +339,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder={isProfessionalMode ? "Search tasks..." : "Search flights..."}
+              placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
@@ -388,66 +350,23 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
             onChange={(e) => setFilterPriority(e.target.value)}
             className="px-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
-            <option value="all">{isProfessionalMode ? 'All Priorities' : 'All Classes'}</option>
-            <option value="high">{isProfessionalMode ? '🔴 High Priority' : '🔴 First Class'}</option>
-            <option value="medium">{isProfessionalMode ? '🟡 Medium' : '🟡 Business'}</option>
-            <option value="low">{isProfessionalMode ? '🟢 Low Priority' : '🟢 Economy'}</option>
+            <option value="all">All Priorities</option>
+            <option value="high">🔴 High Priority</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="low">🟢 Low Priority</option>
           </select>
         </div>
       </div>
 
-      {/* Radar / Control Tower View */}
-      {viewMode === 'radar' && (
-        isAviationMode ? (
-          <ControlTower tasks={tasks} />
-        ) : (
-          // Professional mode doesn't have radar - show kanban instead
-          <ProfessionalKanban
-            tasks={tasks.filter(t => t.status !== 'archived') as any}
-            onTaskClick={(task) => handleEditTask(task as Task)}
-            onAddTask={() => setIsCreateModalOpen(true)}
-            onDeleteTask={handleDeleteTask}
-            onArchiveTask={handleArchiveTask}
-          />
-        )
-      )}
-
-      {/* Board View - Professional or Aviation */}
+      {/* Board View */}
       {viewMode === 'board' && (
-        isProfessionalMode ? (
-          <ProfessionalKanban
-            tasks={tasks.filter(t => t.status !== 'archived') as any}
-            onTaskClick={(task) => handleEditTask(task as Task)}
-            onAddTask={() => setIsCreateModalOpen(true)}
-            onDeleteTask={handleDeleteTask}
-            onArchiveTask={handleArchiveTask}
-          />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {columns.map((column) => (
-              <CloudGroup
-                key={column.id}
-                title={column.title}
-                count={getStatusColumn(column.id as Task['status']).length}
-                status={getCloudStatus(column.id as Task['status'])}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, column.id as Task['status'])}
-                onAddTask={column.id === 'todo' ? () => setIsCreateModalOpen(true) : undefined}
-              >
-                {getStatusColumn(column.id as Task['status']).map((task) => (
-                  <BoardingPassCard
-                    key={task.id}
-                    task={task}
-                    onDragStart={handleDragStart}
-                    onDelete={handleDeleteTask}
-                    onArchive={handleArchiveTask}
-                    onClick={() => router.push(`/tasks/${task.id}`)}
-                  />
-                ))}
-              </CloudGroup>
-            ))}
-          </div>
-        )
+        <ProfessionalKanban
+          tasks={tasks.filter(t => t.status !== 'archived') as any}
+          onTaskClick={(task) => handleEditTask(task as Task)}
+          onAddTask={() => setIsCreateModalOpen(true)}
+          onDeleteTask={handleDeleteTask}
+          onArchiveTask={handleArchiveTask}
+        />
       )}
 
       {/* Archived Section */}
@@ -464,12 +383,10 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
             )}
             <Archive className="w-5 h-5 text-amber-500" />
             <span className="font-semibold text-gray-700">
-              {isProfessionalMode ? '📦 Archived Tasks' : '📦 Archived Flights'}
+              📦 Archived Tasks
             </span>
             <span className="text-sm text-gray-500 ml-2">
-              ({getStatusColumn('archived').length} {getStatusColumn('archived').length === 1
-                ? (isProfessionalMode ? 'task' : 'flight')
-                : (isProfessionalMode ? 'tasks' : 'flights')})
+              ({getStatusColumn('archived').length} {getStatusColumn('archived').length === 1 ? 'task' : 'tasks'})
             </span>
           </button>
 
@@ -481,27 +398,18 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
                     <button
                       onClick={() => handleRestoreTask(task.id)}
                       className="p-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md transition-all"
-                      title={isProfessionalMode ? "Restore to Todo" : "Restore to Boarding"}
+                      title="Restore to Todo"
                     >
                       <RotateCcw className="w-3.5 h-3.5 text-white" />
                     </button>
                   </div>
                   <div className="opacity-70 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-300">
-                    {isProfessionalMode ? (
-                      <ProfessionalTaskCard
-                        task={task as any}
-                        onClick={() => handleEditTask(task as Task)}
-                        onDelete={handleDeleteTask}
-                        onArchive={handleArchiveTask}
-                      />
-                    ) : (
-                      <BoardingPassCard
-                        task={task}
-                        onDragStart={handleDragStart}
-                        onDelete={handleDeleteTask}
-                        onArchive={handleArchiveTask}
-                      />
-                    )}
+                    <ProfessionalTaskCard
+                      task={task as any}
+                      onClick={() => handleEditTask(task as Task)}
+                      onDelete={handleDeleteTask}
+                      onArchive={handleArchiveTask}
+                    />
                   </div>
                 </div>
               ))}
@@ -516,12 +424,12 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
           <table className="w-full">
             <thead className="bg-gradient-to-r from-blue-500 to-cyan-500">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">{isProfessionalMode ? 'Task' : 'Flight'}</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Task</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">{isProfessionalMode ? 'Priority' : 'Class'}</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">{isProfessionalMode ? 'Created' : 'Departure'}</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">{isProfessionalMode ? 'Due Date' : 'Arrival'}</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">{isProfessionalMode ? 'Assignee' : 'Crew'}</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Priority</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Created</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Due Date</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Assignee</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -543,9 +451,9 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
                         task.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
                           'bg-gray-100 text-gray-700'
                       }`}>
-                      {task.status === 'todo' && '🛫'}
-                      {task.status === 'in-progress' && '✈️'}
-                      {task.status === 'review' && '🛬'}
+                      {task.status === 'todo' && '📋'}
+                      {task.status === 'in-progress' && '🔄'}
+                      {task.status === 'review' && '👀'}
                       {task.status === 'done' && '✅'}
                       {task.status.replace('-', ' ')}
                     </span>
@@ -555,9 +463,8 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
                       task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-green-100 text-green-700'
                       }`}>
-                      {task.priority === 'high' ? (isProfessionalMode ? '🔴 High' : '🔴 First Class') :
-                        task.priority === 'medium' ? (isProfessionalMode ? '🟡 Medium' : '🟡 Business') :
-                          (isProfessionalMode ? '🟢 Low' : '🟢 Economy')}
+                      {task.priority === 'high' ? '🔴 High' :
+                        task.priority === 'medium' ? '🟡 Medium' : '🟢 Low'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
@@ -586,7 +493,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
           {tasks.length === 0 && (
             <div className="text-center py-12">
               <CheckSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">{isProfessionalMode ? 'No tasks yet' : 'No flights scheduled yet'}</p>
+              <p className="text-gray-600">No tasks yet</p>
             </div>
           )}
         </div>
@@ -598,7 +505,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
           <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-white/40">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                {isProfessionalMode ? '📋 Create New Task' : '✈️ Schedule New Flight'}
+                📋 Create New Task
               </h2>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
@@ -611,25 +518,25 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-2">
-                  {isProfessionalMode ? 'Task Title *' : 'Flight Name *'}
+                  Task Title *
                 </label>
                 <input
                   type="text"
                   value={newTask.title}
                   onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                  placeholder={isProfessionalMode ? "Enter task title" : "Enter flight name"}
+                  placeholder="Enter task title"
                   className="w-full px-4 py-2 bg-white/70 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-2">
-                  {isProfessionalMode ? 'Description' : 'Flight Details'}
+                  Description
                 </label>
                 <textarea
                   value={newTask.description}
                   onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                  placeholder={isProfessionalMode ? "Enter task description" : "Enter flight details"}
+                  placeholder="Enter task description"
                   rows={3}
                   className="w-full px-4 py-2 bg-white/70 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                 />
@@ -638,22 +545,22 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-2">
-                    {isProfessionalMode ? 'Priority' : 'Class'}
+                    Priority
                   </label>
                   <select
                     value={newTask.priority}
                     onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as 'low' | 'medium' | 'high' })}
                     className="w-full px-4 py-2 bg-white/70 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
-                    <option value="low">{isProfessionalMode ? '🟢 Low Priority' : '🟢 Economy'}</option>
-                    <option value="medium">{isProfessionalMode ? '🟡 Medium Priority' : '🟡 Business'}</option>
-                    <option value="high">{isProfessionalMode ? '🔴 High Priority' : '🔴 First Class'}</option>
+                    <option value="low">🟢 Low Priority</option>
+                    <option value="medium">🟡 Medium Priority</option>
+                    <option value="high">🔴 High Priority</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-2">
-                    {isProfessionalMode ? 'Due Date' : 'Arrival Date'}
+                    Due Date
                   </label>
                   <input
                     type="date"
@@ -677,7 +584,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
                   disabled={!newTask.title}
                   className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isProfessionalMode ? 'Create Task ✓' : 'Schedule Flight ✈️'}
+                  Create Task ✓
                 </button>
               </div>
             </div>
@@ -691,7 +598,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
           <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                {isProfessionalMode ? '✏️ Edit Task' : '✏️ Edit Flight'}
+                ✏️ Edit Task
               </h2>
               <button onClick={() => { setIsEditModalOpen(false); setEditingTask(null); }} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5" />
@@ -704,7 +611,7 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {isProfessionalMode ? 'Task Title' : 'Flight Name'}
+                    Task Title
                   </label>
                   <input
                     type="text"
@@ -725,16 +632,16 @@ export default function AdminTaskView({ user, organization }: AdminTaskViewProps
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {isProfessionalMode ? 'Priority' : 'Class'}
+                      Priority
                     </label>
                     <select
                       value={editingTask.priority}
                       onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value as any })}
                       className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
                     >
-                      <option value="high">{isProfessionalMode ? 'High Priority' : 'First Class'}</option>
-                      <option value="medium">{isProfessionalMode ? 'Medium Priority' : 'Business'}</option>
-                      <option value="low">{isProfessionalMode ? 'Low Priority' : 'Economy'}</option>
+                      <option value="high">High Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="low">Low Priority</option>
                     </select>
                   </div>
                   <div>

@@ -170,9 +170,9 @@ router.patch('/preferences', authenticateToken, async (req: AuthRequest, res) =>
 
     const { theme_mode } = req.body;
 
-    // Validate theme_mode
-    if (theme_mode && !['professional', 'aviation'].includes(theme_mode)) {
-      return res.status(400).json({ error: 'Invalid theme_mode. Must be "professional" or "aviation"' });
+    // Validate theme_mode (only professional mode is supported)
+    if (theme_mode && theme_mode !== 'professional') {
+      return res.status(400).json({ error: 'Invalid theme_mode. Must be "professional"' });
     }
 
     const updates: string[] = [];

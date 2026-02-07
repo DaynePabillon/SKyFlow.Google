@@ -22,6 +22,7 @@ import commentRoutes from './routes/comment.routes';
 import timeEntryRoutes from './routes/timeEntry.routes';
 import widgetRoutes from './routes/widget.routes';
 import workspaceRoutes from './routes/workspace.routes';
+import reportsRoutes from './routes/reports.routes';
 import { runAutoMigrations } from './services/migration.service';
 
 dotenv.config();
@@ -71,6 +72,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api', timeEntryRoutes);
 app.use('/api', widgetRoutes);
 app.use('/api/workspaces', workspaceRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

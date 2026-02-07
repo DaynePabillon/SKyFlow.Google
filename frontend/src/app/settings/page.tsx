@@ -3,9 +3,8 @@
 import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Settings, Plane, Briefcase, Check, ChevronRight, LogOut, Trash2, Plus, X, Building2, AlertTriangle } from 'lucide-react'
+import { Settings, Briefcase, Check, ChevronRight, LogOut, Trash2, Plus, X, Building2, AlertTriangle } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
-import { useThemeMode } from '@/context/ThemeContext'
 
 interface Organization {
     id: string
@@ -15,12 +14,10 @@ interface Organization {
 
 export default function SettingsPage() {
     const router = useRouter()
-    const { themeMode, setThemeMode, isProfessionalMode, isAviationMode } = useThemeMode()
     const [user, setUser] = useState<any>(null)
     const [organizations, setOrganizations] = useState<Organization[]>([])
     const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
     const [isLoading, setIsLoading] = useState(true)
-    const [saving, setSaving] = useState(false)
 
     // Workspace management state
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -62,17 +59,6 @@ export default function SettingsPage() {
 
                 // Fetch organizations
                 await fetchOrganizations()
-
-                // Fetch user preferences
-                const prefsRes = await fetch(`${API_URL}/api/users/preferences`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-                if (prefsRes.ok) {
-                    const prefsData = await prefsRes.json()
-                    if (prefsData.theme_mode) {
-                        localStorage.setItem('skyflow_theme_mode', prefsData.theme_mode)
-                    }
-                }
             } catch (error) {
                 console.error('Error fetching data:', error)
                 router.push('/login')
@@ -83,15 +69,6 @@ export default function SettingsPage() {
 
         fetchData()
     }, [router])
-
-    const handleThemeChange = async (mode: 'professional' | 'aviation') => {
-        setSaving(true)
-        try {
-            await setThemeMode(mode)
-        } finally {
-            setSaving(false)
-        }
-    }
 
     const handleCreateWorkspace = async () => {
         if (!newWorkspaceName.trim()) return
@@ -193,86 +170,8 @@ export default function SettingsPage() {
                     <p className="text-gray-500">Customize your SkyFlow experience</p>
                 </div>
 
-                {/* Theme Mode Section */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-gray-100">
-                        <h2 className="text-lg font-semibold text-gray-900">Interface Mode</h2>
-                        <p className="text-sm text-gray-500 mt-1">Choose how you want SkyFlow to look and feel</p>
-                    </div>
-
-                    <div className="p-6 space-y-4">
-                        {/* Professional Mode */}
-                        <button
-                            onClick={() => handleThemeChange('professional')}
-                            disabled={saving}
-                            className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-start gap-4 ${isProfessionalMode
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                }`}
-                        >
-                            <div className={`p-3 rounded-xl ${isProfessionalMode ? 'bg-blue-500' : 'bg-gray-100'}`}>
-                                <Briefcase className={`w-6 h-6 ${isProfessionalMode ? 'text-white' : 'text-gray-500'}`} />
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="font-semibold text-gray-900">Professional Mode</h3>
-                                    {isProfessionalMode && (
-                                        <span className="px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">Active</span>
-                                    )}
-                                </div>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Clean, corporate interface inspired by Trello and Monday.com. Perfect for formal work environments.
-                                </p>
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg">Dashboard</span>
-                                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg">Tasks</span>
-                                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg">Kanban Boards</span>
-                                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg">Projects</span>
-                                </div>
-                            </div>
-                            {isProfessionalMode && (
-                                <Check className="w-5 h-5 text-blue-500 flex-shrink-0 mt-1" />
-                            )}
-                        </button>
-
-                        {/* Aviation Mode */}
-                        <button
-                            onClick={() => handleThemeChange('aviation')}
-                            disabled={saving}
-                            className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-start gap-4 ${isAviationMode
-                                ? 'border-amber-500 bg-amber-50'
-                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                }`}
-                        >
-                            <div className={`p-3 rounded-xl ${isAviationMode ? 'bg-amber-500' : 'bg-gray-100'}`}>
-                                <Plane className={`w-6 h-6 ${isAviationMode ? 'text-white' : 'text-gray-500'}`} />
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="font-semibold text-gray-900">Aviation Mode</h3>
-                                    {isAviationMode && (
-                                        <span className="px-2 py-0.5 bg-amber-500 text-white text-xs rounded-full">Active</span>
-                                    )}
-                                </div>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Fun, aviation-themed interface with boarding passes and flight metaphors. Makes work feel like an adventure!
-                                </p>
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                    <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-lg">Control Tower</span>
-                                    <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-lg">Flights</span>
-                                    <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-lg">Boarding Passes</span>
-                                    <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-lg">Flight Manifest</span>
-                                </div>
-                            </div>
-                            {isAviationMode && (
-                                <Check className="w-5 h-5 text-amber-500 flex-shrink-0 mt-1" />
-                            )}
-                        </button>
-                    </div>
-                </div>
-
                 {/* Account Section */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mt-6">
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-gray-100">
                         <h2 className="text-lg font-semibold text-gray-900">Account</h2>
                         <p className="text-sm text-gray-500 mt-1">Your account information</p>
@@ -319,10 +218,10 @@ export default function SettingsPage() {
                                     <div>
                                         <h3 className="font-medium text-gray-900">{org.name}</h3>
                                         <span className={`text-xs px-2 py-0.5 rounded-full ${org.role === 'admin'
-                                                ? 'bg-red-100 text-red-700'
-                                                : org.role === 'manager'
-                                                    ? 'bg-blue-100 text-blue-700'
-                                                    : 'bg-gray-100 text-gray-600'
+                                            ? 'bg-red-100 text-red-700'
+                                            : org.role === 'manager'
+                                                ? 'bg-blue-100 text-blue-700'
+                                                : 'bg-gray-100 text-gray-600'
                                             }`}>
                                             {org.role.charAt(0).toUpperCase() + org.role.slice(1)}
                                         </span>
@@ -356,13 +255,6 @@ export default function SettingsPage() {
                         )}
                     </div>
                 </div>
-
-                {saving && (
-                    <div className="fixed bottom-6 right-6 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Saving...
-                    </div>
-                )}
 
                 {/* Create Workspace Modal */}
                 {isCreateModalOpen && (

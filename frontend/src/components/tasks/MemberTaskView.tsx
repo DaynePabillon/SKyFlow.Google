@@ -3,9 +3,7 @@
 import { API_URL } from '@/lib/api/client'
 import { useState, useEffect } from "react"
 import { CheckSquare, Search, LayoutGrid, Table, AlertCircle, Clock, CheckCircle2 } from "lucide-react"
-import BoardingPassCard from "./BoardingPassCard"
 import ProfessionalTaskCard from "./ProfessionalTaskCard"
-import { useThemeMode } from "@/context/ThemeContext"
 
 interface Task {
   id: string
@@ -31,7 +29,6 @@ interface MemberTaskViewProps {
 }
 
 export default function MemberTaskView({ user, organization }: MemberTaskViewProps) {
-  const { isProfessionalMode, isAviationMode } = useThemeMode()
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -113,22 +110,20 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                {isProfessionalMode ? 'My Tasks' : 'My Flights ✈️'}
+                My Tasks
               </h1>
               <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
                 Member
               </span>
             </div>
             <p className="text-gray-600 mt-1">
-              {isProfessionalMode
-                ? `Tasks assigned to you in ${organization.name}`
-                : `Flights assigned to you in ${organization.name}`}
+              Tasks assigned to you in {organization.name}
             </p>
           </div>
           <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
             <AlertCircle className="w-4 h-4 text-blue-600" />
             <span className="text-sm text-blue-600 font-medium">
-              {isProfessionalMode ? 'Can update status' : 'Update status only'}
+              Can update status
             </span>
           </div>
         </div>
@@ -137,23 +132,23 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white/80 backdrop-blur-xl rounded-xl p-4 border border-gray-200">
             <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
-            <div className="text-sm text-gray-500">{isProfessionalMode ? 'Total Tasks' : 'Total Flights'}</div>
+            <div className="text-sm text-gray-500">Total Tasks</div>
           </div>
           <div className="bg-gray-50/80 rounded-xl p-4 border border-gray-200">
             <div className="text-2xl font-bold text-gray-700">{stats.todo}</div>
-            <div className="text-sm text-gray-500">{isProfessionalMode ? 'To Do' : 'Boarding'}</div>
+            <div className="text-sm text-gray-500">To Do</div>
           </div>
           <div className="bg-blue-50/80 rounded-xl p-4 border border-blue-200">
             <div className="text-2xl font-bold text-blue-700">{stats.inProgress}</div>
-            <div className="text-sm text-blue-600">{isProfessionalMode ? 'In Progress' : 'In Flight'}</div>
+            <div className="text-sm text-blue-600">In Progress</div>
           </div>
           <div className="bg-yellow-50/80 rounded-xl p-4 border border-yellow-200">
             <div className="text-2xl font-bold text-yellow-700">{stats.review}</div>
-            <div className="text-sm text-yellow-600">{isProfessionalMode ? 'Review' : 'Landing'}</div>
+            <div className="text-sm text-yellow-600">Review</div>
           </div>
           <div className="bg-green-50/80 rounded-xl p-4 border border-green-200">
             <div className="text-2xl font-bold text-green-700">{stats.done}</div>
-            <div className="text-sm text-green-600">{isProfessionalMode ? 'Completed' : 'Arrived'}</div>
+            <div className="text-sm text-green-600">Completed</div>
           </div>
         </div>
 
@@ -163,7 +158,7 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder={isProfessionalMode ? "Search your tasks..." : "Search your flights..."}
+              placeholder="Search your tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -197,12 +192,10 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
         <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-12 text-center border border-white/40 shadow-lg">
           <CheckCircle2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">
-            {isProfessionalMode ? 'No Tasks Assigned' : 'No Flights Assigned'}
+            No Tasks Assigned
           </h3>
           <p className="text-gray-600">
-            {isProfessionalMode
-              ? "You don't have any tasks assigned to you yet."
-              : "You haven't been assigned to any flights yet."}
+            You don't have any tasks assigned to you yet.
           </p>
         </div>
       )}
@@ -212,18 +205,11 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredTasks.map((task) => (
             <div key={task.id} className="relative">
-              {isProfessionalMode ? (
-                <ProfessionalTaskCard
-                  task={task as any}
-                  onClick={() => { }}
-                  onStatusChange={(taskId, status) => handleStatusChange(taskId, status as Task['status'])}
-                />
-              ) : (
-                <BoardingPassCard
-                  task={task}
-                  onDragStart={() => { }}
-                />
-              )}
+              <ProfessionalTaskCard
+                task={task as any}
+                onClick={() => { }}
+                onStatusChange={(taskId, status) => handleStatusChange(taskId, status as Task['status'])}
+              />
               {/* Status Update Overlay for Members */}
               <div className="absolute bottom-2 right-2">
                 <select
@@ -231,10 +217,10 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
                   onChange={(e) => handleStatusChange(task.id, e.target.value as Task['status'])}
                   className="text-xs px-2 py-1 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400"
                 >
-                  <option value="todo">{isProfessionalMode ? 'To Do' : 'Boarding'}</option>
-                  <option value="in-progress">{isProfessionalMode ? 'In Progress' : 'In Flight'}</option>
-                  <option value="review">{isProfessionalMode ? 'Review' : 'Landing'}</option>
-                  <option value="done">{isProfessionalMode ? 'Done' : 'Arrived'}</option>
+                  <option value="todo">To Do</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="review">Review</option>
+                  <option value="done">Done</option>
                 </select>
               </div>
             </div>
@@ -248,9 +234,9 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
           <table className="w-full">
             <thead className="bg-gradient-to-r from-blue-500 to-cyan-500">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">{isProfessionalMode ? 'Task' : 'Flight'}</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Task</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">{isProfessionalMode ? 'Priority' : 'Class'}</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Priority</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Due Date</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase">Action</th>
               </tr>
@@ -264,21 +250,19 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${task.status === 'done' ? 'bg-green-100 text-green-700' :
-                        task.status === 'review' ? 'bg-yellow-100 text-yellow-700' :
-                          task.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-                            'bg-gray-100 text-gray-700'
+                      task.status === 'review' ? 'bg-yellow-100 text-yellow-700' :
+                        task.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-700'
                       }`}>
                       {task.status.replace('-', ' ')}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${task.priority === 'high' ? 'bg-red-100 text-red-700' :
-                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
+                      task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
                       }`}>
-                      {isProfessionalMode
-                        ? (task.priority === 'high' ? 'High' : task.priority === 'medium' ? 'Medium' : 'Low')
-                        : (task.priority === 'high' ? 'First Class' : task.priority === 'medium' ? 'Business' : 'Economy')}
+                      {task.priority === 'high' ? 'High' : task.priority === 'medium' ? 'Medium' : 'Low'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
@@ -294,10 +278,10 @@ export default function MemberTaskView({ user, organization }: MemberTaskViewPro
                       onChange={(e) => handleStatusChange(task.id, e.target.value as Task['status'])}
                       className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400"
                     >
-                      <option value="todo">{isProfessionalMode ? 'To Do' : 'Boarding'}</option>
-                      <option value="in-progress">{isProfessionalMode ? 'In Progress' : 'In Flight'}</option>
-                      <option value="review">{isProfessionalMode ? 'Review' : 'Landing'}</option>
-                      <option value="done">{isProfessionalMode ? 'Done' : 'Arrived'}</option>
+                      <option value="todo">To Do</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="review">Review</option>
+                      <option value="done">Done</option>
                     </select>
                   </td>
                 </tr>

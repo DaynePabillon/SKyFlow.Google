@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Cloud, LogOut, Menu, X, Calendar, FileText, FolderOpen, BarChart3, Users, FolderKanban, CheckSquare, Building2, ChevronDown, Plus, UserPlus, Plane, Settings, LayoutDashboard, RefreshCw } from "lucide-react"
+import { Cloud, LogOut, Menu, X, Calendar, FileText, FolderOpen, BarChart3, Users, FolderKanban, CheckSquare, Building2, ChevronDown, Plus, UserPlus, Settings, LayoutDashboard, RefreshCw, Bug } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useThemeMode, useThemeLabels } from "@/context/ThemeContext"
+import { useThemeLabels } from "@/context/ThemeContext"
 import NotificationBell from "@/components/notifications/NotificationBell"
+import BugReportModal from "@/components/reports/BugReportModal"
 
 interface Organization {
   id: string
@@ -22,10 +23,10 @@ interface AppLayoutProps {
 
 export default function AppLayout({ user, organizations, selectedOrg, onOrgChange, children }: AppLayoutProps) {
   const router = useRouter()
-  const { isAviationMode } = useThemeMode()
   const labels = useThemeLabels()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false)
+  const [showBugReport, setShowBugReport] = useState(false)
 
   const handleLogout = () => {
     // Clear all authentication data
@@ -160,8 +161,8 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
                   <FolderKanban className="w-5 h-5 group-hover:text-white transition-colors" />
                   <span>Projects</span>
                 </a>
-                <a href="/boards" className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r ${isAviationMode ? 'hover:from-amber-500 hover:to-orange-500' : 'hover:from-blue-500 hover:to-cyan-500'} hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md`}>
-                  {isAviationMode ? <Plane className="w-5 h-5 group-hover:text-white transition-colors" /> : <FolderKanban className="w-5 h-5 group-hover:text-white transition-colors" />}
+                <a href="/boards" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
+                  <FolderKanban className="w-5 h-5 group-hover:text-white transition-colors" />
                   <span>{labels.boards}</span>
                 </a>
                 <a href="/team" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-cyan-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md">
@@ -202,6 +203,14 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
                   <Settings className="w-5 h-5 group-hover:text-white transition-colors" />
                   <span>Settings</span>
                 </a>
+
+                {/* Creator Notes - only visible to creator */}
+                {user?.email === 'waynepabillon667@gmail.com' && (
+                  <a href="/creator-notes" className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-purple-700 rounded-xl hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white transition-all duration-300 group shadow-sm hover:shadow-md bg-purple-50">
+                    <Bug className="w-5 h-5 group-hover:text-white transition-colors" />
+                    <span>Creator Notes</span>
+                  </a>
+                )}
               </nav>
             </div>
           </div>
@@ -212,6 +221,18 @@ export default function AppLayout({ user, organizations, selectedOrg, onOrgChang
           {children}
         </main>
       </div>
+
+      {/* Floating Bug Report Button */}
+      <button
+        onClick={() => setShowBugReport(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center z-50 group"
+        title="Report a bug or issue"
+      >
+        <Bug className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+      </button>
+
+      {/* Bug Report Modal */}
+      <BugReportModal isOpen={showBugReport} onClose={() => setShowBugReport(false)} />
     </div>
   )
 }
