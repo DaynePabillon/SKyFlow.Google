@@ -60,8 +60,43 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         due_date, estimated_hours, assigned_to, userId]
     );
 
-    logger.info(`Task created: ${result.rows[0].id} by user ${userId}`);
-    res.status(201).json(result.rows[0]);
+    const createdTask = result.rows[0];
+
+    // If task has an assignee, send notification and add to task_assignees
+    if (assigned_to && assigned_to !== userId) {
+      // Get creator's name for notification
+      const userResult = await query('SELECT name FROM users WHERE id = $1', [userId]);
+      const creatorName = userResult.rows[0]?.name || 'Someone';
+
+      // Send notification to assignee
+      await notificationService.notifyTaskAssignment(
+        createdTask.id,
+        title,
+        assigned_to,
+        creatorName
+      );
+
+      // Add to task_assignees junction table
+      await query(
+        `INSERT INTO task_assignees (task_id, user_id, assigned_by)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (task_id, user_id) DO NOTHING`,
+        [createdTask.id, assigned_to, userId]
+      );
+
+      // Auto-follow task for assignee
+      await query(
+        `INSERT INTO task_followers (task_id, user_id)
+         VALUES ($1, $2)
+         ON CONFLICT (task_id, user_id) DO NOTHING`,
+        [createdTask.id, assigned_to]
+      );
+
+      logger.info(`Task ${createdTask.id} created and assigned to ${assigned_to}, notification sent`);
+    }
+
+    logger.info(`Task created: ${createdTask.id} by user ${userId}`);
+    res.status(201).json(createdTask);
   } catch (error) {
     logger.error('Error creating task:', error);
     res.status(500).json({ error: 'Failed to create task' });
