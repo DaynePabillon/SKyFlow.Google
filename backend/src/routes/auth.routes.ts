@@ -99,11 +99,23 @@ router.get('/google/callback', async (req: Request, res: Response) => {
         [invitation.id]
       );
 
+      // Mark user as onboarded since they're joining via invitation
+      await dbQuery(
+        `UPDATE users SET onboarding_completed = true, updated_at = NOW() WHERE id = $1`,
+        [user.id]
+      );
+
       inviteToken = invitation.token;
       logger.info(`User ${user.email} added to organization via invitation`);
     } else if (inviteToken) {
       // If invite token provided in URL, process it
       await GoogleAuthService.processInvitation(user.id, inviteToken);
+
+      // Mark user as onboarded since they're joining via invitation
+      await dbQuery(
+        `UPDATE users SET onboarding_completed = true, updated_at = NOW() WHERE id = $1`,
+        [user.id]
+      );
     }
 
     // Generate JWT

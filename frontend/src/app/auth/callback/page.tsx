@@ -48,8 +48,9 @@ function AuthCallbackContent() {
                 localStorage.setItem('onboardingPreferences', JSON.stringify(onboarding_data))
               }
 
-              // Check if user needs onboarding
-              const isFirstTimeUser = !userData.onboarding_completed
+              // Check if user needs onboarding (skip if invited to a workspace)
+              const isInvitedUser = searchParams.get("invited") === "true"
+              const isFirstTimeUser = !userData.onboarding_completed && !isInvitedUser
 
               setStatus('success')
               setMessage(isFirstTimeUser ? 'Welcome to SkyFlow!' : 'Welcome back!')
